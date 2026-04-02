@@ -34,7 +34,8 @@ import {
   Sun,
   Moon,
   Cloud,
-  Heart
+  Heart,
+  Star
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -479,7 +480,7 @@ function MathMaster() {
         <h3 className="text-2xl font-bold text-primary">Math Master</h3>
         <p className="text-muted-foreground font-medium">Test your brain speed!</p>
       </div>
-      <div className="bg-primary/5 p-8 rounded-[3rem] text-center space-y-6 w-full max-w-sm border-2 border-primary/10">
+      <div className="bg-primary/5 p-8 rounded-[3rem] text-center space-y-6 w-full max-sm border-2 border-primary/10">
         <div className="text-5xl font-black text-primary flex items-center justify-center gap-4">
           <span>{q.n1}</span>
           <span className="text-accent">{q.op === '*' ? '×' : q.op}</span>
