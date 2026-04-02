@@ -13,6 +13,8 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) return;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       if (!firebaseUser) {
@@ -33,6 +35,8 @@ export function useUser() {
       } else {
         setProfile(null);
       }
+      setLoading(false);
+    }, (error) => {
       setLoading(false);
     });
 
