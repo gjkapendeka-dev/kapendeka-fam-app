@@ -1,0 +1,220 @@
+
+{
+  "entities": {
+    "Family": {
+      "title": "Family",
+      "description": "The root document for a family unit.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "inviteCode": { "type": "string" },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "timezone": { "type": "string" },
+            "currency": { "type": "string" },
+            "familyMotto": { "type": "string" },
+            "publicHolidaysEnabled": { "type": "boolean" },
+            "schoolTermsEnabled": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["name", "inviteCode"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Extended user information stored in Firestore.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "familyId": { "type": "string" },
+        "role": { "type": "string", "enum": ["parent", "child", "teen", "grandparent", "admin"] },
+        "avatarUrl": { "type": "string" },
+        "points": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string" },
+            "notificationsEnabled": { "type": "boolean" },
+            "locationSharingEnabled": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["displayName", "familyId", "role"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Calendar events for work, school, church, etc.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["work", "school", "church", "sports", "medical", "vacation", "holiday", "other"] },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "assignedTo": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "Chore": {
+      "title": "Chore",
+      "description": "Household tasks with points and rotation.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "frequency": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "pointsReward": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "done"] }
+      }
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Family recipes with ingredients and instructions.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "ingredients": { "type": "array", "items": { "$ref": "#/backend/entities/Ingredient" } },
+        "instructions": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "photoUrl": { "type": "string" }
+      }
+    },
+    "Ingredient": {
+      "title": "Ingredient",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "category": { "type": "string" }
+      }
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial records for expenses and allowances.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["allowance", "expense", "savings", "pocketMoney"] },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" }
+      }
+    },
+    "Todo": {
+      "title": "Todo",
+      "description": "Shared or private tasks.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "isShared": { "type": "boolean" },
+        "assignedTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "done"] },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+      }
+    },
+    "Homework": {
+      "title": "Homework",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "childId": { "type": "string" },
+        "subject": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      }
+    },
+    "HealthLog": {
+      "title": "Health Log",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "value": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Pet": {
+      "title": "Pet",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "feedingSchedule": { "type": "string" }
+      }
+    },
+    "EmergencyDocument": {
+      "title": "Emergency Document",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "type": { "type": "string" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/families/{familyId}": {
+      "schema": "Family",
+      "description": "Root family documents."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles and settings."
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Family calendar events."
+    },
+    "/chores/{choreId}": {
+      "schema": "Chore",
+      "description": "Household chores."
+    },
+    "/recipes/{recipeId}": {
+      "schema": "Recipe",
+      "description": "Recipe box."
+    },
+    "/transactions/{txId}": {
+      "schema": "Transaction",
+      "description": "Family ledger."
+    },
+    "/todos/{todoId}": {
+      "schema": "Todo",
+      "description": "Family and private to-dos."
+    },
+    "/homework/{hwId}": {
+      "schema": "Homework",
+      "description": "School assignments."
+    },
+    "/healthLogs/{logId}": {
+      "schema": "HealthLog",
+      "description": "Wellness tracking."
+    },
+    "/pets/{petId}": {
+      "schema": "Pet",
+      "description": "Pet care tracking."
+    },
+    "/emergencyVault/{docId}": {
+      "schema": "EmergencyDocument",
+      "description": "Secure document storage."
+    }
+  }
+}

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,6 @@ import {
   Award,
   Zap,
   Plus,
-  Mic,
   ArrowRight
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -19,9 +19,13 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AIQuickAdd } from "@/components/ai-quick-add"
+import { useUser, useCollection, useFirestore } from "@/firebase"
+import { collection, query, where, limit, orderBy } from "firebase/firestore"
 
 export default function DashboardPage() {
   const [greeting, setGreeting] = React.useState("Good Morning")
+  const { user, profile } = useUser()
+  const db = useFirestore()
 
   React.useEffect(() => {
     const hours = new Date().getHours()
@@ -30,15 +34,42 @@ export default function DashboardPage() {
     else setGreeting("Good Morning")
   }, [])
 
+  // Fetch upcoming events
+  const eventsQuery = React.useMemo(() => {
+    if (!db || !profile?.familyId) return null;
+    return query(
+      collection(db, "events"),
+      where("familyId", "==", profile.familyId),
+      orderBy("startTime", "asc"),
+      limit(3)
+    );
+  }, [db, profile?.familyId]);
+  const { data: events } = useCollection(eventsQuery);
+
+  // Fetch chores
+  const choresQuery = React.useMemo(() => {
+    if (!db || !profile?.familyId) return null;
+    return query(
+      collection(db, "chores"),
+      where("familyId", "==", profile.familyId),
+      limit(5)
+    );
+  }, [db, profile?.familyId]);
+  const { data: chores } = useCollection(choresQuery);
+
   return (
     <div className="flex flex-col min-h-screen bg-background p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-      {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="md:hidden" />
           <div>
-            <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">{greeting}, Kapendeka Family!</h1>
-            <p className="text-muted-foreground font-medium">It's a beautiful day in Johannesburg. You have 3 chores left today.</p>
+            <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">
+              {greeting}, {profile?.displayName || "Kapendeka Family"}!
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              It's a beautiful day in Johannesburg. 
+              {chores ? ` You have ${chores.filter(c => c.status !== 'done').length} chores left today.` : " Check your agenda below."}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -56,10 +87,8 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* AI Quick Add Bar */}
       <AIQuickAdd />
 
-      {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="rounded-2xl shadow-sm border-primary/5 bg-gradient-to-br from-white to-primary/[0.02]">
           <CardHeader className="pb-2">
@@ -69,8 +98,8 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">1,250</div>
-            <p className="text-xs text-muted-foreground mt-1">+12% from last week</p>
+            <div className="text-3xl font-bold text-primary">{profile?.points || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Keep earning rewards!</p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm border-accent/5 bg-gradient-to-br from-white to-accent/[0.02]">
@@ -81,8 +110,8 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-accent">7 Days</div>
-            <p className="text-xs text-muted-foreground mt-1">Keep it up, George!</p>
+            <div className="text-3xl font-bold text-accent">{profile?.streakDays || 0} Days</div>
+            <p className="text-xs text-muted-foreground mt-1">You're on fire!</p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm">
@@ -93,46 +122,44 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate">Church Service</div>
-            <p className="text-sm text-muted-foreground">Sunday, 09:00 AM</p>
+            <div className="text-lg font-bold truncate">{events?.[0]?.title || "No upcoming events"}</div>
+            <p className="text-sm text-muted-foreground">
+              {events?.[0]?.startTime ? new Date(events[0].startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Plan something fun!"}
+            </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-500" />
-              Budget Left
+              Budget Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">R 4,250.00</div>
-            <p className="text-xs text-muted-foreground mt-1">Daily limit: R 500</p>
+            <p className="text-xs text-muted-foreground mt-1">Monthly summary ready</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Upcoming Section */}
         <div className="lg:col-span-2 space-y-8">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-headline font-bold">Upcoming Agenda</h2>
             <Button variant="link" className="text-primary font-bold">View Full Calendar <ArrowRight className="h-4 w-4 ml-1" /></Button>
           </div>
           <div className="grid gap-4">
-            {[
-              { time: "Today, 15:30", title: "Soccer Practice", person: "Junior", color: "bg-blue-500" },
-              { time: "Today, 19:00", title: "Dinner: Chicken Stir-Fry", person: "Family", color: "bg-orange-500" },
-              { time: "Tomorrow, 08:00", title: "Morning Prayer", person: "All", color: "bg-primary" }
-            ].map((item, i) => (
-              <Card key={i} className="hover:shadow-md transition-shadow group cursor-pointer overflow-hidden border-none shadow-sm ring-1 ring-border/50">
-                <div className={`h-full w-1 absolute left-0 top-0 ${item.color}`} />
+            {(events || []).map((item, i) => (
+              <Card key={item.id} className="hover:shadow-md transition-shadow group cursor-pointer overflow-hidden border-none shadow-sm ring-1 ring-border/50">
+                <div className={`h-full w-1 absolute left-0 top-0 bg-primary`} />
                 <CardContent className="p-5 flex items-center justify-between ml-1">
                   <div>
-                    <div className="text-xs font-bold text-muted-foreground mb-1">{item.time}</div>
+                    <div className="text-xs font-bold text-muted-foreground mb-1">
+                      {new Date(item.startTime).toLocaleString()}
+                    </div>
                     <div className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{item.title}</div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="bg-muted text-[10px] font-bold px-1.5 py-0 uppercase">{item.person}</Badge>
+                      <Badge variant="secondary" className="bg-muted text-[10px] font-bold px-1.5 py-0 uppercase">{item.type}</Badge>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
@@ -141,10 +168,14 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             ))}
+            {(!events || events.length === 0) && (
+              <div className="text-center py-12 bg-muted/20 rounded-2xl border-2 border-dashed">
+                <p className="text-muted-foreground font-medium">Your agenda is clear. Time to relax!</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Chores & Household Tasks */}
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-headline font-bold">Chores</h2>
@@ -159,22 +190,18 @@ export default function DashboardPage() {
               <CardDescription className="text-xs font-medium">Earn points for the Family Ice Cream night!</CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
-              {[
-                { title: "Take out Trash", assigned: "Junior", points: 50, progress: 0 },
-                { title: "Wash the Car", assigned: "George", points: 100, progress: 100 },
-                { title: "Dog Feeding", assigned: "Junior", points: 20, progress: 0 }
-              ].map((chore, i) => (
-                <div key={i} className="space-y-2">
+              {(chores || []).map((chore) => (
+                <div key={chore.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className={`font-bold ${chore.progress === 100 ? 'line-through text-muted-foreground' : ''}`}>{chore.title}</span>
-                      <span className="text-xs text-muted-foreground font-medium">Assigned to {chore.assigned}</span>
+                      <span className={`font-bold ${chore.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>{chore.title}</span>
+                      <span className="text-xs text-muted-foreground font-medium">Assigned to {chore.assignedTo || "Everyone"}</span>
                     </div>
-                    <Badge variant={chore.progress === 100 ? "outline" : "default"} className="font-bold text-[10px] bg-primary/10 text-primary border-none">
-                      +{chore.points} pts
+                    <Badge variant={chore.status === 'done' ? "outline" : "default"} className="font-bold text-[10px] bg-primary/10 text-primary border-none">
+                      +{chore.pointsReward || 50} pts
                     </Badge>
                   </div>
-                  <Progress value={chore.progress} className="h-1.5" />
+                  <Progress value={chore.status === 'done' ? 100 : 0} className="h-1.5" />
                 </div>
               ))}
               <Button className="w-full mt-4 font-bold rounded-xl h-11 shadow-lg shadow-primary/20">View All Tasks</Button>
