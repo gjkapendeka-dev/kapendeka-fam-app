@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,8 @@ import {
   Image as ImageIcon, 
   Smile,
   Search,
-  Loader2
+  Loader2,
+  ChevronLeft
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -33,11 +35,11 @@ import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 
 const CHANNELS = [
-  { id: "general", name: "General Hub", description: "Main family announcements" },
-  { id: "dinner", name: "Dinner Ideas", description: "What's cooking tonight?" },
-  { id: "church", name: "Church & Faith", description: "Spiritual growth and updates" },
+  { id: "general", name: "General Hub", description: "Main announcements" },
+  { id: "dinner", name: "Dinner Ideas", description: "What's cooking?" },
+  { id: "church", name: "Church & Faith", description: "Spiritual updates" },
   { id: "funny", name: "Funny Moments", description: "Jokes and memes" },
-  { id: "school", name: "School & Homework", description: "Academic coordination" },
+  { id: "school", name: "School Hub", description: "Academic coordination" },
 ]
 
 export default function ChatPage() {
@@ -45,10 +47,18 @@ export default function ChatPage() {
   const db = useFirestore()
   
   const [activeChannel, setActiveChannel] = React.useState("general")
+  const [showSidebar, setShowSidebar] = React.useState(true)
   const [newMessage, setNewMessage] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
 
-  // Fetch messages for the active channel
+  // Auto-hide sidebar on mobile once a channel is selected
+  const handleChannelSelect = (id: string) => {
+    setActiveChannel(id)
+    if (window.innerWidth < 1024) {
+      setShowSidebar(false)
+    }
+  }
+
   const messagesQuery = React.useMemo(() => {
     if (!db || !profile?.familyId) return null
     return query(
@@ -63,7 +73,6 @@ export default function ChatPage() {
   const { data: messages, loading } = useCollection(messagesQuery)
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" })
@@ -101,21 +110,26 @@ export default function ChatPage() {
   const currentChannel = CHANNELS.find(c => c.id === activeChannel)
 
   return (
-    <div className="flex h-[calc(100vh-2rem)] overflow-hidden bg-background">
+    <div className="flex h-[calc(100vh-1rem)] overflow-hidden bg-background relative">
       {/* Sidebar: Channels */}
-      <div className="w-80 border-r bg-muted/20 hidden lg:flex flex-col">
-        <div className="p-6 border-b">
+      <div className={`${
+        showSidebar ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      } absolute lg:relative z-20 w-full lg:w-80 h-full border-r bg-white transition-transform duration-300 ease-in-out flex flex-col`}>
+        <div className="p-6 border-b flex items-center justify-between">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Universe Channels
+            Universe Hub
           </h2>
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowSidebar(false)}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
         </div>
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-1">
             {CHANNELS.map((channel) => (
               <button
                 key={channel.id}
-                onClick={() => setActiveChannel(channel.id)}
+                onClick={() => handleChannelSelect(channel.id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                   activeChannel === channel.id
                     ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
@@ -129,91 +143,69 @@ export default function ChatPage() {
               </button>
             ))}
           </div>
-          
-          <div className="mt-8">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-3 mb-2">Direct Messages</h3>
-            <div className="space-y-1">
-              {["George", "Junior", "Sarah"].map((name) => (
-                <button key={name} className="w-full flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:bg-muted transition-colors">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-[10px]">{name[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{name}</span>
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 ml-auto" />
-                </button>
-              ))}
-            </div>
-          </div>
         </ScrollArea>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white w-full h-full relative">
         {/* Chat Header */}
-        <header className="h-20 border-b flex items-center justify-between px-6 shrink-0">
+        <header className="h-16 md:h-20 border-b flex items-center justify-between px-4 md:px-6 shrink-0 bg-white/80 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">
-            <div className="lg:hidden">
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                <Hash className="h-3 w-3 mr-1" />
-                {currentChannel?.id}
-              </Badge>
-            </div>
-            <div className="hidden lg:block">
-              <h1 className="text-lg font-bold">{currentChannel?.name}</h1>
-              <p className="text-xs text-muted-foreground font-medium">{currentChannel?.description}</p>
+            <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10" onClick={() => setShowSidebar(true)}>
+              <Users className="h-5 w-5 text-primary" />
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-base md:text-lg font-bold truncate">{currentChannel?.name}</h1>
+              <p className="text-[10px] md:text-xs text-muted-foreground font-medium truncate">{currentChannel?.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Search className="h-5 w-5 text-muted-foreground" />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+              <Search className="h-4 w-4 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <MoreVertical className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+              <MoreVertical className="h-4 w-4 text-muted-foreground" />
             </Button>
           </div>
         </header>
 
         {/* Messages List */}
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-6">
+        <ScrollArea className="flex-1 p-4 md:p-6 bg-slate-50/30">
+          <div className="space-y-4 md:space-y-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground mt-2 font-medium">Connecting to Universe Hub...</p>
               </div>
             ) : messages?.length === 0 ? (
               <div className="text-center py-20">
-                <div className="h-16 w-16 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Hash className="h-8 w-8 text-muted-foreground/30" />
-                </div>
-                <h3 className="font-bold">No messages here yet</h3>
-                <p className="text-sm text-muted-foreground mt-1">Be the first to say something in #{activeChannel}!</p>
+                <Hash className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                <h3 className="font-bold text-muted-foreground">Start the conversation</h3>
               </div>
             ) : (
-              messages?.map((msg, idx) => {
+              messages?.map((msg) => {
                 const isMe = msg.fromUser === profile?.id
                 return (
                   <div 
                     key={msg.id} 
-                    className={`flex items-start gap-3 ${isMe ? "flex-row-reverse" : ""}`}
+                    className={`flex items-start gap-2 md:gap-3 ${isMe ? "flex-row-reverse" : ""}`}
                   >
-                    <Avatar className="h-10 w-10 border shadow-sm shrink-0">
+                    <Avatar className="h-8 w-8 md:h-10 md:w-10 border shadow-sm shrink-0">
                       <AvatarImage src={`https://picsum.photos/seed/${msg.fromUser}/100/100`} />
                       <AvatarFallback>{msg.fromUserName?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className={`flex flex-col space-y-1 max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
+                    <div className={`flex flex-col space-y-1 max-w-[85%] md:max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
                       <div className="flex items-center gap-2 px-1">
-                        <span className="text-xs font-bold text-foreground">
+                        <span className="text-[10px] md:text-xs font-bold text-foreground">
                           {isMe ? "You" : msg.fromUserName}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[9px] text-muted-foreground">
                           {msg.timestamp ? format(new Date(msg.timestamp.seconds * 1000), "HH:mm") : "..."}
                         </span>
                       </div>
-                      <div className={`p-4 rounded-2xl shadow-sm font-medium leading-relaxed ${
+                      <div className={`p-3 md:p-4 rounded-2xl shadow-sm text-sm md:text-base font-medium leading-relaxed ${
                         isMe 
                         ? "bg-primary text-primary-foreground rounded-tr-none" 
-                        : "bg-muted/50 text-foreground rounded-tl-none"
+                        : "bg-white text-foreground border rounded-tl-none"
                       }`}>
                         {msg.text}
                       </div>
@@ -227,39 +219,25 @@ export default function ChatPage() {
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="p-6 border-t shrink-0">
+        <div className="p-3 md:p-6 border-t shrink-0 bg-white">
           <form onSubmit={handleSendMessage} className="relative">
             <Input 
               placeholder={`Message #${activeChannel}...`}
-              className="h-14 pl-14 pr-32 rounded-2xl border-none bg-muted/30 font-medium focus-visible:ring-accent/20"
+              className="h-12 md:h-14 pl-4 pr-14 rounded-2xl border-none bg-muted/40 font-medium text-sm md:text-base focus-visible:ring-accent/20"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={isSending}
             />
-            <div className="absolute left-2 top-1/2 -translate-y-1/2">
-              <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10 text-muted-foreground">
-                <Plus className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10 text-muted-foreground">
-                <Smile className="h-5 w-5" />
-              </Button>
-              <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10 text-muted-foreground">
-                <ImageIcon className="h-5 w-5" />
-              </Button>
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button 
                 type="submit" 
                 disabled={!newMessage.trim() || isSending}
-                className="h-10 w-10 rounded-xl bg-accent shadow-lg shadow-accent/20 ml-1"
+                className="h-10 w-10 rounded-xl bg-accent shadow-lg shadow-accent/20"
               >
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </form>
-          <p className="text-[10px] text-center text-muted-foreground mt-3 font-medium">
-            Messages are shared with the entire Kapendeka family.
-          </p>
         </div>
       </div>
     </div>
