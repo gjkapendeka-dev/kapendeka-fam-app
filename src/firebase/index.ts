@@ -1,4 +1,3 @@
-
 'use client';
 
 /**
@@ -6,7 +5,7 @@
  * Exports initialization logic, providers, and hooks for easy access.
  */
 
-export { initializeFirebase, FirebaseClientProvider } from './client-provider';
+export { FirebaseClientProvider } from './client-provider';
 export * from './provider';
 export * from './auth/use-user';
 export * from './firestore/use-collection';

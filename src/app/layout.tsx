@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -16,9 +15,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // RootLayout is a Server Component. We do not call initializeFirebase() here.
-  // Instead, FirebaseClientProvider handles initialization internally on the client.
-
   return (
     <html lang="en">
       <head>
