@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Mic, Search, Send, Sparkles } from "lucide-react"
+import { Mic, Search, Send, Sparkles, MicOff } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { naturalLanguageQuickAdd } from "@/ai/flows/natural-language-quick-add"
@@ -13,9 +13,33 @@ import { collection, query, where, getDocs, addDoc, serverTimestamp } from "fire
 export function AIQuickAdd() {
   const [command, setCommand] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isListening, setIsListening] = React.useState(false)
   const { profile } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+
+  // Voice Recognition Logic
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      toast({ variant: "destructive", title: "Unsupported", description: "Voice recognition is not supported in this browser." })
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-ZA' // South African English
+    recognition.continuous = false
+    recognition.interimResults = false
+
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setCommand(transcript)
+    }
+
+    recognition.start()
+  }
 
   const handleCommand = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,14 +47,12 @@ export function AIQuickAdd() {
 
     setIsLoading(true)
     try {
-      // 1. Fetch family members for AI context
       const membersSnap = await getDocs(query(collection(db, "users"), where("familyId", "==", profile.familyId)))
       const familyMembers = membersSnap.docs.map(doc => ({
         userId: doc.id,
         displayName: doc.data().displayName
       }))
 
-      // 2. Call AI Flow
       const result = await naturalLanguageQuickAdd({
         command: command,
         familyId: profile.familyId,
@@ -38,9 +60,7 @@ export function AIQuickAdd() {
         familyMembers
       })
 
-      // 3. Execute the resulting action
       if (result.type === "shoppingList") {
-        // Find existing list or default to "Groceries"
         const listQuery = query(
           collection(db, "shoppingLists"), 
           where("familyId", "==", profile.familyId),
@@ -51,14 +71,11 @@ export function AIQuickAdd() {
         if (!existingLists.empty) {
           const listDoc = existingLists.docs[0]
           const currentItems = listDoc.data().items || []
-          // Check for existing item or add new
-          // For MVP, we'll just show what the AI interpreted
-          toast({
-            title: "Interpreted Action",
-            description: `Adding ${result.itemName} to ${result.listName}...`,
+          await addDoc(collection(db, "shoppingLists"), {
+            ...listDoc.data(),
+            items: [...currentItems, { name: result.itemName, quantity: result.quantity || 1, unit: result.unit || "", category: result.category || "", checked: false }]
           })
         } else {
-          // Create new list if interpretation implies it
           await addDoc(collection(db, "shoppingLists"), {
             familyId: profile.familyId,
             name: result.listName,
@@ -99,10 +116,10 @@ export function AIQuickAdd() {
   return (
     <form onSubmit={handleCommand} className="relative group w-full">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-primary transition-colors group-focus-within:text-accent">
-        <Sparkles className="h-5 w-5 animate-pulse" />
+        <Sparkles className={`h-5 w-5 ${isLoading ? 'animate-spin' : 'animate-pulse'}`} />
       </div>
       <Input
-        placeholder="Type a family command... (e.g., 'Add milk to groceries' or 'Remind me to take out the trash')"
+        placeholder="Speak or type a command... (e.g. 'Buy bread')"
         className="h-16 pl-12 pr-28 rounded-2xl border-none shadow-xl shadow-primary/5 bg-white font-medium text-lg focus-visible:ring-accent/20"
         value={command}
         onChange={(e) => setCommand(e.target.value)}
@@ -113,17 +130,18 @@ export function AIQuickAdd() {
           type="button" 
           variant="ghost" 
           size="icon" 
-          className="h-12 w-12 rounded-xl hover:bg-muted"
+          className={`h-12 w-12 rounded-xl transition-all ${isListening ? 'bg-rose-50 text-rose-500 animate-pulse' : 'hover:bg-muted'}`}
+          onClick={startListening}
           disabled={isLoading}
         >
-          <Mic className="h-5 w-5 text-muted-foreground" />
+          {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5 text-muted-foreground" />}
         </Button>
         <Button 
           type="submit" 
           className="h-12 w-12 rounded-xl bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20"
           disabled={isLoading || !command.trim()}
         >
-          {isLoading ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" /> : <Send className="h-5 w-5" />}
+          <Send className="h-5 w-5" />
         </Button>
       </div>
     </form>

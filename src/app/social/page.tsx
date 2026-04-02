@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -30,7 +31,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog"
 import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { collection, query, where, addDoc, serverTimestamp, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { formatDistanceToNow } from "date-fns"
 import { errorEmitter } from "@/firebase/error-emitter"
@@ -88,6 +89,16 @@ export default function SocialPage() {
           requestResourceData: postData
         }))
       })
+  }
+
+  const handleLike = (postId: string, currentLikes: string[] = []) => {
+    if (!db || !profile) return
+    const postRef = doc(db, "posts", postId)
+    const isLiked = currentLikes.includes(profile.id)
+    
+    updateDoc(postRef, {
+      likes: isLiked ? arrayRemove(profile.id) : arrayUnion(profile.id)
+    })
   }
 
   return (
@@ -162,58 +173,64 @@ export default function SocialPage() {
             </Button>
           </div>
         ) : (
-          posts?.map((post, idx) => (
-            <Card key={post.id} className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center gap-4 pb-4">
-                <Avatar className="h-12 w-12 border-2 border-primary/10">
-                  <AvatarImage src={`https://picsum.photos/seed/${post.authorId}/100/100`} />
-                  <AvatarFallback>{post.authorName?.substring(0, 2).toUpperCase() || "KP"}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-lg">{post.authorName || "Family Member"}</span>
-                    <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-bold uppercase tracking-widest px-2">
-                      {post.type}
-                    </Badge>
+          posts?.map((post, idx) => {
+            const isLiked = profile && post.likes?.includes(profile.id)
+            return (
+              <Card key={post.id} className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center gap-4 pb-4">
+                  <Avatar className="h-12 w-12 border-2 border-primary/10">
+                    <AvatarImage src={`https://picsum.photos/seed/${post.authorId}/100/100`} />
+                    <AvatarFallback>{post.authorName?.substring(0, 2).toUpperCase() || "KP"}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-lg">{post.authorName || "Family Member"}</span>
+                      <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-bold uppercase tracking-widest px-2">
+                        {post.type}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : "Just now"}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : "Just now"}
+                  <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
+                    <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-lg leading-relaxed font-medium">
+                    {post.content}
                   </p>
-                </div>
-                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
-                  <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-lg leading-relaxed font-medium">
-                  {post.content}
-                </p>
-                {idx % 3 === 0 && (
-                  <div className="rounded-2xl overflow-hidden aspect-video bg-muted relative">
-                    <img
-                      src={`https://picsum.photos/seed/${post.id}/800/450`}
-                      alt="Memory"
-                      className="object-cover w-full h-full"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="border-t pt-4 flex items-center gap-6">
-                <button className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-rose-500 transition-colors">
-                  <Heart className="h-5 w-5" />
-                  <span>{post.likes?.length || 0}</span>
-                </button>
-                <button className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-primary transition-colors">
-                  <MessageCircle className="h-5 w-5" />
-                  <span>Comment</span>
-                </button>
-                <button className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-accent ml-auto transition-colors">
-                  <Share2 className="h-5 w-5" />
-                </button>
-              </CardFooter>
-            </Card>
-          ))
+                  {idx % 3 === 0 && (
+                    <div className="rounded-2xl overflow-hidden aspect-video bg-muted relative">
+                      <img
+                        src={`https://picsum.photos/seed/${post.id}/800/450`}
+                        alt="Memory"
+                        className="object-cover w-full h-full"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="border-t pt-4 flex items-center gap-6">
+                  <button 
+                    onClick={() => handleLike(post.id, post.likes)}
+                    className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${isLiked ? 'text-rose-500' : 'text-muted-foreground hover:text-rose-500'}`}
+                  >
+                    <Heart className={`h-5 w-5 ${isLiked ? 'fill-rose-500' : ''}`} />
+                    <span>{post.likes?.length || 0}</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-primary transition-colors">
+                    <MessageCircle className="h-5 w-5" />
+                    <span>Comment</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-accent ml-auto transition-colors">
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                </CardFooter>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { Wallet, TrendingUp, TrendingDown, Plus, Download, Filter, Landmark, Loader2 } from "lucide-react"
+import { Wallet, TrendingUp, TrendingDown, Plus, Download, Filter, Landmark, Loader2, PieChart as PieIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -24,6 +25,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+} from "recharts"
 import { useUser, useCollection, useFirestore } from "@/firebase"
 import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
@@ -35,6 +43,8 @@ const CATEGORIES = [
   "Groceries", "Dining Out", "Travel", "School Fees", "Pocket Money", "Household", "Entertainment", "Income", "Other"
 ]
 
+const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+
 export default function FinancesPage() {
   const { profile } = useUser()
   const db = useFirestore()
@@ -43,7 +53,6 @@ export default function FinancesPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
 
-  // Form State
   const [amount, setAmount] = React.useState("")
   const [type, setType] = React.useState("expense")
   const [category, setCategory] = React.useState("Other")
@@ -61,17 +70,23 @@ export default function FinancesPage() {
   const { data: transactions, loading: txLoading } = useCollection(transactionsQuery)
 
   const stats = React.useMemo(() => {
-    if (!transactions) return { balance: 0, expenses: 0 }
-    return transactions.reduce((acc, tx) => {
+    if (!transactions) return { balance: 0, expenses: 0, categoryData: [] }
+    const catMap: Record<string, number> = {}
+    
+    const totals = transactions.reduce((acc, tx) => {
       const val = parseFloat(tx.amount || "0")
       if (tx.type === "income" || tx.type === "allowance") {
         acc.balance += val
       } else {
         acc.balance -= val
         acc.expenses += val
+        catMap[tx.category] = (catMap[tx.category] || 0) + val
       }
       return acc
     }, { balance: 0, expenses: 0 })
+
+    const categoryData = Object.entries(catMap).map(([name, value]) => ({ name, value }))
+    return { ...totals, categoryData }
   }, [transactions])
 
   const handleAddTransaction = () => {
@@ -116,9 +131,6 @@ export default function FinancesPage() {
           <p className="text-muted-foreground font-medium">Tracking the Kapendeka Family wealth in ZAR</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="rounded-xl h-11 px-6 font-bold">
-            <Download className="h-4 w-4 mr-2" /> Export
-          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="rounded-xl h-11 px-6 font-bold bg-accent shadow-lg shadow-accent/20">
@@ -145,9 +157,7 @@ export default function FinancesPage() {
                   <div className="grid gap-2">
                     <Label>Type</Label>
                     <Select value={type} onValueChange={setType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="expense">Expense</SelectItem>
                         <SelectItem value="income">Income / Allowance</SelectItem>
@@ -158,9 +168,7 @@ export default function FinancesPage() {
                   <div className="grid gap-2">
                     <Label>Category</Label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {CATEGORIES.map(cat => (
                           <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -173,7 +181,7 @@ export default function FinancesPage() {
                   <Label htmlFor="desc">Description</Label>
                   <Input 
                     id="desc" 
-                    placeholder="e.g. Weekly Shop at Woolies" 
+                    placeholder="e.g. Weekly Shop" 
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
@@ -190,7 +198,7 @@ export default function FinancesPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Total Balance</CardTitle>
@@ -202,25 +210,42 @@ export default function FinancesPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-none shadow-sm bg-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">R {stats.expenses.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</div>
-            <div className="flex items-center gap-1 mt-2 text-xs font-medium text-destructive">
-              <TrendingDown className="h-3 w-3" /> Household Spending
+        
+        <Card className="rounded-3xl border-none shadow-sm bg-white lg:col-span-2 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="p-6">
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <PieIcon className="h-4 w-4" />
+                Spending Breakdown
+              </h3>
+              <div className="h-[180px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats.categoryData}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {stats.categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-3xl border-none shadow-sm bg-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Savings Goal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">R 25,000.00</div>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">Family Holiday Goal</p>
-          </CardContent>
+            <div className="bg-muted/20 p-6 flex flex-col justify-center border-l">
+              <div className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Expenses</div>
+              <div className="text-3xl font-bold mt-1 text-rose-500">R {stats.expenses.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</div>
+              <p className="text-[10px] font-bold text-muted-foreground mt-4 uppercase">Top Category</p>
+              <Badge className="w-fit bg-primary/10 text-primary border-none mt-1">
+                {stats.categoryData.length > 0 ? stats.categoryData.sort((a,b) => b.value - a.value)[0].name : "None"}
+              </Badge>
+            </div>
+          </div>
         </Card>
       </div>
 
