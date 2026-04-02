@@ -27,7 +27,8 @@ import {
   History,
   Gift,
   Languages,
-  Newspaper
+  Newspaper,
+  Gamepad
 } from "lucide-react"
 
 import {
@@ -48,6 +49,7 @@ import { usePathname } from "next/navigation"
 
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Universe Arcade", href: "/arcade", icon: Gamepad },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Chores & Tasks", href: "/household", icon: CheckSquare },
   { name: "Meals & Recipes", href: "/meals", icon: Utensils },
