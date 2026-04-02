@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,7 +20,11 @@ import {
   Gamepad2,
   BookOpen,
   Settings,
-  MoreHorizontal
+  StickyNote,
+  Moon,
+  MapPin,
+  Trophy,
+  History
 } from "lucide-react"
 
 import {
@@ -41,19 +46,24 @@ import { usePathname } from "next/navigation"
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Household & Chores", href: "/household", icon: CheckSquare },
+  { name: "Chores & Tasks", href: "/household", icon: CheckSquare },
   { name: "Meals & Recipes", href: "/meals", icon: Utensils },
   { name: "Shopping Lists", href: "/shopping", icon: ShoppingCart },
-  { name: "Health & Wellness", href: "/health", icon: HeartPulse },
-  { name: "Church & Faith", href: "/faith", icon: Church },
   { name: "Finances", href: "/finances", icon: Wallet },
-  { name: "Homework & Education", href: "/school", icon: BookOpen },
-  { name: "Social & Memories", href: "/social", icon: MessageSquare },
+  { name: "Social & Journal", href: "/social", icon: History },
+  { name: "Family Chat", href: "/chat", icon: MessageSquare },
+  { name: "Health & Wellness", href: "/health", icon: HeartPulse },
+  { name: "Rest & Sleep", href: "/sleep", icon: Moon },
+  { name: "Church & Faith", href: "/faith", icon: Church },
+  { name: "School & Homework", href: "/school", icon: BookOpen },
   { name: "Celebrations", href: "/celebrations", icon: PartyPopper },
   { name: "Pets", href: "/pets", icon: Dog },
   { name: "Travel", href: "/travel", icon: Plane },
   { name: "Emergency Vault", href: "/vault", icon: ShieldAlert },
-  { name: "Games & Rewards", href: "/games", icon: Gamepad2 },
+  { name: "Rewards & Levels", href: "/games", icon: Trophy },
+  { name: "Hobbies", href: "/hobbies", icon: Gamepad2 },
+  { name: "Notes & Memos", href: "/notes", icon: StickyNote },
+  { name: "Location Sharing", href: "/location", icon: MapPin },
 ]
 
 export function AppSidebar() {
@@ -87,7 +97,7 @@ export function AppSidebar() {
                   >
                     <Link href={item.href} className="flex items-center gap-3">
                       <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="font-medium group-data-[collapsible=icon]:hidden">{item.name}</span>
+                      <span className="font-medium group-data-[collapsible=icon]:hidden text-sm">{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
