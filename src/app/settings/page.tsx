@@ -1,20 +1,78 @@
+
 "use client"
 
 import * as React from "react"
-import { Settings, User, Globe, Bell, Shield, MapPin, Share2 } from "lucide-react"
+import { Globe, Bell, Shield, MapPin, Loader2, Save } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useUser, useFirestore, useDoc } from "@/firebase"
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
+  const { profile } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+  const [saving, setSaving] = React.useState(false)
+
+  // Fetch Family Settings
+  const familyRef = React.useMemo(() => {
+    if (!db || !profile?.familyId) return null
+    return doc(db, "families", profile.familyId)
+  }, [db, profile?.familyId])
+  
+  const { data: family, loading } = useDoc(familyRef)
+
+  // Form State
+  const [timezone, setTimezone] = React.useState("")
+  const [currency, setCurrency] = React.useState("")
+  const [holidays, setHolidays] = React.useState(true)
+
+  React.useEffect(() => {
+    if (family?.settings) {
+      setTimezone(family.settings.timezone || "johannesburg")
+      setCurrency(family.settings.currency || "zar")
+      setHolidays(family.settings.publicHolidaysEnabled ?? true)
+    }
+  }, [family])
+
+  const handleSave = async () => {
+    if (!db || !profile?.familyId) return
+    setSaving(true)
+
+    try {
+      await updateDoc(doc(db, "families", profile.familyId), {
+        settings: {
+          timezone,
+          currency,
+          publicHolidaysEnabled: holidays
+        },
+        updatedAt: serverTimestamp()
+      })
+      toast({ title: "Settings Saved", description: "Universe configurations updated." })
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save settings." })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>
+
   return (
     <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
-      <header>
-        <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
-        <p className="text-muted-foreground font-medium">Manage the Kapendeka Universe configurations</p>
+      <header className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
+          <p className="text-muted-foreground font-medium">Manage the Kapendeka Universe configurations</p>
+        </div>
+        <Button onClick={handleSave} disabled={saving} className="rounded-xl h-11 px-6 shadow-lg shadow-primary/20">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Save All
+        </Button>
       </header>
 
       <div className="space-y-6">
@@ -30,7 +88,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Timezone</Label>
-                <Select defaultValue="johannesburg">
+                <Select value={timezone} onValueChange={setTimezone}>
                   <SelectTrigger className="rounded-xl h-11">
                     <SelectValue placeholder="Select timezone" />
                   </SelectTrigger>
@@ -42,7 +100,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Currency</Label>
-                <Select defaultValue="zar">
+                <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger className="rounded-xl h-11">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
@@ -58,7 +116,7 @@ export default function SettingsPage() {
                 <div className="text-sm font-bold">Public Holidays</div>
                 <div className="text-xs text-muted-foreground">South African school terms and holidays integration</div>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={holidays} onCheckedChange={setHolidays} />
             </div>
           </CardContent>
         </Card>
@@ -67,9 +125,9 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Privacy & Security
+              Privacy & Notifications
             </CardTitle>
-            <CardDescription>Control who sees what in the family hub</CardDescription>
+            <CardDescription>Control your personal presence in the hub</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
@@ -78,11 +136,11 @@ export default function SettingsPage() {
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-sm font-bold">Location Sharing</div>
-                  <div className="text-xs text-muted-foreground font-medium">Share your live location with family members</div>
+                  <div className="text-sm font-bold">Live Location Presence</div>
+                  <div className="text-xs text-muted-foreground font-medium">Visible to family members when active</div>
                 </div>
               </div>
-              <Switch />
+              <Switch defaultChecked />
             </div>
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
               <div className="flex items-center gap-3">
@@ -90,19 +148,14 @@ export default function SettingsPage() {
                   <Bell className="h-5 w-5" />
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-sm font-bold">Push Notifications</div>
-                  <div className="text-xs text-muted-foreground font-medium">Daily summaries and emergency alerts</div>
+                  <div className="text-sm font-bold">Smart Alerts</div>
+                  <div className="text-xs text-muted-foreground font-medium">Daily summaries and emergency vault alerts</div>
                 </div>
               </div>
               <Switch defaultChecked />
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" className="rounded-xl h-12 px-8 font-bold">Cancel</Button>
-          <Button className="rounded-xl h-12 px-8 font-bold bg-primary shadow-lg shadow-primary/20">Save Changes</Button>
-        </div>
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,12 +20,14 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser, useCollection, useFirestore, useDoc } from "@/firebase"
-import { collection, query, where, doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { collection, query, where, doc, updateDoc, serverTimestamp, setDoc } from "firebase/firestore"
 import { formatDistanceToNow } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LocationSharingPage() {
   const { profile } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
 
   // Fetch all family location shares
   const sharesQuery = React.useMemo(() => {
@@ -44,13 +47,45 @@ export default function LocationSharingPage() {
   }, [db, profile?.id])
   const { data: myShare } = useDoc(userShareRef)
 
-  const toggleSharing = () => {
+  // Real-time Browser Tracking
+  React.useEffect(() => {
+    if (!myShare?.sharingEnabled || !navigator.geolocation || !db || !profile?.id) return
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        updateDoc(doc(db, "locationShares", profile.id), {
+          lastLocation: { lat: latitude, lng: longitude, address: "Live in Johannesburg" },
+          lastUpdated: serverTimestamp()
+        })
+      },
+      (error) => console.error("Location error:", error),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+
+    return () => navigator.geolocation.clearWatch(watchId)
+  }, [myShare?.sharingEnabled, db, profile?.id])
+
+  const toggleSharing = async () => {
     if (!db || !profile?.id) return
     const currentStatus = myShare?.sharingEnabled || false
-    updateDoc(doc(db, "locationShares", profile.id), {
-      sharingEnabled: !currentStatus,
-      lastUpdated: serverTimestamp()
-    })
+    
+    try {
+      await setDoc(doc(db, "locationShares", profile.id), {
+        familyId: profile.familyId,
+        userId: profile.id,
+        userName: profile.displayName,
+        sharingEnabled: !currentStatus,
+        lastUpdated: serverTimestamp()
+      }, { merge: true })
+      
+      toast({
+        title: !currentStatus ? "Location Active" : "Location Paused",
+        description: !currentStatus ? "Your family can now see your live status." : "Your location is now private."
+      })
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not update location status." })
+    }
   }
 
   return (
@@ -107,7 +142,7 @@ export default function LocationSharingPage() {
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                             <MapPin className="h-3.5 w-3.5 text-primary" />
-                            {share.sharingEnabled ? (share.lastLocation?.address || 'Near Johannesburg') : 'Location Paused'}
+                            {share.sharingEnabled ? (share.lastLocation?.address || 'Updating coordinates...') : 'Location Paused'}
                           </div>
                         </div>
                       </div>
@@ -146,20 +181,6 @@ export default function LocationSharingPage() {
                 <AlertTriangle className="h-4 w-4 text-accent" />
                 <span className="text-xs font-bold">Safe Zones Alerts</span>
               </div>
-            </div>
-          </Card>
-
-          <Card className="rounded-2xl border-none shadow-sm bg-muted/30 p-6">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Quick Shortcuts</h4>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-between rounded-xl font-bold border-primary/20 text-primary">
-                I'm Home Safe
-                <Navigation className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between rounded-xl font-bold border-primary/20 text-primary">
-                Send SOS Alert
-                <AlertTriangle className="h-4 w-4 text-rose-500" />
-              </Button>
             </div>
           </Card>
         </div>

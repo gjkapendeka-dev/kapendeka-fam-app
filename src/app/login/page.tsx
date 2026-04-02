@@ -1,0 +1,131 @@
+
+"use client"
+
+import * as React from "react"
+import { auth } from "@/firebase"
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup 
+} from "firebase/auth"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Home, LogIn, Mail, Sparkles } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+export default function LoginPage() {
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [isRegistering, setIsRegistering] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auth) return
+    setLoading(true)
+
+    try {
+      if (isRegistering) {
+        await createUserWithEmailAndPassword(auth, email, password)
+        toast({ title: "Account created!", description: "Welcome to the Kapendeka Universe." })
+      } else {
+        await signInWithEmailAndPassword(auth, email, password)
+      }
+      router.push("/")
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Auth Error",
+        description: error.message,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    if (!auth) return
+    const provider = new GoogleAuthProvider()
+    try {
+      await signInWithPopup(auth, provider)
+      router.push("/")
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message })
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
+      <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-xl">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-3xl flex items-center justify-center shadow-lg mb-4">
+            <Home className="h-8 w-8" />
+          </div>
+          <CardTitle className="text-3xl font-headline font-bold tracking-tight">
+            Kapendeka Hub
+          </CardTitle>
+          <CardDescription className="text-muted-foreground font-medium">
+            Enter the Family Universe
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="you@universe.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-xl h-12"
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-xl h-12"
+                required 
+              />
+            </div>
+            <Button className="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/20" disabled={loading}>
+              {loading ? "Please wait..." : (isRegistering ? "Create Account" : "Sign In")}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground font-bold">Or continue with</span>
+            </div>
+          </div>
+
+          <Button variant="outline" className="w-full h-12 rounded-xl font-bold border-muted-foreground/20" onClick={handleGoogleSignIn}>
+            <Sparkles className="h-4 w-4 mr-2 text-accent" /> Google Universe
+          </Button>
+
+          <div className="text-center">
+            <button 
+              type="button" 
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="text-sm font-bold text-primary hover:underline"
+            >
+              {isRegistering ? "Already have an account? Sign in" : "New to the Hub? Register here"}
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
