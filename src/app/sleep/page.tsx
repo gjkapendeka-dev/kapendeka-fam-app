@@ -5,7 +5,7 @@ import {
   Moon, 
   Plus, 
   CloudMoon, 
-  Zzz, 
+  Bed, 
   Coffee, 
   Battery, 
   Clock, 
@@ -293,14 +293,14 @@ export default function SleepPage() {
         <div className="space-y-6">
           {/* Wind-down Suggestions */}
           <Card className="rounded-3xl border-none shadow-xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white overflow-hidden">
-            <CardHeader>
+            <CardHeader className="bg-primary/5 border-b border-primary/10">
               <CardTitle className="flex items-center gap-2">
-                <Zzz className="h-5 w-5 text-indigo-300" />
+                <Bed className="h-5 w-5 text-indigo-300" />
                 Wind-down Routine
               </CardTitle>
               <CardDescription className="text-indigo-200 font-medium italic">Pre-sleep habits for the universe</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               {[
                 { title: "No Screens", time: "30m before", icon: Coffee },
                 { title: "Journal Moment", time: "10m before", icon: CalendarIcon },
