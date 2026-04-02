@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -19,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AIQuickAdd } from "@/components/ai-quick-add"
+import { FamilyAIBrief } from "@/components/family-ai-brief"
 import { useUser, useCollection, useFirestore } from "@/firebase"
 import { collection, query, where, limit, orderBy } from "firebase/firestore"
 
@@ -78,10 +78,9 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-        <p className="text-sm md:text-base text-muted-foreground font-medium px-1">
-          {chores?.filter(c => c.status !== 'done').length || 0} tasks remaining today.
-        </p>
       </header>
+
+      <FamilyAIBrief />
 
       <AIQuickAdd />
 
@@ -129,7 +128,7 @@ export default function DashboardPage() {
                 <CardContent className="p-4 flex items-center justify-between ml-1">
                   <div className="min-w-0">
                     <div className="text-[10px] font-bold text-muted-foreground mb-0.5">
-                      {new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {item.startTime ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "TBD"}
                     </div>
                     <div className="text-base font-bold text-foreground truncate">{item.title}</div>
                   </div>
