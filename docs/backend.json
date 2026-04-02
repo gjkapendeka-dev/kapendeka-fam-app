@@ -332,6 +332,46 @@
         "lastLocation": { "type": "object" },
         "sharingEnabled": { "type": "boolean" }
       }
+    },
+    "WishlistItem": {
+      "title": "Wishlist Item",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "link": { "type": "string" },
+        "status": { "type": "string", "enum": ["want", "bought", "received"] },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+      }
+    },
+    "LanguageProgress": {
+      "title": "Language Progress",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "language": { "type": "string" },
+        "currentLevel": { "type": "string" },
+        "streakDays": { "type": "number" },
+        "lastLessonDate": { "type": "string", "format": "date-time" },
+        "vocabularyCount": { "type": "number" }
+      }
+    },
+    "NewsArticle": {
+      "title": "News Article",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "category": { "type": "string", "enum": ["announcement", "achievement", "event", "world"] },
+        "date": { "type": "string", "format": "date-time" },
+        "mediaUrl": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -437,6 +477,18 @@
     "/locationShares/{shareId}": {
       "schema": "LocationShare",
       "description": "Opt-in family tracking."
+    },
+    "/wishlist/{itemId}": {
+      "schema": "WishlistItem",
+      "description": "Family member wishlists."
+    },
+    "/languageProgress/{progressId}": {
+      "schema": "LanguageProgress",
+      "description": "Language learning stats."
+    },
+    "/news/{newsId}": {
+      "schema": "NewsArticle",
+      "description": "Family and world news feed."
     }
   }
 }

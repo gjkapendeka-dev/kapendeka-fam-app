@@ -24,7 +24,10 @@ import {
   Moon,
   MapPin,
   Trophy,
-  History
+  History,
+  Gift,
+  Languages,
+  Newspaper
 } from "lucide-react"
 
 import {
@@ -56,6 +59,9 @@ const portals = [
   { name: "Rest & Sleep", href: "/sleep", icon: Moon },
   { name: "Church & Faith", href: "/faith", icon: Church },
   { name: "School & Homework", href: "/school", icon: BookOpen },
+  { name: "Wishlist", href: "/wishlist", icon: Gift },
+  { name: "Learn Language", href: "/languages", icon: Languages },
+  { name: "News Feed", href: "/news", icon: Newspaper },
   { name: "Celebrations", href: "/celebrations", icon: PartyPopper },
   { name: "Pets", href: "/pets", icon: Dog },
   { name: "Travel", href: "/travel", icon: Plane },
