@@ -88,7 +88,7 @@ export default function HouseholdPage() {
       where("isShared", "==", true)
     )
   }, [db, profile?.familyId])
-  const { data: todos, loading: todosLoading } = useCollection(todosQuery)
+  const { data: todos } = useCollection(todosQuery)
 
   const handleCompleteChore = (choreId: string, currentPoints: number) => {
     if (!db || !profile) return
@@ -329,7 +329,7 @@ export default function HouseholdPage() {
                 <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                 Leaderboard
               </CardTitle>
-              <CardDescription className="text-indigo-100 font-medium">Family rankings this week</Description>
+              <CardDescription className="text-indigo-100 font-medium">Family rankings this week</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {[
@@ -361,7 +361,7 @@ export default function HouseholdPage() {
           <Card className="rounded-2xl border-none shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Smart Rotation</CardTitle>
-              <CardDescription className="font-medium text-xs">Fair task division for the household</Description>
+              <CardDescription className="font-medium text-xs">Fair task division for the household</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-muted/30 rounded-xl space-y-3">
