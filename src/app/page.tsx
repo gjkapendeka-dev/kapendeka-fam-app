@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,9 @@ import {
   Award,
   Zap,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Info,
+  Clock
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,6 +24,14 @@ import { AIQuickAdd } from "@/components/ai-quick-add"
 import { FamilyAIBrief } from "@/components/family-ai-brief"
 import { useUser, useCollection, useFirestore } from "@/firebase"
 import { collection, query, where, limit, orderBy } from "firebase/firestore"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 export default function DashboardPage() {
   const [greeting, setGreeting] = React.useState("Good Morning")
@@ -55,6 +66,13 @@ export default function DashboardPage() {
   }, [db, profile?.familyId]);
   const { data: chores } = useCollection(choresQuery);
 
+  // Mock Notifications
+  const notifications = [
+    { title: "Junior completed: Laundry", time: "2h ago", type: "task" },
+    { title: "New Memory posted by Sarah", time: "5h ago", type: "social" },
+    { title: "Reminder: Dentist Appointment", time: "Tomorrow", type: "calendar" },
+  ]
+
   return (
     <div className="flex flex-col min-h-screen bg-background p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       <header className="flex flex-col gap-4">
@@ -72,10 +90,40 @@ export default function DashboardPage() {
                 <span className="font-bold">24°C</span>
               </div>
             </Card>
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl bg-card border shadow-sm">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-accent rounded-full border-2 border-background" />
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl bg-card border shadow-sm group">
+                  <Bell className="h-5 w-5 group-hover:animate-swing" />
+                  <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-accent rounded-full border-2 border-background" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="rounded-l-3xl w-full sm:max-w-md">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                    <Bell className="h-6 w-6 text-primary" />
+                    Universe Activity
+                  </SheetTitle>
+                  <SheetDescription>Recent updates from the Kapendeka hub</SheetDescription>
+                </SheetHeader>
+                <div className="space-y-4">
+                  {notifications.map((n, i) => (
+                    <div key={i} className="p-4 bg-muted/20 rounded-2xl flex items-start gap-4 hover:bg-muted/40 transition-colors cursor-pointer border border-transparent hover:border-primary/5">
+                      <div className="h-10 w-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                        <Info className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-foreground leading-tight">{n.title}</div>
+                        <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground font-bold uppercase">
+                          <Clock className="h-3 w-3" />
+                          {n.time}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="ghost" className="w-full text-primary font-bold">Clear All Notifications</Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

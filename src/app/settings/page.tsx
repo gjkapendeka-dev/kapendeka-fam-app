@@ -2,11 +2,12 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Bell, Shield, MapPin, Loader2, Save } from "lucide-react"
+import { Globe, Bell, Shield, MapPin, Loader2, Save, Sparkles } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
@@ -30,12 +31,14 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = React.useState("")
   const [currency, setCurrency] = React.useState("")
   const [holidays, setHolidays] = React.useState(true)
+  const [motto, setMotto] = React.useState("")
 
   React.useEffect(() => {
-    if (family?.settings) {
-      setTimezone(family.settings.timezone || "johannesburg")
-      setCurrency(family.settings.currency || "zar")
-      setHolidays(family.settings.publicHolidaysEnabled ?? true)
+    if (family) {
+      setTimezone(family.settings?.timezone || "johannesburg")
+      setCurrency(family.settings?.currency || "zar")
+      setHolidays(family.settings?.publicHolidaysEnabled ?? true)
+      setMotto(family.settings?.familyMotto || "One Family, One Universe")
     }
   }, [family])
 
@@ -48,7 +51,8 @@ export default function SettingsPage() {
         settings: {
           timezone,
           currency,
-          publicHolidaysEnabled: holidays
+          publicHolidaysEnabled: holidays,
+          familyMotto: motto
         },
         updatedAt: serverTimestamp()
       })
@@ -63,7 +67,7 @@ export default function SettingsPage() {
   if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
+    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto pb-20">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
@@ -76,6 +80,24 @@ export default function SettingsPage() {
       </header>
 
       <div className="space-y-6">
+        <Card className="rounded-[2.5rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-800 text-white p-1">
+          <CardContent className="p-8 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-accent" />
+              <h2 className="text-xl font-bold">Universe Identity</h2>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-primary-foreground/80">Family Motto</Label>
+              <Input 
+                value={motto} 
+                onChange={(e) => setMotto(e.target.value)}
+                placeholder="e.g. Strength in Unity"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-12 rounded-xl text-lg font-bold"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="rounded-2xl border-none shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -28,7 +28,9 @@ import {
   Gift,
   Languages,
   Newspaper,
-  Gamepad
+  Gamepad,
+  LogOut,
+  User
 } from "lucide-react"
 
 import {
@@ -45,7 +47,10 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useAuth, useUser } from "@/firebase"
+import { signOut } from "firebase/auth"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -76,6 +81,15 @@ const portals = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { profile } = useUser()
+  const auth = useAuth()
+
+  const handleLogout = async () => {
+    if (!auth) return
+    await signOut(auth)
+    router.push("/login")
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -116,13 +130,34 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarSeparator className="opacity-50" />
       <SidebarFooter>
-        <SidebarMenu className="px-2 pb-4">
+        <SidebarMenu className="px-2 pb-4 space-y-1">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings" className="h-11">
+            <SidebarMenuButton asChild tooltip="My Profile" isActive={pathname === "/profile"}>
+              <Link href="/profile" className="flex items-center gap-3">
+                <Avatar className="h-5 w-5 rounded-md">
+                  <AvatarImage src={`https://picsum.photos/seed/${profile?.id}/50/50`} />
+                  <AvatarFallback className="text-[8px] bg-primary text-white">KP</AvatarFallback>
+                </Avatar>
+                <span className="font-medium group-data-[collapsible=icon]:hidden">Profile</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/settings"}>
               <Link href="/settings" className="flex items-center gap-3">
                 <Settings className="h-5 w-5" />
                 <span className="font-medium group-data-[collapsible=icon]:hidden">Settings</span>
               </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={handleLogout} 
+              tooltip="Logout"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="font-medium group-data-[collapsible=icon]:hidden">Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

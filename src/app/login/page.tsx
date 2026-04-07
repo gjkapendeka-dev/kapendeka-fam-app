@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { auth } from "@/firebase"
+import { useAuth } from "@/firebase"
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -18,6 +18,7 @@ import { Home, LogIn, Mail, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
+  const auth = useAuth()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [isRegistering, setIsRegistering] = React.useState(false)
