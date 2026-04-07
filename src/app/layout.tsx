@@ -1,7 +1,6 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase';
@@ -30,7 +29,10 @@ export default function RootLayout({
           <SidebarProvider>
             <div className="flex min-h-screen w-full bg-background">
               <AppSidebar />
-              <SidebarInset className="flex flex-col">
+              <SidebarInset className="flex flex-col relative">
+                <div className="md:hidden fixed top-4 left-4 z-[60]">
+                  <SidebarTrigger className="h-10 w-10 bg-white/80 backdrop-blur-sm shadow-xl border rounded-xl" />
+                </div>
                 <main className="flex-1 overflow-y-auto">
                   {children}
                 </main>
