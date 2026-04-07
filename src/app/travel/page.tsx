@@ -11,7 +11,7 @@ import {
   Circle, 
   ChevronRight,
   Loader2,
-  Suitcase
+  Briefcase
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -131,7 +131,7 @@ export default function TravelPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-6">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Suitcase className="h-5 w-5 text-primary" />
+            <Briefcase className="h-5 w-5 text-primary" />
             Upcoming Journeys
           </h2>
 

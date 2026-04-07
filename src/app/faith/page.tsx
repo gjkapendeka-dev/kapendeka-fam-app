@@ -4,7 +4,7 @@ import * as React from "react"
 import { 
   Church, 
   Plus, 
-  HandsPraying, 
+  HandHeart, 
   BookOpen, 
   Heart, 
   MessageSquare, 
@@ -215,7 +215,7 @@ export default function FaithPage() {
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <HandsPraying className="h-5 w-5 text-accent" />
+                <HandHeart className="h-5 w-5 text-accent" />
                 Family Prayer Wall
               </CardTitle>
               <CardDescription className="text-primary-foreground/70 font-medium">Interceding for the Kapendeka Universe</CardDescription>

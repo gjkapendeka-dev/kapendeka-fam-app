@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -6,7 +5,7 @@ import {
   Gamepad, 
   Music, 
   Search, 
-  Grid3X3, 
+  Grid3x3, 
   RotateCw, 
   ArrowLeft, 
   ArrowRight, 
@@ -41,7 +40,7 @@ import {
   MousePointer2,
   Dices,
   Keyboard,
-  Grid2X2,
+  Grid2x2,
   HelpCircle,
   Hand,
   Bomb,
@@ -966,7 +965,7 @@ export default function ArcadePage() {
           <TabsTrigger value="typer" className="rounded-xl font-bold py-2 px-4 gap-2"><Keyboard className="h-4 w-4" /> Typer</TabsTrigger>
           <TabsTrigger value="doodle" className="rounded-xl font-bold py-2 px-4 gap-2"><PenTool className="h-4 w-4" /> Doodle</TabsTrigger>
           <TabsTrigger value="whack" className="rounded-xl font-bold py-2 px-4 gap-2"><Hammer className="h-4 w-4" /> Whack</TabsTrigger>
-          <TabsTrigger value="tetris" className="rounded-xl font-bold py-2 px-4 gap-2"><Grid3X3 className="h-4 w-4" /> Tetris</TabsTrigger>
+          <TabsTrigger value="tetris" className="rounded-xl font-bold py-2 px-4 gap-2"><Grid3x3 className="h-4 w-4" /> Tetris</TabsTrigger>
         </TabsList>
 
         <div className="mt-4">
