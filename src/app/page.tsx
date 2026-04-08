@@ -74,7 +74,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
-      <header className="flex flex-col gap-4">
+      <header className="flex flex-col gap-4 md:pr-0 pr-14">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-foreground">

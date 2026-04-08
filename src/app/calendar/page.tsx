@@ -136,7 +136,7 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:pr-0 pr-14">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Family Calendar</h1>
           <p className="text-muted-foreground font-medium">Coordinate the Kapendeka schedule</p>
