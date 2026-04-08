@@ -77,7 +77,7 @@ export default function DashboardPage() {
       <header className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-foreground ml-12 md:ml-0">
+            <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-foreground">
               {greeting}, {profile?.displayName?.split(' ')[0] || "Family"}!
             </h1>
           </div>
