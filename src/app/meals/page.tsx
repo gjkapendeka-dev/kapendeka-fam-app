@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Utensils, Sparkles, ChefHat, Calendar, ShoppingBasket, Plus, Search, Loader2 } from "lucide-react"
+import { Utensils, Sparkles, ChefHat, Calendar, ShoppingBasket, Plus, Search, Loader2, Camera, X, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,8 +16,10 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { naturalLanguageMealSuggestion } from "@/ai/flows/natural-language-meal-suggestion"
 import { generateShoppingList } from "@/ai/flows/ai-meal-plan-shopping-list-generation"
+import { identifyRecipe } from "@/ai/flows/identify-recipe-flow"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useCollection, useFirestore } from "@/firebase"
 import { collection, query, where, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore"
@@ -38,6 +40,13 @@ export default function MealPlannerPage() {
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [newRecipeTitle, setNewRecipeTitle] = React.useState("")
 
+  // Camera State
+  const [isCameraOpen, setIsCameraOpen] = React.useState(false)
+  const [hasCameraPermission, setHasCameraPermission] = React.useState(false)
+  const [isScanning, setIsScanning] = React.useState(false)
+  const videoRef = React.useRef<HTMLVideoElement>(null)
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+
   // Fetch Family Recipes
   const recipesQuery = React.useMemo(() => {
     if (!db || !profile?.familyId) return null
@@ -45,7 +54,7 @@ export default function MealPlannerPage() {
   }, [db, profile?.familyId])
   const { data: recipes, loading: recipesLoading } = useCollection(recipesQuery)
 
-  // Fetch Current Meal Plan (simplified for MVP: just get one)
+  // Fetch Current Meal Plan
   const mealPlanQuery = React.useMemo(() => {
     if (!db || !profile?.familyId) return null
     return query(collection(db, "mealPlans"), where("familyId", "==", profile.familyId))
@@ -116,7 +125,6 @@ export default function MealPlannerPage() {
         }))
       })
 
-      // Save to shoppingLists collection
       const newListRef = doc(collection(db, "shoppingLists"))
       await setDoc(newListRef, {
         familyId: profile?.familyId,
@@ -139,10 +147,77 @@ export default function MealPlannerPage() {
     }
   }
 
+  // Camera Logic
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      setHasCameraPermission(true)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error)
+      setHasCameraPermission(false)
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use the scanner.',
+      })
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach(track => track.stop())
+    }
+    setIsCameraOpen(false)
+  }
+
+  const captureAndScan = async () => {
+    if (!videoRef.current || !canvasRef.current || !db || !profile?.familyId) return
+
+    setIsScanning(true)
+    const context = canvasRef.current.getContext('2d')
+    canvasRef.current.width = videoRef.current.videoWidth
+    canvasRef.current.height = videoRef.current.videoHeight
+    context?.drawImage(videoRef.current, 0, 0)
+    
+    const photoDataUri = canvasRef.current.toDataURL('image/jpeg')
+
+    try {
+      const result = await identifyRecipe({ photoDataUri })
+      
+      // Save identified recipe to Firestore
+      const recipeData = {
+        familyId: profile.familyId,
+        ...result,
+        createdAt: serverTimestamp(),
+      }
+      
+      await addDoc(collection(db, "recipes"), recipeData)
+      
+      toast({
+        title: "Recipe Identified!",
+        description: `"${result.title}" has been added to your recipe box.`,
+      })
+      stopCamera()
+    } catch (e) {
+      console.error(e)
+      toast({
+        variant: "destructive",
+        title: "Scan Failed",
+        description: "Could not identify the recipe. Please try again with better lighting.",
+      })
+    } finally {
+      setIsScanning(false)
+    }
+  }
+
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Meal Planner & Recipe Box</h1>
@@ -156,6 +231,53 @@ export default function MealPlannerPage() {
           >
             <ShoppingBasket className="h-4 w-4 mr-2" /> Shopping Lists
           </Button>
+          
+          <Dialog open={isCameraOpen} onOpenChange={(open) => { if (open) startCamera(); else stopCamera(); setIsCameraOpen(open); }}>
+            <DialogTrigger asChild>
+              <Button className="rounded-xl h-11 px-6 font-bold bg-accent shadow-lg shadow-accent/20">
+                <Camera className="h-4 w-4 mr-2" /> Scan Recipe
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="rounded-2xl sm:max-w-2xl overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>AI Recipe Scanner</DialogTitle>
+                <DialogDescription>Point your camera at a cookbook or a meal to identify it.</DialogDescription>
+              </DialogHeader>
+              
+              <div className="relative aspect-video rounded-xl bg-black overflow-hidden mt-4">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {!hasCameraPermission && !isScanning && (
+                  <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
+                    <Alert variant="destructive" className="bg-black/80 border-rose-500 text-white">
+                      <AlertTitle>Camera Required</AlertTitle>
+                      <AlertDescription>Please grant camera access to use the scanning feature.</AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+
+                {isScanning && (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white space-y-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-accent" />
+                    <p className="font-bold text-lg animate-pulse uppercase tracking-widest">Universe AI Analyzing...</p>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="mt-6 flex gap-2">
+                <Button variant="outline" onClick={stopCamera} disabled={isScanning}>Cancel</Button>
+                <Button 
+                  onClick={captureAndScan} 
+                  disabled={isScanning || !hasCameraPermission}
+                  className="bg-accent hover:bg-accent/90"
+                >
+                  {isScanning ? "Processing..." : "Capture & Identify"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="rounded-xl h-11 px-6 font-bold bg-primary shadow-lg shadow-primary/20">
@@ -165,7 +287,7 @@ export default function MealPlannerPage() {
             <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle>New Recipe</DialogTitle>
-                <DialogDescription>Add a new favorite dish to the family collection.</DialogDescription>
+                <DialogDescription>Add a favorite dish to the family collection.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
@@ -194,13 +316,13 @@ export default function MealPlannerPage() {
               <Sparkles className="h-6 w-6 text-accent animate-pulse" />
               <h2 className="text-2xl font-bold">What's for dinner?</h2>
             </div>
-            <p className="text-primary-foreground/80 font-medium">Ask AI to suggest a meal based on your family preferences or dietary goals.</p>
+            <p className="text-primary-foreground/80 font-medium">Ask AI to suggest a meal based on your preferences or scan a photo to add a recipe.</p>
           </div>
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
-                placeholder="Suggest a healthy dinner with chicken for Tuesday..." 
+                placeholder="Suggest a healthy dinner with chicken..." 
                 className="h-14 pl-12 rounded-2xl border-none bg-white/90 text-primary-foreground font-medium text-lg placeholder:text-muted-foreground focus-visible:ring-accent"
                 value={queryStr}
                 onChange={(e) => setQueryStr(e.target.value)}
@@ -258,7 +380,7 @@ export default function MealPlannerPage() {
               ))
             ) : (
               <div className="col-span-full py-12 text-center bg-muted/20 rounded-2xl border-2 border-dashed">
-                <p className="text-muted-foreground font-medium">Your recipe box is empty. Add your first family favorite!</p>
+                <p className="text-muted-foreground font-medium">Your recipe box is empty. Scan a photo or add your first favorite!</p>
               </div>
             )}
           </div>
