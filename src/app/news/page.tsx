@@ -77,12 +77,25 @@ export default function NewsPage() {
       .then(() => setIsSubmitting(false))
   }
 
-  // Mock Global News for the Global tab
-  const globalNews = [
-    { title: "Economic Shift in SADC Regions", source: "African Business", time: "2h ago" },
-    { title: "New Tech Hub Opens in Sandton", source: "Joburg Times", time: "5h ago" },
-    { title: "Bafana Bafana Qualify for Finals", source: "Supersport", time: "1d ago" },
-  ]
+  const [globalNews, setGlobalNews] = React.useState<any[]>([])
+  const [newsLoading, setNewsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    fetch("https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/world/rss.xml")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.items) {
+          setGlobalNews(data.items.slice(0, 10).map((item: any) => ({
+            title: item.title,
+            source: "BBC World",
+            time: new Date(item.pubDate).toLocaleDateString(),
+            link: item.link
+          })))
+        }
+      })
+      .catch(e => console.error(e))
+      .finally(() => setNewsLoading(false))
+  }, [])
 
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto">
@@ -188,14 +201,18 @@ export default function NewsPage() {
 
         <TabsContent value="global" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {globalNews.map((news, i) => (
+            {newsLoading ? (
+              [1, 2, 3].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />)
+            ) : globalNews.map((news, i) => (
               <Card key={i} className="rounded-2xl border-none shadow-sm bg-muted/10 p-6 flex flex-col space-y-4">
                 <div className="flex justify-between items-start">
                   <Badge className="bg-white text-primary border-primary/20">{news.source}</Badge>
                   <span className="text-[10px] text-muted-foreground font-bold uppercase">{news.time}</span>
                 </div>
-                <h4 className="font-bold text-lg leading-tight flex-1">{news.title}</h4>
-                <Button variant="link" className="p-0 h-auto justify-start text-primary font-bold">Read coverage</Button>
+                <h4 className="font-bold text-lg leading-tight flex-1 line-clamp-3">{news.title}</h4>
+                <a href={news.link} target="_blank" rel="noopener noreferrer">
+                  <Button variant="link" className="p-0 h-auto justify-start text-primary font-bold">Read coverage</Button>
+                </a>
               </Card>
             ))}
             <Card className="rounded-2xl border-none bg-primary text-white p-6 flex flex-col justify-center items-center text-center space-y-2">

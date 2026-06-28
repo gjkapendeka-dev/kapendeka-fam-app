@@ -36,7 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { format } from "date-fns"
+import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 
 export default function DashboardPage() {
@@ -72,12 +72,17 @@ export default function DashboardPage() {
   }, [supabase, profile?.familyId, cycle]);
   const { data: rituals } = useCollection(ritualsQuery);
 
-  // Mock Notifications
-  const notifications = [
-    { title: "Junior completed: Laundry", time: "2h ago", type: "task" },
-    { title: "New Memory posted by Sarah", time: "5h ago", type: "social" },
-    { title: "Reminder: Dentist Appointment", time: "Tomorrow", type: "calendar" },
-  ]
+  const notificationsQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null;
+    return supabase.from("broadcasts").select("*").eq("family_id", profile.familyId).order("created_at", { ascending: false }).limit(6);
+  }, [supabase, profile?.familyId]);
+  const { data: broadcasts } = useCollection(notificationsQuery);
+
+  const notifications = broadcasts?.map(b => ({
+    title: b.message,
+    time: formatDistanceToNow(new Date(b.created_at), { addSuffix: true }),
+    type: b.type
+  })) || []
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fafafa] dark:bg-background p-3 md:p-5 space-y-4 md:space-y-5 max-w-[1600px] mx-auto pb-20 overflow-x-hidden">
