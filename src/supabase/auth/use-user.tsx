@@ -47,7 +47,12 @@ export function useUser() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      if (!loading && pathname !== '/login') {
+        router.push('/login');
+      }
+      return;
+    }
 
     if (!selectedProfileId) {
       if (pathname !== '/login' && pathname !== '/select-profile') {
