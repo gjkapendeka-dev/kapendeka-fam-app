@@ -30,7 +30,9 @@ import {
   Newspaper,
   Gamepad,
   LogOut,
-  User
+  User,
+  Target,
+  Sparkles
 } from "lucide-react"
 
 import {
@@ -54,6 +56,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Family Rituals", href: "/rituals", icon: Target },
   { name: "Universe Arcade", href: "/arcade", icon: Gamepad },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Chores & Tasks", href: "/household", icon: CheckSquare },
@@ -92,34 +95,36 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 flex items-center px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
+    <Sidebar collapsible="icon" className="border-none bg-[#fafafa] dark:bg-background">
+      <SidebarHeader className="h-20 flex items-center px-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[1.25rem] bg-primary text-primary-foreground shadow-2xl shadow-primary/20 group-hover:scale-110 transition-transform">
             <Home className="h-6 w-6" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-headline font-bold text-lg leading-tight tracking-tight">Kapendeka</span>
-            <span className="text-xs text-muted-foreground font-medium">Universe Hub</span>
+            <span className="font-headline font-black text-xl leading-none tracking-tighter uppercase italic">Kapendeka</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-primary/60 mt-1">Universe Hub</span>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Portals</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-2">Universe Portals</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="px-2 space-y-0.5">
+            <SidebarMenu className="px-3 space-y-1">
               {portals.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
                     tooltip={item.name}
-                    className="h-11 hover:bg-sidebar-accent/50 transition-all duration-200"
+                    className="h-12 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
                   >
-                    <Link href={item.href} className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="font-medium group-data-[collapsible=icon]:hidden text-sm">{item.name}</span>
+                    <Link href={item.href} className="flex items-center gap-4">
+                      <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`font-black uppercase tracking-tight text-[11px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {item.name}
+                      </span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -128,38 +133,35 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarSeparator className="opacity-50" />
+      <SidebarSeparator className="mx-6 opacity-10 bg-primary" />
       <SidebarFooter>
-        <SidebarMenu className="px-2 pb-4 space-y-1">
+        <SidebarMenu className="px-3 pb-8 space-y-2">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="My Profile" isActive={pathname === "/profile"}>
-              <Link href="/profile" className="flex items-center gap-3">
-                <Avatar className="h-5 w-5 rounded-md">
+            <SidebarMenuButton asChild tooltip="My Profile" isActive={pathname === "/profile"} className="h-14 rounded-2xl bg-white shadow-lg shadow-primary/5 border border-primary/5">
+              <Link href="/profile" className="flex items-center gap-4">
+                <Avatar className="h-8 w-8 rounded-xl border-2 border-primary/10">
                   <AvatarImage src={`https://picsum.photos/seed/${profile?.id}/50/50`} />
-                  <AvatarFallback className="text-[8px] bg-primary text-white">KP</AvatarFallback>
+                  <AvatarFallback className="text-[10px] font-black bg-primary text-white uppercase italic">KP</AvatarFallback>
                 </Avatar>
-                <span className="font-medium group-data-[collapsible=icon]:hidden">Profile</span>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                  <span className="font-black text-[11px] uppercase tracking-tight truncate">{profile?.displayName || "Profile"}</span>
+                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">{profile?.role || "Node"}</span>
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/settings"}>
-              <Link href="/settings" className="flex items-center gap-3">
-                <Settings className="h-5 w-5" />
-                <span className="font-medium group-data-[collapsible=icon]:hidden">Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              onClick={handleLogout} 
-              tooltip="Logout"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="font-medium group-data-[collapsible=icon]:hidden">Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <div className="grid grid-cols-2 gap-2 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem className="col-span-1">
+              <SidebarMenuButton asChild isActive={pathname === "/settings"} className="h-10 rounded-xl justify-center bg-muted/20 hover:bg-primary/5">
+                <Link href="/settings"><Settings className="h-4 w-4 text-muted-foreground" /></Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem className="col-span-1">
+              <SidebarMenuButton onClick={handleLogout} className="h-10 rounded-xl justify-center bg-rose-50 hover:bg-rose-100 text-rose-500">
+                <LogOut className="h-4 w-4" />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </div>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

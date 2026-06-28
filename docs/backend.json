@@ -79,6 +79,20 @@
         "rotationEnabled": { "type": "boolean" }
       }
     },
+    "Ritual": {
+      "title": "Ritual",
+      "description": "Daily recurring habits that build the family legacy.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "title": { "type": "string" },
+        "timeOfDay": { "type": "string", "enum": ["morning", "afternoon", "evening", "anytime"] },
+        "icon": { "type": "string" },
+        "description": { "type": "string" },
+        "pointsValue": { "type": "number" },
+        "lastCompletedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "Recipe": {
       "title": "Recipe",
       "description": "Family recipes with ingredients and instructions.",
@@ -385,6 +399,10 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profiles and settings."
+    },
+    "/rituals/{ritualId}": {
+      "schema": "Ritual",
+      "description": "Daily family habits."
     },
     "/events/{eventId}": {
       "schema": "Event",
