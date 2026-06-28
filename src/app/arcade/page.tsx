@@ -55,7 +55,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useSupabase } from "@/supabase"
+import { useSupabase, useUser } from "@/supabase"
+import { useToast } from "@/hooks/use-toast"
+
+const saveGameScore = async (supabase: any, profile: any, game: string, score: number, type: 'score' | 'win' | 'loss' | 'draw' = 'score') => {
+  if (!supabase || !profile) return
+  
+  const payload: any = {
+    family_id: profile.family_id,
+    member_id: profile.id,
+    game: game,
+    updated_at: new Date().toISOString()
+  }
+
+  if (type === 'score') payload.best_score = score
+  if (type === 'win') payload.wins = 1
+  if (type === 'loss') payload.losses = 1
+  if (type === 'draw') payload.draws = 1
+
+  await supabase.from('arcade_scores').insert([payload])
+}
+
 // --- 1. PIANO GAME ---
 const PIANO_KEYS = [
   { note: "C", freq: 261.63, color: "bg-white", text: "DO", key: "A" },
@@ -69,6 +89,9 @@ const PIANO_KEYS = [
 ]
 
 function PianoGame() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [activeNote, setActiveNote] = React.useState<string | null>(null)
   const audioContext = React.useRef<AudioContext | null>(null)
 
@@ -117,6 +140,9 @@ function PianoGame() {
 
 // --- 2. WORD SEARCH GAME ---
 function WordSearchGame() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [words, setWords] = React.useState<string[]>(["FAMILY", "JOY", "HUB", "ARCADE"])
   const [newWord, setNewWord] = React.useState("")
   const [grid, setGrid] = React.useState<string[][]>([])
@@ -227,6 +253,9 @@ function WordSearchGame() {
 
 // --- 3. TIC TAC TOE ---
 function TicTacToe() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [board, setBoard] = React.useState(Array(9).fill(null))
   const [xIsNext, setXIsNext] = React.useState(true)
 
@@ -292,6 +321,9 @@ function TicTacToe() {
 const MEMORY_ICONS = [Heart, Star, Sun, Moon, Cloud, Zap, Flame, Smile]
 
 function MemoryMatch() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [cards, setCards] = React.useState<any[]>([])
   const [flipped, setFlipped] = React.useState<number[]>([])
   const [solved, setSolved] = React.useState<number[]>([])
@@ -375,6 +407,9 @@ function MemoryMatch() {
 
 // --- 5. SNAKE GAME ---
 function SnakeGame() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [snake, setSnake] = React.useState([{ x: 10, y: 10 }])
   const [food, setFood] = React.useState({ x: 5, y: 5 })
   const [dir, setDir] = React.useState({ x: 0, y: -1 })
@@ -392,7 +427,7 @@ function SnakeGame() {
       newHead.y < 0 || newHead.y >= gridSize ||
       snake.some(s => s.x === newHead.x && s.y === newHead.y)
     ) {
-      setGameOver(true)
+      setGameOver(true); saveGameScore(supabase, profile, "Simon Says", sequence.length - 1);; saveGameScore(supabase, profile, "Snake", score);
       return
     }
 
@@ -446,6 +481,9 @@ function SnakeGame() {
 
 // --- 6. MATH MASTER ---
 function MathMaster() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [q, setQ] = React.useState({ n1: 0, n2: 0, op: '+', ans: 0 })
   const [guess, setGuess] = React.useState("")
   const [score, setScore] = React.useState(0)
@@ -470,7 +508,7 @@ function MathMaster() {
 
   const check = () => {
     if (parseInt(guess) === q.ans) {
-      setScore(s => s + 1)
+      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Piano", ns); return ns; })
       setFeedback("Correct! ✨")
       setTimeout(generate, 1000)
     } else {
@@ -570,13 +608,16 @@ function DoodleBoard() {
 
 // --- 8. WHACK-A-TASK ---
 function WhackATask() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [moles, setMoles] = React.useState(Array(9).fill(false))
   const [score, setScore] = React.useState(0)
   const [active, setActive] = React.useState(false)
 
   const whack = (i: number) => {
     if (moles[i]) {
-      setScore(s => s + 1)
+      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Math Master", ns); return ns; })
       const next = [...moles]; next[i] = false; setMoles(next)
     }
   }
@@ -629,6 +670,9 @@ function TetrisGame() {
 
 // --- 10. SIMON SAYS ---
 function SimonSays() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [sequence, setSequence] = React.useState<number[]>([])
   const [userSequence, setUserSequence] = React.useState<number[]>([])
   const [activeColor, setActiveColor] = React.useState<number | null>(null)
@@ -681,6 +725,9 @@ function SimonSays() {
 
 // --- 11. BALLOON POP ---
 function BalloonPop() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [balloons, setBalloons] = React.useState<{id: number, x: number, y: number, color: string}[]>([])
   const [score, setScore] = React.useState(0)
 
@@ -702,7 +749,7 @@ function BalloonPop() {
     <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
       <div className="absolute top-6 left-6 z-10 font-black text-primary text-xl md:text-2xl tracking-tighter">Pop Score: {score}</div>
       {balloons.map(b => (
-        <button key={b.id} onClick={() => { setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
+        <button key={b.id} onClick={() => { setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Color Finder", ns); return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
       ))}
     </div>
   )
@@ -710,6 +757,9 @@ function BalloonPop() {
 
 // --- 12. ROCK PAPER SCISSORS ---
 function RockPaperScissors() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [user, setUser] = React.useState<string | null>(null)
   const [ai, setAi] = React.useState<string | null>(null)
   const [result, setResult] = React.useState("")
@@ -741,6 +791,9 @@ function RockPaperScissors() {
 
 // --- 13. REACTION TEST ---
 function ReactionTest() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [state, setState] = React.useState<"idle" | "waiting" | "ready" | "result">("idle")
   const [startTime, setStartTime] = React.useState(0)
   const [time, setTime] = React.useState(0)
@@ -757,7 +810,7 @@ function ReactionTest() {
     if (state === "waiting") {
       clearTimeout(timeoutRef.current); alert("Too early!"); setState("idle")
     } else if (state === "ready") {
-      setTime(Date.now() - startTime); setState("result")
+      setTime(Date.now() - startTime); setState("result"); saveGameScore(supabase, profile, "Reaction", Date.now() - startTime);
     }
   }
 
@@ -775,6 +828,9 @@ function ReactionTest() {
 
 // --- 14. SPEED CLICKER ---
 function SpeedClicker() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [clicks, setClicks] = React.useState(0)
   const [timeLeft, setTimeLeft] = React.useState(10)
   const [active, setActive] = React.useState(false)
@@ -808,6 +864,9 @@ function SpeedClicker() {
 
 // --- 15. COLOR FINDER ---
 function ColorFinder() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [target, setTarget] = React.useState(0)
   const [colors, setColors] = React.useState<string[]>([])
   const [score, setScore] = React.useState(0)
@@ -827,7 +886,7 @@ function ColorFinder() {
       <h3 className="text-2xl font-bold text-primary">Find the Odd Color</h3>
       <div className="grid grid-cols-2 gap-4">
         {colors.map((c, i) => (
-          <button key={i} onClick={() => { if (i === target) { setScore(s => s + 1); generate() } else { setScore(0); generate() } }} className="w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] shadow-lg active:scale-95 transition-transform" style={{ backgroundColor: c }} />
+          <button key={i} onClick={() => { if (i === target) { setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Typing", ns); return ns; }); generate() } else { setScore(0); generate() } }} className="w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] shadow-lg active:scale-95 transition-transform" style={{ backgroundColor: c }} />
         ))}
       </div>
       <div className="text-lg font-black uppercase text-primary tracking-widest">Score: {score}</div>
@@ -837,6 +896,9 @@ function ColorFinder() {
 
 // --- 16. DICE ROLLER ---
 function DiceRoller() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [val, setVal] = React.useState(1)
   const [rolling, setRolling] = React.useState(false)
 
@@ -862,6 +924,9 @@ function DiceRoller() {
 
 // --- 17. NUMBER GUESS ---
 function NumberGuess() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const [num, setTarget] = React.useState(Math.floor(Math.random() * 100) + 1)
   const [guess, setGuess] = React.useState("")
   const [msg, setMsg] = React.useState("Guess between 1-100")
@@ -887,6 +952,9 @@ function NumberGuess() {
 
 // --- 18. KID TYPER ---
 function TypingGame() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
   const words = ["HUB", "FAMILY", "JOY", "STAR", "BRAVE", "KIND", "HAPPY", " Kapendeka"]
   const [word, setWord] = React.useState(words[0])
   const [input, setInput] = React.useState("")
@@ -944,6 +1012,77 @@ function SlotMachine() {
 }
 
 // --- MAIN PAGE ---
+
+function Leaderboard() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const [scores, setScores] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!supabase || !profile?.family_id) return;
+    
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).toISOString();
+
+    const fetchScores = async () => {
+      const { data } = await supabase
+        .from('arcade_scores')
+        .select('*, profiles!arcade_scores_member_id_fkey(display_name, avatar_url, id)')
+        .eq('family_id', profile.family_id)
+        .gte('updated_at', startOfWeek)
+        .order('best_score', { ascending: false });
+
+      if (data) setScores(data);
+    };
+
+    fetchScores();
+  }, [supabase, profile]);
+
+  // Group by game
+  const grouped = scores.reduce((acc, curr) => {
+    if (!acc[curr.game]) acc[curr.game] = [];
+    acc[curr.game].push(curr);
+    return acc;
+  }, {});
+
+  return (
+    <div className="p-4 md:p-8 space-y-6">
+      <h2 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
+        <Trophy className="h-6 w-6 text-yellow-500" /> Weekly Leaderboard
+      </h2>
+      {Object.keys(grouped).length === 0 ? (
+        <p className="text-muted-foreground">No scores yet this week! Start playing!</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.entries(grouped).map(([game, gameScores]) => (
+            <Card key={game} className="rounded-3xl border-none shadow-md overflow-hidden bg-white/50">
+              <CardHeader className="bg-primary/5 pb-4">
+                <CardTitle className="text-lg font-bold">{game}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {gameScores.slice(0, 3).map((s, i) => (
+                  <div key={s.id} className="flex items-center justify-between p-3 border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{i + 1}</div>
+                      <div className="flex items-center gap-2">
+                        <img src={s.profiles?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.profiles?.id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
+                        <span className="font-bold text-sm">{s.profiles?.display_name}</span>
+                      </div>
+                    </div>
+                    <div className="font-bold text-primary">
+                      {s.best_score ? `${s.best_score} pts` : (s.wins ? 'Won' : 'Played')}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ArcadePage() {
   const toggleLandscape = async () => {
     try {
@@ -982,8 +1121,9 @@ export default function ArcadePage() {
         </div>
       </header>
 
-      <Tabs defaultValue="piano" className="w-full">
+      <Tabs defaultValue="leaderboard" className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-4 justify-start no-scrollbar touch-pan-x">
+          <TabsTrigger value="leaderboard" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Trophy className="h-4 w-4" /> Leaderboard</TabsTrigger>
           <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Music className="h-4 w-4" /> Piano</TabsTrigger>
           <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Activity className="h-4 w-4" /> Simon</TabsTrigger>
           <TabsTrigger value="pop" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Circle className="h-4 w-4" /> Pop</TabsTrigger>
@@ -1006,6 +1146,7 @@ export default function ArcadePage() {
         </TabsList>
 
         <div className="mt-4">
+          <TabsContent value="leaderboard"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl min-h-[60vh]"><Leaderboard /></Card></TabsContent>
           <TabsContent value="piano"><Card className="rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-white shadow-xl"><PianoGame /></Card></TabsContent>
           <TabsContent value="simon"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SimonSays /></Card></TabsContent>
           <TabsContent value="pop"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><BalloonPop /></Card></TabsContent>

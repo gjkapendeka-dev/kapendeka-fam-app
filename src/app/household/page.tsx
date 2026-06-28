@@ -136,69 +136,71 @@ export default function HouseholdPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Household Tasks</h1>
           <p className="text-muted-foreground font-medium">Keep the Kapendeka Universe running smoothly</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-xl h-11 px-6 font-bold bg-primary shadow-lg shadow-primary/20">
-              <Plus className="h-4 w-4 mr-2" /> Quick Add
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>Add Family Task</DialogTitle>
-              <DialogDescription>
-                Create a new chore or todo for the family.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Task Name</Label>
-                <Input 
-                  id="title" 
-                  placeholder="e.g. Wash the car" 
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        {profile?.role === 'parent' && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="rounded-xl h-11 px-6 font-bold bg-primary shadow-lg shadow-primary/20">
+                <Plus className="h-4 w-4 mr-2" /> Quick Add
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>Add Family Task</DialogTitle>
+                <DialogDescription>
+                  Create a new chore or todo for the family.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label>Type</Label>
-                  <Select value={newType} onValueChange={setNewType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="chore">Household Chore</SelectItem>
-                      <SelectItem value="todo">General Todo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="title">Task Name</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="e.g. Wash the car" 
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                  />
                 </div>
-                {newType === "chore" ? (
+                <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label>Points</Label>
-                    <Input type="number" value={newPoints} onChange={(e) => setNewPoints(e.target.value)} />
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <Label>Priority</Label>
-                    <Select value={newPriority} onValueChange={setNewPriority}>
+                    <Label>Type</Label>
+                    <Select value={newType} onValueChange={setNewType}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="chore">Household Chore</SelectItem>
+                        <SelectItem value="todo">General Todo</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+                  {newType === "chore" ? (
+                    <div className="grid gap-2">
+                      <Label>Points</Label>
+                      <Input type="number" value={newPoints} onChange={(e) => setNewPoints(e.target.value)} />
+                    </div>
+                  ) : (
+                    <div className="grid gap-2">
+                      <Label>Priority</Label>
+                      <Select value={newPriority} onValueChange={setNewPriority}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleAddTask} disabled={!newTitle}>Add to Hub</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button onClick={handleAddTask} disabled={!newTitle}>Add to Hub</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

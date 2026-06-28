@@ -72,10 +72,12 @@ export default function SettingsPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
           <p className="text-muted-foreground font-medium">Manage the Kapendeka Universe configurations</p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="rounded-xl h-11 px-6 shadow-lg shadow-primary/20">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Save All
-        </Button>
+        {profile?.role === 'parent' && (
+          <Button onClick={handleSave} disabled={saving} className="rounded-xl h-11 px-6 shadow-lg shadow-primary/20">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            Save All
+          </Button>
+        )}
       </header>
 
       <div className="space-y-4">
