@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Lightbulb, Plus, Image as ImageIcon, Target, Calendar, Loader2, Sparkles, Star } from "lucide-react"
+import { Lightbulb, Plus, Image as ImageIcon, Target, Calendar, Loader2, Sparkles, Star, Maximize } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +37,21 @@ export default function VisionBoardPage() {
 
   const { data: visions, loading } = useCollection(visionQuery)
 
+  const toggleLandscape = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen()
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
+      } else {
+        document.exitFullscreen()
+      }
+    } catch (e) {
+      console.warn("Fullscreen failed:", e)
+    }
+  }
+
   const handleAdd = () => {
     if (!db || !profile?.familyId || !title) return
     setIsSubmitting(true)
@@ -68,27 +82,38 @@ export default function VisionBoardPage() {
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Designing the Family Future</p>
            </div>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-2xl h-12 px-6 bg-primary shadow-xl font-black uppercase text-[10px] tracking-widest">
-              <Plus className="h-4 w-4 mr-2" /> New Vision
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="rounded-[2.5rem]">
-             <DialogHeader><DialogTitle className="text-xl font-black uppercase">Dream Big</DialogTitle></DialogHeader>
-             <div className="grid gap-6 py-6">
-                <div className="grid gap-2">
-                   <Label className="font-bold text-[10px] uppercase opacity-50">What is the Vision?</Label>
-                   <Input placeholder="e.g. New Family Home" value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl h-12" />
-                </div>
-                <div className="grid gap-2">
-                   <Label className="font-bold text-[10px] uppercase opacity-50">Target Year</Label>
-                   <Input type="number" value={targetYear} onChange={(e) => setTargetYear(e.target.value)} className="rounded-xl h-12" />
-                </div>
-             </div>
-             <DialogFooter><Button onClick={handleAdd} disabled={!title || isSubmitting} className="w-full h-12 rounded-xl">Anchor Vision</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleLandscape}
+            className="rounded-xl font-bold border-primary/20 text-primary h-11 px-4 shadow-sm"
+          >
+            <Maximize className="h-4 w-4 mr-2" /> 
+            Full View
+          </Button>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="rounded-2xl h-12 px-6 bg-primary shadow-xl font-black uppercase text-[10px] tracking-widest text-white">
+                <Plus className="h-4 w-4 mr-2" /> New Vision
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="rounded-[2.5rem]">
+              <DialogHeader><DialogTitle className="text-xl font-black uppercase">Dream Big</DialogTitle></DialogHeader>
+              <div className="grid gap-6 py-6">
+                  <div className="grid gap-2">
+                    <Label className="font-bold text-[10px] uppercase opacity-50">What is the Vision?</Label>
+                    <Input placeholder="e.g. New Family Home" value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl h-12" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="font-bold text-[10px] uppercase opacity-50">Target Year</Label>
+                    <Input type="number" value={targetYear} onChange={(e) => setTargetYear(e.target.value)} className="rounded-xl h-12" />
+                  </div>
+              </div>
+              <DialogFooter><Button onClick={handleAdd} disabled={!title || isSubmitting} className="w-full h-12 rounded-xl">Anchor Vision</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

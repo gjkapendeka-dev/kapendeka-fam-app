@@ -45,7 +45,8 @@ import {
   Bomb,
   Sparkles,
   Timer,
-  Palette
+  Palette,
+  Maximize
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -939,14 +940,41 @@ function SlotMachine() {
 
 // --- MAIN PAGE ---
 export default function ArcadePage() {
+  const toggleLandscape = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen()
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
+      } else {
+        document.exitFullscreen()
+      }
+    } catch (e) {
+      console.warn("Fullscreen/Orientation lock failed:", e)
+    }
+  }
+
   return (
     <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
-        <div>
+        <div className="flex flex-col">
           <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Universe Arcade</h1>
           <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">19 Games Live for the Hub</p>
         </div>
-        <Badge className="bg-accent text-white border-none font-bold uppercase px-3 py-1 w-fit text-[9px] md:text-xs tracking-widest">Premium Fun</Badge>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleLandscape}
+            className="rounded-xl font-bold border-primary/20 text-primary h-11 px-4 shadow-sm"
+          >
+            <Maximize className="h-4 w-4 mr-2" /> 
+            <span className="hidden sm:inline">Landscape Mode</span>
+            <span className="sm:hidden">Rotate</span>
+          </Button>
+          <Badge className="bg-accent text-white border-none font-bold uppercase px-3 py-1 w-fit text-[9px] md:text-xs tracking-widest hidden md:flex">Premium Fun</Badge>
+        </div>
       </header>
 
       <Tabs defaultValue="piano" className="w-full">

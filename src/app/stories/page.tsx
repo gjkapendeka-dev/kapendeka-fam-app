@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Library, Sparkles, Plus, Loader2, BookOpen, ChevronRight, Play } from "lucide-react"
+import { Library, Sparkles, Plus, Loader2, BookOpen, ChevronRight, Play, Maximize } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +28,21 @@ export default function StoryStudioPage() {
   }, [db, profile?.familyId])
 
   const { data: savedStories } = useCollection(storiesQuery)
+
+  const toggleLandscape = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen()
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
+      } else {
+        document.exitFullscreen()
+      }
+    } catch (e) {
+      console.warn("Fullscreen/Orientation lock failed:", e)
+    }
+  }
 
   const handleGenerate = async () => {
     if (!profile) return
@@ -59,7 +73,7 @@ export default function StoryStudioPage() {
 
   return (
     <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-6xl mx-auto pb-24 pr-14">
-      <header>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4 mb-2">
            <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-2xl">
               <Library className="h-6 w-6" />
@@ -69,6 +83,15 @@ export default function StoryStudioPage() {
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Co-create family legends with AI</p>
            </div>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={toggleLandscape}
+          className="rounded-xl font-bold border-primary/20 text-primary h-11 px-4 shadow-sm"
+        >
+          <Maximize className="h-4 w-4 mr-2" /> 
+          Cinema Mode
+        </Button>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

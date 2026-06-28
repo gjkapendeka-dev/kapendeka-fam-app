@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Compass, Plus, MapPin, CheckCircle2, ChevronRight, Trophy, Zap, Loader2, Target } from "lucide-react"
+import { Compass, Plus, MapPin, CheckCircle2, ChevronRight, Trophy, Zap, Loader2, Target, Maximize } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +22,21 @@ export default function QuestPage() {
   }, [db, profile?.familyId])
 
   const { data: quests, loading } = useCollection(questsQuery)
+
+  const toggleLandscape = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen()
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock('landscape')
+        }
+      } else {
+        document.exitFullscreen()
+      }
+    } catch (e) {
+      console.warn("Fullscreen failed:", e)
+    }
+  }
 
   const handleCompleteStep = (questId: string, stepIdx: number) => {
     if (!db || !quests) return
@@ -55,9 +69,20 @@ export default function QuestPage() {
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Active Adventures for the Kids</p>
            </div>
         </div>
-        <Button className="rounded-2xl h-12 px-6 bg-primary shadow-lg font-black uppercase text-[10px] tracking-widest">
-           <Plus className="h-4 w-4 mr-2" /> Launch Quest
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleLandscape}
+            className="rounded-xl font-bold border-primary/20 text-primary h-11 px-4 shadow-sm"
+          >
+            <Maximize className="h-4 w-4 mr-2" /> 
+            Rotate
+          </Button>
+          <Button className="rounded-2xl h-12 px-6 bg-primary text-white shadow-lg font-black uppercase text-[10px] tracking-widest">
+             <Plus className="h-4 w-4 mr-2" /> Launch Quest
+          </Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
