@@ -32,13 +32,9 @@ import {
   ResponsiveContainer,
   Tooltip as ChartTooltip,
 } from "recharts"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const CATEGORIES = [
   "Groceries", "Dining Out", "Travel", "School Fees", "Pocket Money", "Household", "Entertainment", "Income", "Other"
 ]
@@ -47,7 +43,7 @@ const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
 
 export default function FinancesPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
   
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -59,13 +55,11 @@ export default function FinancesPage() {
   const [description, setDescription] = React.useState("")
 
   const transactionsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "transactions"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "desc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("transactions")
+      .select("*")
+      .eq("familyId", profile.familyId).order("date", { ascending: false })
+  }, [supabase, profile?.familyId])
 
   const { data: transactions, loading: txLoading } = useCollection(transactionsQuery)
 
@@ -89,38 +83,35 @@ export default function FinancesPage() {
     return { ...totals, categoryData }
   }, [transactions])
 
-  const handleAddTransaction = () => {
-    if (!db || !profile?.familyId || !amount) return
+  const handleAddTransaction = async () => {
+    if (!supabase || !profile?.familyId || !amount) return
 
     setLoading(true)
     const txData = {
       familyId: profile.familyId,
       userId: profile.id,
+      userName: profile.displayName,
       amount: parseFloat(amount),
-      type: type,
-      category: category,
-      description: description,
-      date: serverTimestamp(),
+      type,
+      category,
+      description,
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "transactions"), txData)
-      .then(() => {
-        setIsDialogOpen(false)
-        setAmount("")
-        setDescription("")
-        toast({
-          title: "Transaction Logged",
-          description: `R ${parseFloat(amount).toFixed(2)} recorded successfully.`,
-        })
+    const { error } = await supabase.from("transactions").insert([txData])
+    setLoading(false)
+    if (!error) {
+      setIsDialogOpen(false)
+      setAmount("")
+      setDescription("")
+      toast({
+        title: "Transaction Logged",
+        description: `R ${parseFloat(amount).toFixed(2)} recorded successfully.`,
       })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "transactions",
-          operation: "create",
-          requestResourceData: txData
-        }))
-      })
-      .finally(() => setLoading(false))
+    } else {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+    }
   }
 
   return (
@@ -228,7 +219,7 @@ export default function FinancesPage() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {stats.categoryData.map((entry, index) => (
+                      {stats.categoryData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -242,7 +233,7 @@ export default function FinancesPage() {
               <div className="text-3xl font-bold mt-1 text-rose-500">R {stats.expenses.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</div>
               <p className="text-[10px] font-bold text-muted-foreground mt-4 uppercase">Top Category</p>
               <Badge className="w-fit bg-primary/10 text-primary border-none mt-1">
-                {stats.categoryData.length > 0 ? stats.categoryData.sort((a,b) => b.value - a.value)[0].name : "None"}
+                {stats.categoryData.length > 0 ? stats.categoryData.sort((a: any, b: any) => b.value - a.value)[0].name : "None"}
               </Badge>
             </div>
           </div>
@@ -278,7 +269,7 @@ export default function FinancesPage() {
                 transactions?.map((tx) => (
                   <TableRow key={tx.id} className="group transition-colors hover:bg-muted/30">
                     <TableCell className="font-medium text-muted-foreground">
-                      {tx.date ? format(new Date(tx.date.seconds * 1000), "MMM dd, yyyy") : "Pending..."}
+                      {tx.date ? format(new Date(tx.date.seconds * 1000), "MMM dd, yyyy") : "Pending, ..."}
                     </TableCell>
                     <TableCell className="font-bold">{tx.description || "No description"}</TableCell>
                     <TableCell>
@@ -290,8 +281,8 @@ export default function FinancesPage() {
                       {tx.type === 'income' || tx.type === 'allowance' ? '+' : '-'} R {Math.abs(tx.amount).toFixed(2)}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                )
+              ))}
             </TableBody>
           </Table>
         </CardContent>

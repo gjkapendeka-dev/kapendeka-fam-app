@@ -3,8 +3,7 @@ import './globals.css';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseClientProvider } from '@/firebase';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { SupabaseProvider } from "@/supabase";
 
 export const metadata: Metadata = {
   title: 'Kapendeka Family Hub',
@@ -25,8 +24,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
       <body className="font-body antialiased selection:bg-primary/10">
-        <FirebaseClientProvider>
-          <FirebaseErrorListener />
+        <SupabaseProvider>
           <SidebarProvider>
             <div className="flex min-h-screen w-full bg-background overflow-x-hidden">
               <AppSidebar />
@@ -41,7 +39,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </SidebarProvider>
-        </FirebaseClientProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

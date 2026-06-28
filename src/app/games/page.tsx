@@ -20,23 +20,20 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function GamesRewardsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   // Fetch Family Rewards
   const rewardsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "familyRewards"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("familyRewards").select("*").eq("familyId", profile.familyId)
+    
+  }, [supabase, profile?.familyId])
   const { data: rewards, loading: rewardsLoading } = useCollection(rewardsQuery)
 
   // Leaderboard Mock

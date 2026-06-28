@@ -57,8 +57,8 @@ import {
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuth, useUser } from "@/firebase"
-import { signOut } from "firebase/auth"
+import { useUser } from "@/supabase"
+import { supabase } from "@/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
@@ -100,11 +100,9 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { profile } = useUser()
-  const auth = useAuth()
 
   const handleLogout = async () => {
-    if (!auth) return
-    await signOut(auth)
+    await supabase.auth.signOut()
     router.push("/login")
   }
 
@@ -126,23 +124,26 @@ export function AppSidebar() {
           <SidebarGroupLabel className="px-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-2">Universe Portals</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="px-3 space-y-1">
-              {portals.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.name}
-                    className="h-12 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
-                  >
-                    <Link href={item.href} className="flex items-center gap-4">
-                      <item.icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`font-black uppercase tracking-tight text-[11px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
-                        {item.name}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {portals.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                      tooltip={item.name}
+                      className="h-12 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                    >
+                      <Link href={item.href} className="flex items-center gap-4">
+                        <Icon className={`h-5 w-5 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`font-black uppercase tracking-tight text-[11px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {item.name}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

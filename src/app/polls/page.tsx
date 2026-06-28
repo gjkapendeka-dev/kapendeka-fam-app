@@ -17,13 +17,12 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function PollsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isAddOpen, setIsAddOpen] = React.useState(false)
@@ -33,14 +32,14 @@ export default function PollsPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const pollsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "polls"), where("familyId", "==", profile.familyId), orderBy("createdAt", "desc"))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("polls").select("*").eq("familyId", profile.familyId).order("createdAt", { ascending: false })
+  }, [supabase, profile?.familyId])
 
   const { data: polls, loading } = useCollection(pollsQuery)
 
   const handleCreate = () => {
-    if (!db || !profile?.familyId || !question) return
+    if (!supabase || !profile?.familyId || !question) return
     setIsSubmitting(true)
     const data = {
       familyId: profile.familyId,
@@ -49,23 +48,22 @@ export default function PollsPage() {
       votes: {},
       status: "open",
       createdBy: profile.displayName,
-      createdAt: serverTimestamp()
+      createdAt: new Date().toISOString()
     }
-    addDoc(collection(db, "polls"), data)
+    supabase.from("polls").insert([data])
       .then(() => {
         setIsAddOpen(false)
         setQuestion(""); setOption1(""); setOption2("")
         toast({ title: "Poll Launched" })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   const handleVote = (pollId: string, optionIndex: number) => {
-    if (!db || !profile) return
-    const pollRef = doc(db, "polls", pollId)
-    updateDoc(pollRef, {
+    if (!supabase || !profile) return
+    supabase.from("polls").update({
       [`votes.${profile.id}`]: optionIndex
-    })
+    }).eq("id", pollId)
   }
 
   return (

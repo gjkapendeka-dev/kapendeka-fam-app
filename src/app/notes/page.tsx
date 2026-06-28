@@ -33,8 +33,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const COLORS = [
@@ -47,7 +46,7 @@ const COLORS = [
 
 export default function NotesPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -57,18 +56,15 @@ export default function NotesPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const notesQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "notes"),
-      where("familyId", "==", profile.familyId),
-      orderBy("isPinned", "desc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("notes").select("*").eq("familyId", profile.familyId).order("isPinned", { ascending: false })
+    
+  }, [supabase, profile?.familyId])
 
   const { data: notes, loading } = useCollection(notesQuery)
 
   const handleAddNote = () => {
-    if (!db || !profile?.familyId || !title) return
+    if (!supabase || !profile?.familyId || !title) return
 
     setIsSubmitting(true)
     const data = {
@@ -78,27 +74,27 @@ export default function NotesPage() {
       color: selectedColor,
       isPinned: false,
       createdBy: profile.id,
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "notes"), data)
+    supabase.from("notes").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setTitle("")
         setContent("")
         toast({ title: "Note Stuck!", description: "Sticky note added to the hub." })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   const togglePin = (noteId: string, current: boolean) => {
-    if (!db) return
-    updateDoc(doc(db, "notes", noteId), { isPinned: !current })
+    if (!supabase) return
+    supabase.from("notes").update({ isPinned: !current }).eq("id", noteId)
   }
 
   const handleDelete = (noteId: string) => {
-    if (!db) return
-    deleteDoc(doc(db, "notes", noteId))
+    if (!supabase) return
+    supabase.from("notes").delete().eq("id", noteId)
       .then(() => toast({ title: "Note removed" }))
   }
 
@@ -127,7 +123,7 @@ export default function NotesPage() {
               </div>
               <div className="grid gap-2">
                 <Label>Content</Label>
-                <Textarea placeholder="Details..." value={content} onChange={(e) => setContent(e.target.value)} />
+                <Textarea placeholder="Details, ..." value={content} onChange={(e) => setContent(e.target.value)} />
               </div>
               <div className="grid gap-2">
                 <Label>Color</Label>
@@ -196,8 +192,8 @@ export default function NotesPage() {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          )
+        ))}
       </div>
     </div>
   )

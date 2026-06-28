@@ -35,14 +35,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format, formatDistanceToNow } from "date-fns"
 
 export default function CelebrationsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -54,18 +53,15 @@ export default function CelebrationsPage() {
   const [date, setDate] = React.useState("")
 
   const celebrationsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "celebrations"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "asc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("celebrations").select("*").eq("familyId", profile.familyId).order("date", { ascending: true })
+    
+  }, [supabase, profile?.familyId])
 
   const { data: celebrations, loading } = useCollection(celebrationsQuery)
 
   const handleAddCelebration = () => {
-    if (!db || !profile?.familyId || !name) return
+    if (!supabase || !profile?.familyId || !name) return
 
     setIsSubmitting(true)
     const data = {
@@ -73,16 +69,16 @@ export default function CelebrationsPage() {
       name,
       type,
       date, // Recurring date string YYYY-MM-DD
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "celebrations"), data)
+    supabase.from("celebrations").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setName("")
         toast({ title: "Celebration Added", description: `Marked ${name}'s ${type} in the hub.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (
@@ -179,8 +175,8 @@ export default function CelebrationsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            )}
+              )
+            ))}
           </div>
         </div>
 

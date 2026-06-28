@@ -98,19 +98,19 @@ const getRecipesTool = ai.defineTool(
     }
     if (input.mealType) {
       filteredRecipes = filteredRecipes.filter(recipe =>
-        recipe.tags?.includes(input.mealType.toLowerCase())
+        recipe.tags?.includes(input.mealType!.toLowerCase())
       );
     }
     if (input.healthFocus) {
       filteredRecipes = filteredRecipes.filter(recipe =>
-        recipe.tags?.includes(input.healthFocus.toLowerCase())
+        recipe.tags?.includes(input.healthFocus!.toLowerCase())
       );
     }
     if (input.dayOfWeek) {
       // For simplicity, we'll assume 'Tuesday' might match 'taco-tuesday' or a general dinner.
       // A more robust implementation might map days to specific meal plans.
       filteredRecipes = filteredRecipes.filter(recipe =>
-        recipe.tags?.some(tag => tag.toLowerCase().includes(input.dayOfWeek.toLowerCase()))
+        recipe.tags?.some(tag => tag.toLowerCase().includes(input.dayOfWeek!.toLowerCase()))
       );
     }
     if (input.tags && input.tags.length > 0) {

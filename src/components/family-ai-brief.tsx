@@ -5,29 +5,28 @@ import { Sparkles, Loader2, Info } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { generateDailyBrief, type FamilyBriefOutput } from "@/ai/flows/family-daily-brief"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, limit, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 
 export function FamilyAIBrief() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const [brief, setBrief] = React.useState<FamilyBriefOutput | null>(null)
   const [loading, setLoading] = React.useState(false)
 
   const eventsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "events"), where("familyId", "==", profile.familyId), limit(5))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("events").select("*").eq("familyId", profile.familyId).limit(5)
+  }, [supabase, profile?.familyId])
   
   const choresQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "chores"), where("familyId", "==", profile.familyId), where("status", "==", "pending"), limit(5))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("chores").select("*").eq("familyId", profile.familyId).eq("status", "pending").limit(5)
+  }, [supabase, profile?.familyId])
 
   const newsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "news"), where("familyId", "==", profile.familyId), orderBy("date", "desc"), limit(2))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("news").select("*").eq("familyId", profile.familyId).order("date", { ascending: false }).limit(2)
+  }, [supabase, profile?.familyId])
 
   const { data: events } = useCollection(eventsQuery)
   const { data: chores } = useCollection(choresQuery)

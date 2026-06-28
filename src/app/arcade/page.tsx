@@ -55,7 +55,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-
+import { useSupabase } from "@/supabase"
 // --- 1. PIANO GAME ---
 const PIANO_KEYS = [
   { note: "C", freq: 261.63, color: "bg-white", text: "DO", key: "A" },
@@ -249,18 +249,23 @@ function TicTacToe() {
   const isDraw = !winner && board.every(s => s !== null)
 
   const handleClick = (i: number) => {
-    if (winner || board[i]) return
+    if (board[i] || winner) return
     const newBoard = board.slice()
     newBoard[i] = xIsNext ? 'X' : 'O'
     setBoard(newBoard)
     setXIsNext(!xIsNext)
   }
+  
+  const resetLocal = () => {
+    setBoard(Array(9).fill(null))
+    setXIsNext(true)
+  }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-8 py-8 px-4 relative">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Tic-Tac-Toe</h3>
-        <p className="text-muted-foreground font-medium text-sm">
+        <p className="text-muted-foreground font-medium text-sm mt-2">
           {winner ? `Winner: ${winner}!` : isDraw ? "It's a Draw!" : `Next Player: ${xIsNext ? 'X' : 'O'}`}
         </p>
       </div>
@@ -269,15 +274,15 @@ function TicTacToe() {
           <button
             key={i}
             onClick={() => handleClick(i)}
-            className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex items-center justify-center text-3xl font-black shadow-sm active:scale-95 transition-all"
+            className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex items-center justify-center text-3xl font-black shadow-sm active:scale-95 transition-all disabled:opacity-80"
           >
             {cell === 'X' && <X className="h-10 w-10 text-primary" />}
             {cell === 'O' && <Circle className="h-10 w-10 text-accent" />}
           </button>
         ))}
       </div>
-      <Button onClick={() => setBoard(Array(9).fill(null))} variant="outline" className="rounded-xl font-bold h-12 px-8">
-        <RefreshCw className="h-4 w-4 mr-2" /> Reset
+      <Button onClick={resetLocal} variant="outline" className="h-12 px-8 rounded-full font-bold border-primary text-primary">
+        Reset Game
       </Button>
     </div>
   )
@@ -638,8 +643,8 @@ function SimonSays() {
 
   const playSequence = async (seq: number[]) => {
     for (let i = 0; i < seq.length; i++) {
-      await new Promise(r => setTimeout(resolve => { setActiveColor(seq[i]); resolve() }, 600))
-      await new Promise(r => setTimeout(resolve => { setActiveColor(null); resolve() }, 200))
+      await new Promise(resolve => setTimeout(() => { setActiveColor(seq[i]); resolve(null) }, 600))
+      await new Promise(resolve => setTimeout(() => { setActiveColor(null); resolve(null) }, 200))
     }
   }
 
@@ -761,7 +766,7 @@ function ReactionTest() {
       <div onClick={state === "idle" || state === "result" ? start : handleClick} className={cn("w-full max-w-md h-64 rounded-[3rem] flex items-center justify-center text-3xl font-black text-white cursor-pointer transition-colors shadow-2xl active:scale-95 duration-100", 
         state === "idle" ? "bg-primary" : state === "waiting" ? "bg-rose-500" : state === "ready" ? "bg-emerald-500" : "bg-blue-600"
       )}>
-        {state === "idle" ? "Tap to Start" : state === "waiting" ? "Wait for Green..." : state === "ready" ? "TAP NOW!" : `${time}ms!`}
+        {state === "idle" ? "Tap to Start" : state === "waiting" ? "Wait for Green, ..." : state === "ready" ? "TAP NOW!" : `${time}ms!`}
       </div>
       {state === "result" && <Button variant="outline" className="h-12 px-8 rounded-xl font-bold" onClick={start}>Try Again</Button>}
     </div>

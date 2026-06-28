@@ -40,13 +40,9 @@ import {
   ChartTooltipContent 
 } from "@/components/ui/chart"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from "recharts"
-import { useUser, useCollection, useFirestore, useDoc } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit, doc } from "firebase/firestore"
+import { useUser, useCollection, useSupabase, useDoc } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format, subDays } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const LOG_TYPES = [
   { value: "steps", label: "Steps", icon: Activity, color: "text-emerald-500" },
   { value: "water", label: "Water (L)", icon: Droplets, color: "text-blue-500" },
@@ -57,7 +53,7 @@ const LOG_TYPES = [
 
 export default function HealthPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isLogOpen, setIsLogOpen] = React.useState(false)
@@ -66,22 +62,22 @@ export default function HealthPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   // Fetch Health Profile
-  const profileRef = React.useMemo(() => {
-    if (!db || !profile?.id) return null
-    return doc(db, "healthProfiles", profile.id)
-  }, [db, profile?.id])
-  const { data: healthProfile } = useDoc(profileRef)
+  const profileQuery = React.useMemo(() => {
+    if (!supabase || !profile?.id) return null
+    return supabase.from("healthProfiles")
+      .select("*")
+      .eq("id", profile.id)
+  }, [supabase, profile?.id])
+  const { data: healthProfiles } = useCollection(profileQuery)
+  const healthProfile = healthProfiles?.[0] || null
 
   // Fetch Health Logs (last 30)
   const logsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "healthLogs"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "desc"),
-      limit(30)
-    )
-  })
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("health_logs")
+      .select("*")
+      .eq("familyId", profile.familyId).order("date", { ascending: false }).limit(30)
+  }, [supabase, profile?.familyId])
   const { data: logs, loading: logsLoading } = useCollection(logsQuery)
 
   // Chart Data Preparation (Steps over last 7 days)
@@ -95,8 +91,8 @@ export default function HealthPage() {
     })
   }, [logs])
 
-  const handleAddLog = () => {
-    if (!db || !profile?.familyId || !logValue) return
+  const handleAddLog = async () => {
+    if (!supabase || !profile?.familyId || !logValue) return
 
     setIsSubmitting(true)
     const logData = {
@@ -105,23 +101,19 @@ export default function HealthPage() {
       userName: profile.displayName,
       type: logType,
       value: logValue,
-      date: serverTimestamp(),
+      date: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "healthLogs"), logData)
-      .then(() => {
-        setIsLogOpen(false)
-        setLogValue("")
-        toast({ title: "Wellness Logged", description: `${logType} updated in your universe hub.` })
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "healthLogs",
-          operation: "create",
-          requestResourceData: logData
-        }))
-      })
-      .finally(() => setIsSubmitting(false))
+    const { error } = await supabase.from("health_logs").insert([logData])
+    setIsSubmitting(false)
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+      return
+    }
+
+    setIsLogOpen(false)
+    setLogValue("")
+    toast({ title: "Wellness Logged", description: `${logType} updated in your universe hub.` })
   }
 
   return (
@@ -191,7 +183,7 @@ export default function HealthPage() {
             </CardHeader>
             <CardContent className="p-6">
               <div className="h-[300px] w-full">
-                <ChartContainer config={{ steps: { label: "Steps", color: "hsl(var(--primary))" } }}>
+                <ChartContainer config={{ steps: { label: "Steps", color: "hsl(var(--primary)" } }}>
                   <BarChart data={chartData}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600 }} />
@@ -232,7 +224,7 @@ export default function HealthPage() {
                         <div className="text-right">
                           <div className="font-bold text-lg">{log.value}</div>
                           <div className="text-[10px] text-muted-foreground">
-                            {log.date ? format(new Date(log.date.seconds * 1000), "HH:mm") : "..."}
+                            {log.date ? format(new Date(log.date.seconds * 1000), "HH:mm") : ", ..."}
                           </div>
                         </div>
                       </div>
@@ -263,8 +255,8 @@ export default function HealthPage() {
                       <Badge key={a} className="bg-white/20 text-white border-none font-bold">
                         {a}
                       </Badge>
-                    ))
-                  ) : (
+                    )
+                  )) : (
                     <span className="text-sm font-medium opacity-60">None listed</span>
                   )}
                 </div>
@@ -278,8 +270,8 @@ export default function HealthPage() {
                         <Thermometer className="h-4 w-4" />
                         {m}
                       </div>
-                    ))
-                  ) : (
+                    )
+                  )) : (
                     <span className="text-sm font-medium opacity-60">No active medications</span>
                   )}
                 </div>

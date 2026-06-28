@@ -29,16 +29,12 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 export default function FaithPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isEntryOpen, setIsEntryOpen] = React.useState(false)
@@ -52,45 +48,38 @@ export default function FaithPage() {
 
   // Fetch Faith Entries
   const faithQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "faithEntries"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "desc"),
-      limit(20)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("faith_entries")
+      .select("*")
+      .eq("familyId", profile.familyId).order("date", { ascending: false }).limit(20)
+  }, [supabase, profile?.familyId])
 
   const { data: entries, loading } = useCollection(faithQuery)
 
-  const handleAddEntry = () => {
-    if (!db || !profile?.familyId || !entryTitle) return
+  const handleAddEntry = async () => {
+    if (!supabase || !profile?.familyId || !entryTitle) return
 
     setIsSubmitting(true)
     const entryData = {
       familyId: profile.familyId,
       title: entryTitle,
       notes: entryNotes,
-      date: serverTimestamp(),
+      date: new Date().toISOString(),
       prayerPoints: [], // Can be populated later or from a specific list
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "faithEntries"), entryData)
-      .then(() => {
-        setIsEntryOpen(false)
-        setEntryTitle("")
-        setEntryNotes("")
-        toast({ title: "Faith Entry Added", description: "Your spiritual notes have been saved to the Hub." })
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "faithEntries",
-          operation: "create",
-          requestResourceData: entryData
-        }))
-      })
-      .finally(() => setIsSubmitting(false))
+    const { error } = await supabase.from("faith_entries").insert([entryData])
+    setIsSubmitting(false)
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+      return
+    }
+
+    setIsEntryOpen(false)
+    setEntryTitle("")
+    setEntryNotes("")
+    toast({ title: "Faith Entry Added", description: "Your spiritual notes have been saved to the Hub." })
   }
 
   // Placeholder for collective prayer points (could be a separate collection for MVP, or part of the entry)
@@ -133,7 +122,7 @@ export default function FaithPage() {
                   <Label htmlFor="notes">Notes & Reflections</Label>
                   <Textarea 
                     id="notes" 
-                    placeholder="Write down sermon points or your thoughts..." 
+                    placeholder="Write down sermon points or your thoughts, ..." 
                     className="min-h-[150px] rounded-xl"
                     value={entryNotes}
                     onChange={(e) => setEntryNotes(e.target.value)}
@@ -161,7 +150,7 @@ export default function FaithPage() {
             </h2>
             <div className="relative w-full max-w-[200px] hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search notes..." className="pl-9 rounded-xl h-9" />
+              <Input placeholder="Search notes, ..." className="pl-9 rounded-xl h-9" />
             </div>
           </div>
 
@@ -177,7 +166,7 @@ export default function FaithPage() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/20">
-                            {entry.date ? format(new Date(entry.date.seconds * 1000), "MMM dd, yyyy") : "..."}
+                            {entry.date ? format(new Date(entry.date.seconds * 1000), "MMM dd, yyyy") : ", ..."}
                           </Badge>
                           <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-widest bg-muted text-muted-foreground">
                             Service

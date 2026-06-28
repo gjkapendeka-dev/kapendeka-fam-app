@@ -28,13 +28,12 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useFirestore, useCollection } from "@/firebase"
-import { doc, updateDoc, query, collection, where } from "firebase/firestore"
+import { useUser, useSupabase, useCollection } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
   const { profile, user } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
   
   const [name, setName] = React.useState("")
@@ -44,9 +43,9 @@ export default function ProfilePage() {
 
   // Fetch all family members
   const membersQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "users"), where("familyId", "==", profile.familyId))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("users").select("*").eq("familyId", profile.familyId)
+  }, [supabase, profile?.familyId])
   const { data: members } = useCollection(membersQuery)
 
   React.useEffect(() => {
@@ -57,13 +56,13 @@ export default function ProfilePage() {
   }, [profile])
 
   const handleUpdate = async () => {
-    if (!db || !profile?.id) return
+    if (!supabase || !profile?.id) return
     setSaving(true)
     try {
-      await updateDoc(doc(db, "users", profile.id), {
+      await supabase.from("users").update({
         displayName: name,
         role: role
-      })
+      }).eq("id", profile.id)
       toast({ title: "Profile Updated", description: "Your universe identity has been saved." })
     } catch (e) {
       toast({ variant: "destructive", title: "Update Failed" })

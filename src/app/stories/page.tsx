@@ -8,13 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { generateFamilyStory, type StoryOutput } from "@/ai/flows/ai-story-studio-flow"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function StoryStudioPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isGenerating, setIsGenerating] = React.useState(false)
@@ -23,9 +22,9 @@ export default function StoryStudioPage() {
   const [activeStory, setActiveStory] = React.useState<StoryOutput | null>(null)
 
   const storiesQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "stories"), where("familyId", "==", profile.familyId), orderBy("createdAt", "desc"))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("stories").select("*").eq("familyId", profile.familyId).order("createdAt", { ascending: false })
+  }, [supabase, profile?.familyId])
 
   const { data: savedStories } = useCollection(storiesQuery)
 
@@ -55,12 +54,13 @@ export default function StoryStudioPage() {
       })
       setActiveStory(result)
       
-      // Save to Firebase
-      await addDoc(collection(db, "stories"), {
-        familyId: profile.familyId,
-        ...result,
-        createdAt: serverTimestamp()
-      })
+      // Save to Supabase
+      if (supabase) {
+        await supabase.from("stories").insert([{
+          familyId: profile.familyId, ...result,
+          createdAt: new Date().toISOString()
+        }])
+      }
       
       toast({ title: "New Epic Created!", description: "Check out your family's latest adventure." })
     } catch (e) {

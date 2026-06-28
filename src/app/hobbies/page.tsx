@@ -29,8 +29,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const HOBBY_ICONS = [
@@ -44,7 +43,7 @@ const HOBBY_ICONS = [
 
 export default function HobbiesPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -53,17 +52,15 @@ export default function HobbiesPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const hobbiesQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "hobbies"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("hobbies").select("*").eq("familyId", profile.familyId)
+    
+  }, [supabase, profile?.familyId])
 
   const { data: hobbies, loading } = useCollection(hobbiesQuery)
 
   const handleAddHobby = () => {
-    if (!db || !profile?.familyId || !hobbyName) return
+    if (!supabase || !profile?.familyId || !hobbyName) return
 
     setIsSubmitting(true)
     const data = {
@@ -77,16 +74,16 @@ export default function HobbiesPage() {
         xp: 0,
         streak: 1
       },
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "hobbies"), data)
+    supabase.from("hobbies").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setHobbyName("")
         toast({ title: "Passion Registered", description: `${hobbyName} added to your universe profile.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (

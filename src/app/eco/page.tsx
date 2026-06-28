@@ -9,33 +9,32 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function EcoUniversePage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const ecoQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "ecoLogs"), where("familyId", "==", profile.familyId), orderBy("date", "desc"), limit(10))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("ecoLogs").select("*").eq("familyId", profile.familyId).order("date", { ascending: false }).limit(10)
+  }, [supabase, profile?.familyId])
 
   const { data: logs, loading } = useCollection(ecoQuery)
 
   const handleLog = (type: string, val: number) => {
-    if (!db || !profile) return
+    if (!supabase || !profile) return
     const data = {
       familyId: profile.familyId,
       userId: profile.id,
       userName: profile.displayName,
       type,
       value: val,
-      date: serverTimestamp()
+      date: new Date().toISOString()
     }
-    addDoc(collection(db, "ecoLogs"), data).then(() => {
+    supabase.from("ecoLogs").insert([data]).then(() => {
       toast({ title: "Eco Impact Recorded!", description: "The Universe thanks you." })
     })
   }

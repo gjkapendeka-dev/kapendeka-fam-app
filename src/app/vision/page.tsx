@@ -16,13 +16,12 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function VisionBoardPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isAddOpen, setIsAddOpen] = React.useState(false)
@@ -31,9 +30,9 @@ export default function VisionBoardPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const visionQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "visionBoard"), where("familyId", "==", profile.familyId), orderBy("targetYear", "asc"))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("visionBoard").select("*").eq("familyId", profile.familyId).order("targetYear", { ascending: true })
+  }, [supabase, profile?.familyId])
 
   const { data: visions, loading } = useCollection(visionQuery)
 
@@ -53,21 +52,21 @@ export default function VisionBoardPage() {
   }
 
   const handleAdd = () => {
-    if (!db || !profile?.familyId || !title) return
+    if (!supabase || !profile?.familyId || !title) return
     setIsSubmitting(true)
     const data = {
       familyId: profile.familyId,
       title,
       targetYear: parseInt(targetYear),
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/400`,
-      createdAt: serverTimestamp()
+      createdAt: new Date().toISOString()
     }
-    addDoc(collection(db, "visionBoard"), data)
+    supabase.from("visionBoard").insert([data])
       .then(() => {
         setIsAddOpen(false); setTitle("")
         toast({ title: "Vision Anchored" })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (
@@ -136,8 +135,8 @@ export default function VisionBoardPage() {
                 </div>
               </div>
             </Card>
-          ))
-        )}
+          )
+        ))}
       </div>
     </div>
   )

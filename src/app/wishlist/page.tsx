@@ -34,12 +34,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, updateDoc, doc, deleteDoc } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const PRIORITIES = [
   { value: "high", label: "High Priority", color: "text-rose-500 bg-rose-50" },
   { value: "medium", label: "Medium Priority", color: "text-amber-500 bg-amber-50" },
@@ -48,11 +44,13 @@ const PRIORITIES = [
 
 export default function WishlistPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [items, setItems] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
 
   // Form State
   const [title, setTitle] = React.useState("")
@@ -60,19 +58,25 @@ export default function WishlistPage() {
   const [priority, setPriority] = React.useState("medium")
   const [link, setLink] = React.useState("")
 
-  const wishlistQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "wishlist"),
-      where("familyId", "==", profile.familyId),
-      orderBy("createdAt", "desc")
-    )
-  }, [db, profile?.familyId])
+  const fetchItems = React.useCallback(async () => {
+    if (!supabase || !profile?.familyId) return
+    setLoading(true)
+    const { data } = await supabase
+      .from("wishlist_items")
+      .select("*")
+      .eq("familyId", profile.familyId)
+      .order("createdAt", { ascending: false })
+      .limit(50)
+    setItems(data || [])
+    setLoading(false)
+  }, [supabase, profile?.familyId])
 
-  const { data: items, loading } = useCollection(wishlistQuery)
+  React.useEffect(() => {
+    fetchItems()
+  }, [fetchItems])
 
-  const handleAddItem = () => {
-    if (!db || !profile?.familyId || !title) return
+  const handleAddItem = async () => {
+    if (!supabase || !profile?.familyId || !title) return
 
     setIsSubmitting(true)
     const itemData = {
@@ -84,38 +88,34 @@ export default function WishlistPage() {
       priority,
       link,
       status: "want",
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "wishlist"), itemData)
-      .then(() => {
-        setIsDialogOpen(false)
-        setTitle("")
-        setPrice("")
-        setLink("")
-        toast({ title: "Added to Wishlist", description: `${title} is now in the family list.` })
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "wishlist",
-          operation: "create",
-          requestResourceData: itemData
-        }))
-      })
-      .finally(() => setIsSubmitting(false))
+    const { error } = await supabase.from("wishlist_items").insert([itemData])
+    setIsSubmitting(false)
+    if (error) {
+      toast({ title: "Error adding item", description: error.message, variant: "destructive" })
+      return
+    }
+
+    setIsDialogOpen(false)
+    setTitle("")
+    setPrice("")
+    setLink("")
+    toast({ title: "Added to Wishlist", description: `${title} is now in the family list.` })
   }
 
-  const toggleStatus = (itemId: string, currentStatus: string) => {
-    if (!db) return
+  const toggleStatus = async (itemId: string, currentStatus: string) => {
+    if (!supabase) return
     const newStatus = currentStatus === "want" ? "bought" : "want"
-    updateDoc(doc(db, "wishlist", itemId), { status: newStatus })
-      .then(() => toast({ title: "Status Updated" }))
+    const { error } = await supabase.from("wishlist_items").update({ status: newStatus }).eq("id", itemId)
+    if (!error) toast({ title: "Status Updated" })
   }
 
-  const deleteItem = (itemId: string) => {
-    if (!db) return
-    deleteDoc(doc(db, "wishlist", itemId))
-      .then(() => toast({ title: "Item Removed" }))
+  const deleteItem = async (itemId: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("wishlist_items").delete().eq("id", itemId)
+    if (!error) toast({ title: "Item Removed" })
   }
 
   return (

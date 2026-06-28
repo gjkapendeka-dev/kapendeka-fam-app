@@ -41,13 +41,9 @@ import {
   ChartTooltipContent 
 } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format, subDays, startOfDay } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const SLEEP_QUALITIES = [
   { value: "excellent", label: "Excellent", color: "text-emerald-500" },
   { value: "good", label: "Good", color: "text-blue-500" },
@@ -57,7 +53,7 @@ const SLEEP_QUALITIES = [
 
 export default function SleepPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isLogOpen, setIsLogOpen] = React.useState(false)
@@ -67,14 +63,11 @@ export default function SleepPage() {
 
   // Fetch Sleep Logs
   const sleepQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "sleepLogs"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "desc"),
-      limit(30)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("sleep_logs")
+      .select("*")
+      .eq("familyId", profile.familyId).order("date", { ascending: false }).limit(30)
+  }, [supabase, profile?.familyId])
 
   const { data: logs, loading } = useCollection(sleepQuery)
 
@@ -92,8 +85,8 @@ export default function SleepPage() {
     })
   }, [logs])
 
-  const handleAddLog = () => {
-    if (!db || !profile?.familyId || !sleepHours) return
+  const handleAddLog = async () => {
+    if (!supabase || !profile?.familyId || !sleepHours || !sleepQuality) return
 
     setIsSubmitting(true)
     const logData = {
@@ -102,27 +95,23 @@ export default function SleepPage() {
       userName: profile.displayName,
       hours: parseFloat(sleepHours),
       quality: sleepQuality,
-      date: serverTimestamp(),
-      createdAt: serverTimestamp(),
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "sleepLogs"), logData)
-      .then(() => {
-        setIsLogOpen(false)
-        setSleepHours("")
-        toast({ 
-          title: "Rest Logged", 
-          description: `Sweet dreams recorded! ${sleepHours} hours added to your log.` 
-        })
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "sleepLogs",
-          operation: "create",
-          requestResourceData: logData
-        }))
-      })
-      .finally(() => setIsSubmitting(false))
+    const { error } = await supabase.from("sleep_logs").insert([logData])
+    setIsSubmitting(false)
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+      return
+    }
+
+    setIsLogOpen(false)
+    setSleepHours("")
+    toast({ 
+      title: "Rest Logged", 
+      description: `Sweet dreams recorded! ${sleepHours} hours added to your log.` 
+    })
   }
 
   const averageSleep = React.useMemo(() => {
@@ -271,7 +260,7 @@ export default function SleepPage() {
                           <div>
                             <div className="font-bold text-sm">{log.userName || "Family Member"}</div>
                             <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
-                              {log.date ? format(new Date(log.date.seconds * 1000), "MMM dd, yyyy") : "..."}
+                              {log.date ? format(new Date(log.date.seconds * 1000), "MMM dd, yyyy") : ", ..."}
                             </div>
                           </div>
                         </div>

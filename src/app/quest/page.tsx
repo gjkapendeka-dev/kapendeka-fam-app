@@ -7,19 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function QuestPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const questsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(collection(db, "quests"), where("familyId", "==", profile.familyId))
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("quests").select("*").eq("familyId", profile.familyId)
+  }, [supabase, profile?.familyId])
 
   const { data: quests, loading } = useCollection(questsQuery)
 
@@ -39,7 +38,7 @@ export default function QuestPage() {
   }
 
   const handleCompleteStep = (questId: string, stepIdx: number) => {
-    if (!db || !quests) return
+    if (!supabase || !quests) return
     const quest = quests.find(q => q.id === questId)
     if (!quest) return
 
@@ -47,10 +46,10 @@ export default function QuestPage() {
     newSteps[stepIdx] = { ...newSteps[stepIdx], completed: !newSteps[stepIdx].completed }
     
     const allDone = newSteps.every(s => s.completed)
-    updateDoc(doc(db, "quests", questId), {
+    supabase.from("quests").update({
       steps: newSteps,
       status: allDone ? "completed" : "active"
-    })
+    }).eq("id", questId)
     
     if (allDone) {
       toast({ title: "Quest Completed!", description: `Earned ${quest.pointsReward} bonus XP!` })

@@ -37,12 +37,8 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const EVENT_TYPES = [
   { value: "work", label: "Work", color: "bg-blue-500" },
   { value: "school", label: "School", color: "bg-orange-500" },
@@ -56,7 +52,7 @@ const EVENT_TYPES = [
 
 export default function CalendarPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
   const [date, setDate] = React.useState<Date | undefined>(new Date())
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -69,13 +65,11 @@ export default function CalendarPage() {
   const [newStartTime, setNewStartTime] = React.useState("09:00")
 
   const eventsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "events"),
-      where("familyId", "==", profile.familyId),
-      orderBy("startTime", "asc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("calendar_events")
+      .select("*")
+      .eq("familyId", profile.familyId).order("startTime", { ascending: true })
+  }, [supabase, profile?.familyId])
 
   const { data: events, loading } = useCollection(eventsQuery)
 
@@ -89,8 +83,8 @@ export default function CalendarPage() {
     })
   }, [events, date])
 
-  const handleAddEvent = () => {
-    if (!db || !profile?.familyId || !date || !newTitle) return
+  const handleAddEvent = async () => {
+    if (!supabase || !profile?.familyId || !date || !newTitle) return
 
     const [hours, minutes] = newStartTime.split(":").map(Number)
     const startTimeDate = new Date(date)
@@ -109,29 +103,23 @@ export default function CalendarPage() {
       endTime: endTimeDate.toISOString(),
       assignedTo: [profile.id],
       isRecurring: false,
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "events"), eventData)
-      .then(() => {
-        setIsDialogOpen(false)
-        setNewTitle("")
-        setNewType("other")
-        setNewLocation("")
-        setNewDesc("")
-        toast({
-          title: "Event Added",
-          description: `${newTitle} has been scheduled.`,
-        })
+    const { error } = await supabase.from("calendar_events").insert([eventData])
+    if (!error) {
+      setIsDialogOpen(false)
+      setNewTitle("")
+      setNewType("other")
+      setNewLocation("")
+      setNewDesc("")
+      toast({
+        title: "Event Added",
+        description: `${newTitle} has been scheduled.`,
       })
-      .catch((err) => {
-        const permsError = new FirestorePermissionError({
-          path: "events",
-          operation: "create",
-          requestResourceData: eventData
-        })
-        errorEmitter.emit("permission-error", permsError)
-      })
+    } else {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+    }
   }
 
   return (
@@ -202,7 +190,7 @@ export default function CalendarPage() {
                   <Label htmlFor="description">Notes</Label>
                   <Textarea 
                     id="description" 
-                    placeholder="Any extra details..." 
+                    placeholder="Any extra details, ..." 
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
                   />

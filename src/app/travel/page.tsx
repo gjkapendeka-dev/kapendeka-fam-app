@@ -27,14 +27,13 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 export default function TravelPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -46,18 +45,15 @@ export default function TravelPage() {
   const [endDate, setEndDate] = React.useState("")
 
   const tripsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "trips"),
-      where("familyId", "==", profile.familyId),
-      orderBy("dates.start", "asc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("trips").select("*").eq("familyId", profile.familyId).order("dates.start", { ascending: true })
+    
+  }, [supabase, profile?.familyId])
 
   const { data: trips, loading } = useCollection(tripsQuery)
 
   const handleAddTrip = () => {
-    if (!db || !profile?.familyId || !destination) return
+    if (!supabase || !profile?.familyId || !destination) return
 
     setIsSubmitting(true)
     const data = {
@@ -72,16 +68,16 @@ export default function TravelPage() {
         { item: "Sunscreen", packed: false },
         { item: "Chargers", packed: false }
       ],
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "trips"), data)
+    supabase.from("trips").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setDestination("")
         toast({ title: "Trip Planned!", description: `Packing lists for ${destination} generated.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (
@@ -188,8 +184,8 @@ export default function TravelPage() {
                     </CardContent>
                   </div>
                 </Card>
-              ))
-            )}
+              )
+            ))}
           </div>
         </div>
 

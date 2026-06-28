@@ -37,8 +37,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, increment } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const TIME_OF_DAY = [
@@ -50,7 +49,7 @@ const TIME_OF_DAY = [
 
 export default function RitualsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -63,17 +62,15 @@ export default function RitualsPage() {
   const [points, setPoints] = React.useState("100")
 
   const ritualsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "rituals"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("rituals").select("*").eq("familyId", profile.familyId)
+    
+  }, [supabase, profile?.familyId])
 
   const { data: rituals, loading } = useCollection(ritualsQuery)
 
   const handleAddRitual = () => {
-    if (!db || !profile?.familyId || !title) return
+    if (!supabase || !profile?.familyId || !title) return
 
     setIsSubmitting(true)
     const data = {
@@ -83,31 +80,31 @@ export default function RitualsPage() {
       timeOfDay,
       pointsValue: parseInt(points),
       lastCompletedAt: null,
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "rituals"), data)
+    supabase.from("rituals").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setTitle("")
         setDescription("")
         toast({ title: "Ritual Anchored", description: `${title} is now a family tradition.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   const handleComplete = (ritualId: string, ritualPoints: number) => {
-    if (!db || !profile) return
+    if (!supabase || !profile) return
     
     // Complete ritual logic
-    updateDoc(doc(db, "rituals", ritualId), {
-      lastCompletedAt: serverTimestamp()
-    })
+    supabase.from("rituals").update({
+      lastCompletedAt: new Date().toISOString()
+    }).eq("id", ritualId)
     
     // Award points
-    updateDoc(doc(db, "users", profile.id), {
-      points: increment(ritualPoints)
-    })
+    supabase.from("users").update({
+      points: (profile.points || 0) + ritualPoints
+    }).eq("id", profile.id)
 
     toast({ 
       title: "Ritual Honored!", 
@@ -117,8 +114,8 @@ export default function RitualsPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (!db) return
-    deleteDoc(doc(db, "rituals", id))
+    if (!supabase) return
+    supabase.from("rituals").delete().eq("id", id)
       .then(() => toast({ title: "Ritual Removed" }))
   }
 

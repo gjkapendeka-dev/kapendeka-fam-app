@@ -19,65 +19,62 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useCollection, useFirestore, useDoc } from "@/firebase"
-import { collection, query, where, doc, updateDoc, serverTimestamp, setDoc } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LocationSharingPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   // Fetch all family location shares
   const sharesQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "locationShares"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("member_locations")
+      .select("*")
+      .eq("familyId", profile.familyId)
+  }, [supabase, profile?.familyId])
 
   const { data: shares, loading } = useCollection(sharesQuery)
 
   // Fetch user's own share status
-  const userShareRef = React.useMemo(() => {
-    if (!db || !profile?.id) return null
-    return doc(db, "locationShares", profile.id)
-  }, [db, profile?.id])
-  const { data: myShare } = useDoc(userShareRef)
+  const myShare = React.useMemo(() => {
+    if (!shares || !profile?.id) return null
+    return shares.find(s => s.userId === profile.id) || null
+  }, [shares, profile?.id])
 
   // Real-time Browser Tracking
   React.useEffect(() => {
-    if (!myShare?.sharingEnabled || !navigator.geolocation || !db || !profile?.id) return
+    if (!myShare?.sharingEnabled || !navigator.geolocation || !supabase || !profile?.id) return
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords
-        updateDoc(doc(db, "locationShares", profile.id), {
+        supabase.from("member_locations").update({
           lastLocation: { lat: latitude, lng: longitude, address: "Live in Johannesburg" },
-          lastUpdated: serverTimestamp()
-        })
+          lastUpdated: new Date().toISOString()
+        }).eq("userId", profile.id)
       },
       (error) => console.error("Location error:", error),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
 
     return () => navigator.geolocation.clearWatch(watchId)
-  }, [myShare?.sharingEnabled, db, profile?.id])
+  }, [myShare?.sharingEnabled, supabase, profile?.id])
 
   const toggleSharing = async () => {
-    if (!db || !profile?.id) return
+    if (!supabase || !profile?.id) return
     const currentStatus = myShare?.sharingEnabled || false
     
     try {
-      await setDoc(doc(db, "locationShares", profile.id), {
-        familyId: profile.familyId,
+      await supabase.from("member_locations").upsert({
         userId: profile.id,
+        familyId: profile.familyId,
         userName: profile.displayName,
         sharingEnabled: !currentStatus,
-        lastUpdated: serverTimestamp()
-      }, { merge: true })
+        lastUpdated: new Date().toISOString()
+      }, { onConflict: 'userId' })
       
       toast({
         title: !currentStatus ? "Location Active" : "Location Paused",
@@ -142,7 +139,7 @@ export default function LocationSharingPage() {
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
                             <MapPin className="h-3.5 w-3.5 text-primary" />
-                            {share.sharingEnabled ? (share.lastLocation?.address || 'Updating coordinates...') : 'Location Paused'}
+                            {share.sharingEnabled ? (share.lastLocation?.address || 'Updating coordinates, ...') : 'Location Paused'}
                           </div>
                         </div>
                       </div>

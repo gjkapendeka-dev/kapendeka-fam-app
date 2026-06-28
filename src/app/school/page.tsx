@@ -35,14 +35,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, updateDoc, doc } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 export default function SchoolPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -55,18 +54,15 @@ export default function SchoolPage() {
   const [dueDate, setDueDate] = React.useState("")
 
   const homeworkQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "homework"),
-      where("familyId", "==", profile.familyId),
-      orderBy("dueDate", "asc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("homework").select("*").eq("familyId", profile.familyId).order("dueDate", { ascending: true })
+    
+  }, [supabase, profile?.familyId])
 
   const { data: assignments, loading } = useCollection(homeworkQuery)
 
   const handleAddAssignment = () => {
-    if (!db || !profile?.familyId || !title) return
+    if (!supabase || !profile?.familyId || !title) return
 
     setIsSubmitting(true)
     const data = {
@@ -75,23 +71,23 @@ export default function SchoolPage() {
       subject,
       childName,
       status: "pending",
-      dueDate: dueDate ? new Date(dueDate).toISOString() : serverTimestamp(),
-      createdAt: serverTimestamp(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "homework"), data)
+    supabase.from("homework").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setTitle("")
         toast({ title: "Assignment Added", description: `Added ${title} for ${childName}.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   const toggleStatus = (id: string, current: string) => {
-    if (!db) return
+    if (!supabase) return
     const next = current === "pending" ? "done" : "pending"
-    updateDoc(doc(db, "homework", id), { status: next })
+    supabase.from("homework").update({ status: next }).eq("id", id)
   }
 
   return (
@@ -198,8 +194,8 @@ export default function SchoolPage() {
                     </Button>
                   </CardContent>
                 </Card>
-              ))
-            )}
+              )
+            ))}
           </div>
         </div>
 

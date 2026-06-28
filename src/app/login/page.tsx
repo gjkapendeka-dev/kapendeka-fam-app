@@ -2,13 +2,8 @@
 "use client"
 
 import * as React from "react"
-import { useAuth } from "@/firebase"
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup 
-} from "firebase/auth"
+import { useAuth } from "@/supabase"
+import { supabase } from "@/supabase"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -33,10 +28,12 @@ export default function LoginPage() {
 
     try {
       if (isRegistering) {
-        await createUserWithEmailAndPassword(auth, email, password)
-        toast({ title: "Account created!", description: "Welcome to the Kapendeka Universe." })
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) throw error
+        toast({ title: "Account created!", description: "Welcome to the Kapendeka Universe. Please check your email to verify." })
       } else {
-        await signInWithEmailAndPassword(auth, email, password)
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
       }
       router.push("/")
     } catch (error: any) {
@@ -52,17 +49,17 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     if (!auth) return
-    const provider = new GoogleAuthProvider()
     try {
-      await signInWithPopup(auth, provider)
-      router.push("/")
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
+      if (error) throw error
+      // router.push("/") // OAuth usually redirects automatically
     } catch (error: any) {
       toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message })
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops)] from-primary/10 via-background to-background">
       <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-xl">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-3xl flex items-center justify-center shadow-lg mb-4">
@@ -101,7 +98,7 @@ export default function LoginPage() {
               />
             </div>
             <Button className="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/20" disabled={loading}>
-              {loading ? "Please wait..." : (isRegistering ? "Create Account" : "Sign In")}
+              {loading ? "Please wait, ..." : (isRegistering ? "Create Account" : "Sign In")}
             </Button>
           </form>
 

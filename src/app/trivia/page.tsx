@@ -7,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, updateDoc, increment } from "firebase/firestore"
+import { useUser, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const QUESTIONS = [
@@ -20,7 +19,7 @@ const QUESTIONS = [
 
 export default function TriviaPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [gameState, setGameState] = React.useState<"idle" | "playing" | "result">("idle")
@@ -51,10 +50,10 @@ export default function TriviaPage() {
       } else {
         setGameState("result")
         // Award points for completion
-        if (db && profile) {
-          updateDoc(doc(db, "users", profile.id), {
-            points: increment(score * 50)
-          })
+        if (supabase && profile) {
+          supabase.from("users").update({
+            points: (profile.points || 0) + score * 50
+          }).eq("id", profile.id)
         }
       }
     }, 1000)

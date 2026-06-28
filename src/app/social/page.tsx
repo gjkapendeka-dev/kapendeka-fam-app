@@ -30,16 +30,12 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { formatDistanceToNow } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 export default function SocialPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -47,19 +43,16 @@ export default function SocialPage() {
   const [postType, setPostType] = React.useState("memory")
 
   const postsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "posts"),
-      where("familyId", "==", profile.familyId),
-      orderBy("createdAt", "desc"),
-      limit(20)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("posts")
+      .select("*")
+      .eq("familyId", profile.familyId).order("createdAt", { ascending: false }).limit(20)
+  }, [supabase, profile?.familyId])
 
   const { data: posts, loading } = useCollection(postsQuery)
 
-  const handleCreatePost = () => {
-    if (!db || !profile?.familyId || !newPostContent) return
+  const handleCreatePost = async () => {
+    if (!supabase || !profile?.familyId || !newPostContent) return
 
     const postData = {
       familyId: profile.familyId,
@@ -69,36 +62,32 @@ export default function SocialPage() {
       type: postType,
       content: newPostContent,
       mediaUrls: [],
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
       likes: []
     }
 
-    addDoc(collection(db, "posts"), postData)
-      .then(() => {
-        setIsDialogOpen(false)
-        setNewPostContent("")
-        toast({
-          title: "Memory Saved",
-          description: "Your post has been shared with the family universe.",
-        })
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "posts",
-          operation: "create",
-          requestResourceData: postData
-        }))
-      })
+    const { error } = await supabase.from("posts").insert([postData])
+    if (error) {
+      toast({ title: "Error creating post", description: error.message, variant: "destructive" })
+      return
+    }
+
+    setIsDialogOpen(false)
+    setNewPostContent("")
+    toast({
+      title: "Memory Saved",
+      description: "Your post has been shared with the family universe.",
+    })
   }
 
-  const handleLike = (postId: string, currentLikes: string[] = []) => {
-    if (!db || !profile) return
-    const postRef = doc(db, "posts", postId)
+  const handleLike = async (postId: string, currentLikes: string[] = []) => {
+    if (!supabase || !profile) return
     const isLiked = currentLikes.includes(profile.id)
+    const newLikes = isLiked ? currentLikes.filter(id => id !== profile.id) : [...currentLikes, profile.id]
     
-    updateDoc(postRef, {
-      likes: isLiked ? arrayRemove(profile.id) : arrayUnion(profile.id)
-    })
+    await supabase.from("posts").update({
+      likes: newLikes
+    }).eq("id", postId)
   }
 
   return (
@@ -164,7 +153,7 @@ export default function SocialPage() {
             <div className="h-20 w-20 bg-white rounded-[2rem] flex items-center justify-center shadow-sm mb-4">
               <History className="h-10 w-10 text-muted-foreground/30" />
             </div>
-            <h3 className="text-xl font-bold">The Universe is quiet...</h3>
+            <h3 className="text-xl font-bold">The Universe is quiet, ...</h3>
             <p className="text-muted-foreground font-medium max-w-xs mx-auto mt-2">
               Start the Kapendeka Journal by sharing the first memory of the week!
             </p>

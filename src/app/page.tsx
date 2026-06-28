@@ -27,8 +27,7 @@ import { Progress } from "@/components/ui/progress"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AIQuickAdd } from "@/components/ai-quick-add"
 import { FamilyAIBrief } from "@/components/family-ai-brief"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, limit, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import {
   Sheet,
   SheetContent,
@@ -44,7 +43,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = React.useState("Good Morning")
   const [cycle, setCycle] = React.useState<"morning" | "afternoon" | "evening">("morning")
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
 
   React.useEffect(() => {
     const hours = new Date().getHours()
@@ -61,25 +60,16 @@ export default function DashboardPage() {
   }, [])
 
   const eventsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null;
-    return query(
-      collection(db, "events"),
-      where("familyId", "==", profile.familyId),
-      orderBy("startTime", "asc"),
-      limit(3)
-    );
-  }, [db, profile?.familyId]);
+    if (!supabase || !profile?.familyId) return null;
+    return supabase.from("events").select("*").eq("familyId", profile.familyId).order("startTime", { ascending: true }).limit(3);
+  }, [supabase, profile?.familyId]);
   const { data: events } = useCollection(eventsQuery);
 
   const ritualsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null;
-    return query(
-      collection(db, "rituals"),
-      where("familyId", "==", profile.familyId),
-      where("timeOfDay", "in", [cycle, "anytime"]),
-      limit(4)
-    );
-  }, [db, profile?.familyId, cycle]);
+    if (!supabase || !profile?.familyId) return null;
+    return supabase.from("rituals").select("*").eq("familyId", profile.familyId)
+      .in("timeOfDay", [cycle, "anytime"]).limit(4);
+  }, [supabase, profile?.familyId, cycle]);
   const { data: rituals } = useCollection(ritualsQuery);
 
   // Mock Notifications
@@ -135,20 +125,22 @@ export default function DashboardPage() {
                   <SheetDescription className="font-bold text-muted-foreground uppercase tracking-widest text-[9px]">Recent updates</SheetDescription>
                 </SheetHeader>
                 <div className="space-y-4">
-                  {notifications.map((n, i) => (
-                    <div key={i} className="p-4 md:p-5 bg-muted/30 rounded-[1.5rem] md:rounded-[2rem] flex items-start gap-4 hover:bg-muted/50 transition-all cursor-pointer group">
-                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        <Info className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <div className="text-sm font-bold text-foreground leading-tight">{n.title}</div>
-                        <div className="flex items-center gap-1.5 mt-2 text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
-                          <Clock className="h-3 w-3" />
-                          {n.time}
+                  {notifications.map((n, i) => {
+                    return (
+                      <div key={i} className="p-4 md:p-5 bg-muted/30 rounded-[1.5rem] md:rounded-[2rem] flex items-start gap-4 hover:bg-muted/50 transition-all cursor-pointer group">
+                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                          <Info className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <div className="text-sm font-bold text-foreground leading-tight">{n.title}</div>
+                          <div className="flex items-center gap-1.5 mt-2 text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
+                            <Clock className="h-3 w-3" />
+                            <span>{n.time}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <Button variant="ghost" className="w-full text-primary font-black uppercase tracking-widest text-[10px] mt-4">Clear Logs</Button>
                 </div>
               </SheetContent>

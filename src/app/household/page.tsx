@@ -39,25 +39,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { 
-  collection, 
-  query, 
-  where, 
-  addDoc, 
-  serverTimestamp, 
-  orderBy, 
-  updateDoc, 
-  doc,
-  increment
-} from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 export default function HouseholdPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 
@@ -70,57 +56,45 @@ export default function HouseholdPage() {
 
   // Fetch Chores
   const choresQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "chores"),
-      where("familyId", "==", profile.familyId),
-      orderBy("dueDate", "asc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("chores")
+      .select("*")
+      .eq("familyId", profile.familyId).order("dueDate", { ascending: true })
+  }, [supabase, profile?.familyId])
   const { data: chores, loading: choresLoading } = useCollection(choresQuery)
 
   // Fetch Todos
   const todosQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "todos"),
-      where("familyId", "==", profile.familyId),
-      where("isShared", "==", true)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("todos")
+      .select("*")
+      .eq("familyId", profile.familyId).eq("isShared", true)
+  }, [supabase, profile?.familyId])
   const { data: todos } = useCollection(todosQuery)
 
-  const handleCompleteChore = (choreId: string, currentPoints: number) => {
-    if (!db || !profile) return
-
-    const choreRef = doc(db, "chores", choreId)
-    const userRef = doc(db, "users", profile.id)
-
-    updateDoc(choreRef, {
+  const handleCompleteChore = async (choreId: string, currentPoints: number) => {
+    if (!supabase || !profile) return
+    
+    const { error: choreError } = await supabase.from("chores").update({
       status: "done",
-      completedAt: serverTimestamp(),
+      completedAt: new Date().toISOString(),
       completedBy: profile.id
-    })
-    .then(() => {
-      // Award points to the user
-      updateDoc(userRef, {
-        points: increment(currentPoints)
-      })
+    }).eq("id", choreId)
+
+    if (!choreError) {
+      // Award points (in a real app, this should be an RPC to ensure atomicity)
+      const newPoints = (profile.points || 0) + currentPoints
+      await supabase.from("users").update({ points: newPoints }).eq("id", profile.id)
+      
       toast({
         title: "Chore Completed!",
         description: `You earned ${currentPoints} points for the Kapendeka rewards!`,
       })
-    })
-    .catch((err) => {
-      errorEmitter.emit("permission-error", new FirestorePermissionError({
-        path: `chores/${choreId}`,
-        operation: "update"
-      }))
-    })
+    }
   }
 
-  const handleAddTask = () => {
-    if (!db || !profile?.familyId || !newTitle) return
+  const handleAddTask = async () => {
+    if (!supabase || !profile?.familyId || !newTitle) return
 
     const collectionName = newType === "chore" ? "chores" : "todos"
     const data = newType === "chore" ? {
@@ -129,9 +103,9 @@ export default function HouseholdPage() {
       assignedTo: newAssignedTo || profile.id,
       status: "pending",
       pointsReward: parseInt(newPoints),
-      dueDate: serverTimestamp(),
+      dueDate: new Date().toISOString(),
       rotationEnabled: true,
-      createdAt: serverTimestamp()
+      createdAt: new Date().toISOString()
     } : {
       familyId: profile.familyId,
       title: newTitle,
@@ -139,25 +113,20 @@ export default function HouseholdPage() {
       assignedTo: newAssignedTo || profile.id,
       status: "pending",
       priority: newPriority,
-      createdAt: serverTimestamp()
+      createdAt: new Date().toISOString()
     }
 
-    addDoc(collection(db, collectionName), data)
-      .then(() => {
-        setIsDialogOpen(false)
-        setNewTitle("")
-        toast({
-          title: "Added Successfully",
-          description: `${newTitle} has been added to the family hub.`,
-        })
+    const { error } = await supabase.from(collectionName).insert([data])
+    if (!error) {
+      setIsDialogOpen(false)
+      setNewTitle("")
+      toast({
+        title: "Added Successfully",
+        description: `${newTitle} has been added to the family hub.`,
       })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: collectionName,
-          operation: "create",
-          requestResourceData: data
-        }))
-      })
+    } else {
+      toast({ title: "Error", description: error.message, variant: "destructive" })
+    }
   }
 
   return (
@@ -295,8 +264,8 @@ export default function HouseholdPage() {
                       </Button>
                     </CardContent>
                   </Card>
-                ))
-              )}
+                )
+              ))}
             </TabsContent>
 
             <TabsContent value="todos" className="space-y-4">

@@ -7,13 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, updateDoc, increment, collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ZenSpacePage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [activeTab, setActiveIdx] = React.useState<number | null>(null)
@@ -31,21 +30,21 @@ export default function ZenSpacePage() {
   }, [isMeditating])
 
   const handleFinish = async () => {
-    if (!db || !profile) return
+    if (!supabase || !profile) return
     setIsMeditating(false)
     const mins = Math.floor(timer / 60) || 1
     
-    await addDoc(collection(db, "zenMoments"), {
+    await supabase.from("zenMoments").insert([{
       familyId: profile.familyId,
       userId: profile.id,
       userName: profile.displayName,
       duration: mins,
-      createdAt: serverTimestamp()
-    })
+      createdAt: new Date().toISOString()
+    }])
 
-    await updateDoc(doc(db, "users", profile.id), {
-      points: increment(mins * 20)
-    })
+    await supabase.from("users").update({
+      points: (profile.points || 0) + mins * 20
+    }).eq("id", profile.id)
 
     toast({ title: "Zen Moment Archived", description: `You earned ${mins * 20} Tranquility Points.` })
     setTimer(0)

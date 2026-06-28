@@ -9,21 +9,20 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useUser, useFirestore, useDoc } from "@/firebase"
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useSupabase, useDoc } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
   const [saving, setSaving] = React.useState(false)
 
   // Fetch Family Settings
   const familyRef = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return doc(db, "families", profile.familyId)
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("families").select("*").eq("id", profile.familyId)
+  }, [supabase, profile?.familyId])
   
   const { data: family, loading } = useDoc(familyRef)
 
@@ -43,19 +42,19 @@ export default function SettingsPage() {
   }, [family])
 
   const handleSave = async () => {
-    if (!db || !profile?.familyId) return
+    if (!supabase || !profile?.familyId) return
     setSaving(true)
 
     try {
-      await updateDoc(doc(db, "families", profile.familyId), {
+      await supabase.from("families").update({
         settings: {
           timezone,
           currency,
           publicHolidaysEnabled: holidays,
           familyMotto: motto
         },
-        updatedAt: serverTimestamp()
-      })
+        updatedAt: new Date().toISOString()
+      }).eq("id", profile.familyId)
       toast({ title: "Settings Saved", description: "Universe configurations updated." })
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to save settings." })

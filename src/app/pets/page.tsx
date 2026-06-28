@@ -36,13 +36,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function PetsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -54,17 +53,15 @@ export default function PetsPage() {
   const [feedingSchedule, setFeedingSchedule] = React.useState("Morning & Evening")
 
   const petsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "pets"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("pets").select("*").eq("familyId", profile.familyId)
+    
+  }, [supabase, profile?.familyId])
 
   const { data: pets, loading } = useCollection(petsQuery)
 
   const handleAddPet = () => {
-    if (!db || !profile?.familyId || !name) return
+    if (!supabase || !profile?.familyId || !name) return
 
     setIsSubmitting(true)
     const data = {
@@ -72,16 +69,16 @@ export default function PetsPage() {
       name,
       type,
       feedingSchedule,
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "pets"), data)
+    supabase.from("pets").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setName("")
         toast({ title: "Pet Profile Created", description: `${name} is now part of the hub roster.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (
@@ -186,8 +183,8 @@ export default function PetsPage() {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          )
+        ))}
       </div>
     </div>
   )

@@ -19,20 +19,8 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { 
-  collection, 
-  query, 
-  where, 
-  addDoc, 
-  serverTimestamp, 
-  orderBy, 
-  limit 
-} from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { format } from "date-fns"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
-
 const CHANNELS = [
   { id: "general", name: "General Hub", description: "Main announcements" },
   { id: "dinner", name: "Dinner Ideas", description: "What's cooking?" },
@@ -43,7 +31,7 @@ const CHANNELS = [
 
 export default function ChatPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   
   const [activeChannel, setActiveChannel] = React.useState("general")
   const [showSidebar, setShowSidebar] = React.useState(true)
@@ -66,15 +54,11 @@ export default function ChatPage() {
   }
 
   const messagesQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "messages"),
-      where("familyId", "==", profile.familyId),
-      where("channel", "==", activeChannel),
-      orderBy("timestamp", "asc"),
-      limit(50)
-    )
-  }, [db, profile?.familyId, activeChannel])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("messages")
+      .select("*")
+      .eq("familyId", profile.familyId).eq("channel", activeChannel).order("timestamp", { ascending: true }).limit(50)
+  }, [supabase, profile?.familyId, activeChannel])
 
   const { data: messages, loading } = useCollection(messagesQuery)
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -85,9 +69,9 @@ export default function ChatPage() {
     }
   }, [messages])
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!db || !profile?.familyId || !newMessage.trim()) return
+    if (!supabase || !profile?.familyId || !newMessage.trim()) return
 
     setIsSending(true)
     const messageData = {
@@ -96,21 +80,14 @@ export default function ChatPage() {
       fromUserName: profile.displayName,
       text: newMessage,
       channel: activeChannel,
-      timestamp: serverTimestamp(),
+      timestamp: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "messages"), messageData)
-      .then(() => {
-        setNewMessage("")
-      })
-      .catch((err) => {
-        errorEmitter.emit("permission-error", new FirestorePermissionError({
-          path: "messages",
-          operation: "create",
-          requestResourceData: messageData
-        }))
-      })
-      .finally(() => setIsSending(false))
+    const { error } = await supabase.from("messages").insert([messageData])
+    setIsSending(false)
+    if (!error) {
+      setNewMessage("")
+    }
   }
 
   const currentChannel = CHANNELS.find(c => c.id === activeChannel)
@@ -207,7 +184,7 @@ export default function ChatPage() {
                           {isMe ? "You" : msg.fromUserName}
                         </span>
                         <span className="text-[8px] md:text-[9px] text-muted-foreground font-bold uppercase">
-                          {msg.timestamp ? format(new Date(msg.timestamp.seconds * 1000), "HH:mm") : "..."}
+                          {msg.timestamp ? format(new Date(msg.timestamp.seconds * 1000), "HH:mm") : ", ..."}
                         </span>
                       </div>
                       <div className={`p-4 rounded-[1.5rem] shadow-sm text-sm md:text-base font-medium leading-relaxed ${

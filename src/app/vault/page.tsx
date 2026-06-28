@@ -35,13 +35,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function VaultPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -52,17 +51,15 @@ export default function VaultPage() {
   const [type, setType] = React.useState("IDs")
 
   const vaultQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "emergencyVault"),
-      where("familyId", "==", profile.familyId)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("emergencyVault").select("*").eq("familyId", profile.familyId)
+    
+  }, [supabase, profile?.familyId])
 
   const { data: docs, loading } = useCollection(vaultQuery)
 
   const handleUpload = () => {
-    if (!db || !profile?.familyId || !title) return
+    if (!supabase || !profile?.familyId || !title) return
     if (profile.role !== 'parent' && profile.role !== 'admin') {
       toast({ variant: "destructive", title: "Access Denied", description: "Only parents can add to the vault." })
       return
@@ -74,16 +71,16 @@ export default function VaultPage() {
       title,
       type,
       accessRoles: ["parent", "admin"],
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     }
 
-    addDoc(collection(db, "emergencyVault"), data)
+    supabase.from("emergencyVault").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         setTitle("")
         toast({ title: "Document Vaulted", description: `${title} is now secured.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   const isParent = profile?.role === 'parent' || profile?.role === 'admin'
@@ -181,8 +178,8 @@ export default function VaultPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
+            )
+          ))}
         </div>
 
         <Card className="rounded-[2.5rem] border-none bg-primary p-8 text-white">

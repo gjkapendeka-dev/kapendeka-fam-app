@@ -28,8 +28,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
@@ -39,7 +38,7 @@ const LANGUAGES = [
 
 export default function LanguageLearningPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -47,18 +46,15 @@ export default function LanguageLearningPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const progressQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "languageProgress"),
-      where("familyId", "==", profile.familyId),
-      orderBy("lastLessonDate", "desc")
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("languageProgress").select("*").eq("familyId", profile.familyId).order("lastLessonDate", { ascending: false })
+    
+  }, [supabase, profile?.familyId])
 
   const { data: progressList, loading } = useCollection(progressQuery)
 
   const handleAddLanguage = () => {
-    if (!db || !profile?.familyId) return
+    if (!supabase || !profile?.familyId) return
 
     setIsSubmitting(true)
     const data = {
@@ -69,16 +65,16 @@ export default function LanguageLearningPage() {
       currentLevel: "Beginner",
       streakDays: 1,
       vocabularyCount: 0,
-      lastLessonDate: serverTimestamp(),
-      createdAt: serverTimestamp()
+      lastLessonDate: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     }
 
-    addDoc(collection(db, "languageProgress"), data)
+    supabase.from("languageProgress").insert([data])
       .then(() => {
         setIsDialogOpen(false)
         toast({ title: "Portal Opened!", description: `Starting your ${selectedLang} journey.` })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   return (
@@ -173,8 +169,8 @@ export default function LanguageLearningPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            )}
+              )
+            ))}
           </div>
         </div>
 

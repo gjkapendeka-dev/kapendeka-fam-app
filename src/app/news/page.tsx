@@ -29,14 +29,13 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
-import { useUser, useCollection, useFirestore } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { useUser, useCollection, useSupabase } from "@/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
 export default function NewsPage() {
   const { profile } = useUser()
-  const db = useFirestore()
+  const supabase = useSupabase()
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -46,19 +45,15 @@ export default function NewsPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const newsQuery = React.useMemo(() => {
-    if (!db || !profile?.familyId) return null
-    return query(
-      collection(db, "news"),
-      where("familyId", "==", profile.familyId),
-      orderBy("date", "desc"),
-      limit(20)
-    )
-  }, [db, profile?.familyId])
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("news").select("*").eq("familyId", profile.familyId).order("date", { ascending: false }).limit(20)
+    
+  }, [supabase, profile?.familyId])
 
   const { data: articles, loading } = useCollection(newsQuery)
 
   const handlePostNews = () => {
-    if (!db || !profile?.familyId || !newTitle) return
+    if (!supabase || !profile?.familyId || !newTitle) return
 
     setIsSubmitting(true)
     const newsData = {
@@ -68,18 +63,18 @@ export default function NewsPage() {
       authorId: profile.id,
       authorName: profile.displayName,
       category: category,
-      date: serverTimestamp(),
-      createdAt: serverTimestamp()
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     }
 
-    addDoc(collection(db, "news"), newsData)
+    supabase.from("news").insert([newsData])
       .then(() => {
         setIsDialogOpen(false)
         setNewTitle("")
         setNewContent("")
         toast({ title: "News Published", description: "The family has been updated!" })
       })
-      .finally(() => setIsSubmitting(false))
+      .then(() => setIsSubmitting(false))
   }
 
   // Mock Global News for the Global tab
@@ -116,7 +111,7 @@ export default function NewsPage() {
                 <Label>Details</Label>
                 <textarea 
                   className="flex min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-accent" 
-                  placeholder="Tell the story..."
+                  placeholder="Tell the story, ..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                 />
@@ -187,8 +182,8 @@ export default function NewsPage() {
                   </div>
                 </div>
               </Card>
-            ))
-          )}
+            )
+          ))}
         </TabsContent>
 
         <TabsContent value="global" className="mt-8">
