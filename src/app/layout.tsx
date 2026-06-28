@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SupabaseProvider } from "@/supabase";
 import { LayoutWrapper } from "@/components/layout-wrapper";
+import { RealtimeBroadcast } from "@/components/realtime-broadcast";
 
 export const metadata: Metadata = {
   title: 'Kapendeka Family Hub',
@@ -26,6 +27,7 @@ export default function RootLayout({
         <SupabaseProvider>
           <LayoutWrapper>
             {children}
+            <RealtimeBroadcast />
           </LayoutWrapper>
           <Toaster />
         </SupabaseProvider>
