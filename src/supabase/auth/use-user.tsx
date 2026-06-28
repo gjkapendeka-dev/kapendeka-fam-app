@@ -75,7 +75,7 @@ export function useUser() {
     }
     fetchProfile();
 
-    const channel = supabase.channel(`public:profiles:id=eq.${selectedProfileId}`)
+    const channel = supabase.channel(`public:profiles:id=eq.${selectedProfileId}-${Math.random()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${selectedProfileId}` },
