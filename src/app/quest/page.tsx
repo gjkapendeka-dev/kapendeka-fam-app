@@ -89,8 +89,6 @@ export default function QuestPage() {
     } else if (allDone) {
       toast({ title: "Quest Completed!", description: "Kids earn XP for this!" })
     }
- bonus XP!` })
-    }
   }
 
   return (
