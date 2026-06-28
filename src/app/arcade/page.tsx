@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useSupabase, useCollection, useUser } from "@/supabase"
 import { 
   Gamepad, 
   Music, 
@@ -56,7 +55,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useSupabase, useUser } from "@/supabase"
+import { useSupabase, useUser, useCollection } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 
 const saveGameScore = async (supabase: any, profile: any, game: string, score: number, type: 'score' | 'win' | 'loss' | 'draw' = 'score') => {
