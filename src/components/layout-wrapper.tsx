@@ -8,10 +8,19 @@ import { Loader2 } from "lucide-react"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { loading } = useUser()
+  const { loading, user, profile } = useUser()
   const isAuthPage = pathname === '/login' || pathname === '/select-profile'
 
   if (loading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // True auth guard: block rendering protected content while redirects happen
+  if (!isAuthPage && (!user || !profile)) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
