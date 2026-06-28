@@ -80,20 +80,20 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fafafa] dark:bg-background p-4 md:p-8 space-y-6 md:space-y-8 max-w-[1600px] mx-auto pb-24 overflow-x-hidden">
-      <header className="flex flex-col gap-6 pr-14 md:pr-0">
+    <div className="flex flex-col min-h-screen bg-[#fafafa] dark:bg-background p-3 md:p-5 space-y-4 md:space-y-5 max-w-[1600px] mx-auto pb-20 overflow-x-hidden">
+      <header className="flex flex-col gap-2 pr-12 md:pr-0">
         <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5">
+              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5">
                 Kapendeka Universe Premium
               </Badge>
             </div>
-            <h1 className="text-2xl md:text-5xl font-headline font-bold tracking-tight text-foreground mt-2 leading-tight">
+            <h1 className="text-xl md:text-4xl font-headline font-bold tracking-tight text-foreground mt-1 leading-tight">
               {greeting}, <span className="text-primary">{profile?.displayName?.split(' ')[0] || "Explorer"}</span>
             </h1>
-            <p className="text-muted-foreground font-medium flex items-center gap-2 text-xs md:text-base">
-              <CalendarIcon className="h-3 w-3 md:h-4 md:w-4 text-primary/60" />
+            <p className="text-muted-foreground font-medium flex items-center gap-1.5 text-xs md:text-sm">
+              <CalendarIcon className="h-3 w-3 text-primary/60" />
               {format(new Date(), "EEEE, MMMM do")}
             </p>
           </div>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent className="rounded-l-[2rem] md:rounded-l-[3rem] w-full sm:max-w-md border-none shadow-2xl">
-                <SheetHeader className="mb-8">
+                <SheetHeader className="mb-4">
                   <SheetTitle className="text-2xl md:text-3xl font-black flex items-center gap-3">
                     <Bell className="h-7 w-7 md:h-8 md:w-8 text-primary" />
                     Activity
@@ -149,13 +149,13 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 md:gap-4">
         {/* Main Feed */}
-        <div className="xl:col-span-8 space-y-6 md:space-y-8">
+        <div className="xl:col-span-8 space-y-4 md:space-y-5">
           <FamilyAIBrief />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-primary/5 bg-white p-6 md:p-8 group hover:shadow-primary/10 transition-all cursor-default relative overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-primary/5 bg-white p-4 md:p-5 group hover:shadow-primary/10 transition-all cursor-default relative overflow-hidden">
               <div className="absolute -top-4 -right-4 h-24 w-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                 <Award className="h-4 w-4 text-primary" />
@@ -165,7 +165,7 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold text-muted-foreground/60 mt-2 uppercase">Total XP</p>
             </Card>
 
-            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-accent/5 bg-white p-6 md:p-8 group hover:shadow-accent/10 transition-all cursor-default relative overflow-hidden">
+            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-accent/5 bg-white p-4 md:p-5 group hover:shadow-accent/10 transition-all cursor-default relative overflow-hidden">
               <div className="absolute -top-4 -right-4 h-24 w-24 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-colors" />
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                 <Zap className="h-4 w-4 text-accent" />
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold text-muted-foreground/60 mt-2 uppercase">Active Streak</p>
             </Card>
 
-            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-indigo-500/5 bg-white p-6 md:p-8 group hover:shadow-indigo-500/10 transition-all cursor-default relative overflow-hidden">
+            <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-indigo-500/5 bg-white p-4 md:p-5 group hover:shadow-indigo-500/10 transition-all cursor-default relative overflow-hidden">
               <div className="absolute -top-4 -right-4 h-24 w-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                 <Target className="h-4 w-4 text-indigo-500" />
@@ -188,7 +188,7 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase">Universe Timeline</h2>
               <Link href="/calendar">
@@ -234,14 +234,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Sidebar / Rituals */}
-        <div className="xl:col-span-4 space-y-6 md:space-y-8">
-          <div className="space-y-4 md:space-y-6">
+        <div className="xl:col-span-4 space-y-4 md:space-y-5">
+          <div className="space-y-4 md:space-y-4">
             <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase flex items-center gap-3">
               Daily Rituals
               <Badge className="bg-accent text-white border-none text-[8px] font-black tracking-[0.2em]">{cycle}</Badge>
             </h2>
             <Card className="rounded-[2rem] md:rounded-[2.5rem] shadow-2xl shadow-primary/10 border-none overflow-hidden bg-white">
-              <CardHeader className="bg-primary/5 border-b border-primary/10 p-6 md:p-8">
+              <CardHeader className="bg-primary/5 border-b border-primary/10 p-4 md:p-5">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl md:rounded-[1.5rem] bg-white shadow-lg flex items-center justify-center">
                     <Target className="h-6 w-6 md:h-7 md:w-7 text-primary" />
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 md:p-8 space-y-6">
+              <CardContent className="p-4 md:p-5 space-y-4">
                 {(rituals || []).length > 0 ? (
                   rituals?.map((ritual) => (
                     <div key={ritual.id} className="space-y-3 group cursor-pointer active:scale-[0.98] transition-all">
@@ -271,7 +271,7 @@ export default function DashboardPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 space-y-4">
+                  <div className="text-center py-4 space-y-4">
                     <Coffee className="h-8 w-8 text-muted-foreground/20 mx-auto" />
                     <p className="text-[9px] font-black uppercase text-muted-foreground/50 tracking-[0.2em]">No Rituals Defined</p>
                     <Link href="/rituals">
@@ -289,17 +289,17 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-4">
              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase">Quick Portal</h2>
              <AIQuickAdd />
           </div>
 
-          <Card className="rounded-[1.5rem] md:rounded-[2rem] bg-gradient-to-br from-indigo-900 to-black p-6 md:p-8 text-white relative overflow-hidden shadow-2xl">
+          <Card className="rounded-[1.5rem] md:rounded-[2rem] bg-gradient-to-br from-indigo-900 to-black p-4 md:p-5 text-white relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 p-4">
               <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-white/10" />
             </div>
             <h3 className="text-lg md:text-xl font-black uppercase tracking-tighter mb-4">Command Center</h3>
-            <p className="text-xs md:text-sm font-medium text-white/70 leading-relaxed mb-6">
+            <p className="text-xs md:text-sm font-medium text-white/70 leading-relaxed mb-3">
               The Kapendeka Universe is operating with 99% continuity. All nodes aligned.
             </p>
             <div className="flex gap-4">

@@ -60,7 +60,7 @@ export default function TriviaPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20 pr-14">
       <header className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xl">
            <HelpCircle className="h-6 w-6" />
@@ -77,13 +77,13 @@ export default function TriviaPage() {
              <Trophy className="h-48 w-48" />
           </div>
           <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Universe Trivia</h2>
-          <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">Prove you're the master node of the Kapendeka Universe. Earn XP for every correct answer.</p>
+          <p className="text-muted-foreground font-medium mb-4 max-w-sm mx-auto">Prove you're the master node of the Kapendeka Universe. Earn XP for every correct answer.</p>
           <Button onClick={handleStart} className="h-16 px-12 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-lg shadow-xl shadow-primary/20 transition-all hover:scale-105">
              <Play className="h-6 w-6 mr-3" /> Begin Challenge
           </Button>
         </Card>
       ) : gameState === "playing" ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
            <div className="flex justify-between items-center px-4">
               <Badge className="bg-amber-100 text-amber-600 border-none font-black text-[10px] uppercase px-4 py-1">
                  Question {currentIdx + 1} / {QUESTIONS.length}
@@ -92,13 +92,13 @@ export default function TriviaPage() {
            </div>
            <Progress value={((currentIdx + 1) / QUESTIONS.length) * 100} className="h-2 bg-muted/20" />
            <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-10">
-              <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-8 leading-tight">{QUESTIONS[currentIdx].q}</h3>
+              <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-4 leading-tight">{QUESTIONS[currentIdx].q}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {QUESTIONS[currentIdx].options.map((opt, i) => (
                     <Button 
                       key={i} 
                       variant={selected === i ? (i === QUESTIONS[currentIdx].correct ? "default" : "destructive") : "outline"}
-                      className="h-16 rounded-2xl font-bold text-lg justify-start px-8 shadow-sm transition-all active:scale-95"
+                      className="h-16 rounded-2xl font-bold text-lg justify-start px-4 shadow-sm transition-all active:scale-95"
                       onClick={() => selected === null && handleAnswer(i)}
                       disabled={selected !== null}
                     >
@@ -111,12 +111,12 @@ export default function TriviaPage() {
         </div>
       ) : (
         <Card className="rounded-[3rem] border-none shadow-2xl bg-gradient-to-br from-amber-400 to-orange-600 text-white p-12 text-center">
-           <div className="h-24 w-24 rounded-[2rem] bg-white/20 flex items-center justify-center mx-auto mb-6">
+           <div className="h-24 w-24 rounded-[2rem] bg-white/20 flex items-center justify-center mx-auto mb-3">
               <Star className="h-12 w-12 text-white fill-white" />
            </div>
            <h2 className="text-5xl font-black uppercase tracking-tighter mb-2">Game Over!</h2>
-           <p className="text-2xl font-bold opacity-80 mb-8">You scored {score} out of {QUESTIONS.length}</p>
-           <div className="bg-white/10 p-6 rounded-3xl border border-white/10 mb-8 max-w-xs mx-auto">
+           <p className="text-2xl font-bold opacity-80 mb-4">You scored {score} out of {QUESTIONS.length}</p>
+           <div className="bg-white/10 p-6 rounded-3xl border border-white/10 mb-4 max-w-xs mx-auto">
               <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Rewards Earned</div>
               <div className="text-3xl font-black mt-1">+{score * 50} XP</div>
            </div>

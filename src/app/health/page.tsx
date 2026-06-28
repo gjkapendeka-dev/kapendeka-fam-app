@@ -117,7 +117,7 @@ export default function HealthPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Health & Wellness</h1>
@@ -171,8 +171,8 @@ export default function HealthPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           {/* Activity Chart */}
           <Card className="rounded-[2rem] border-none shadow-xl bg-white overflow-hidden">
             <CardHeader className="bg-primary/5 pb-2">
@@ -206,7 +206,7 @@ export default function HealthPage() {
                 {logsLoading ? (
                   [1, 2, 3].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)
                 ) : logs?.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground font-medium">No health logs found. Start tracking today!</div>
+                  <div className="text-center py-5 text-muted-foreground font-medium">No health logs found. Start tracking today!</div>
                 ) : (
                   logs?.map((log) => {
                     const typeInfo = LOG_TYPES.find(t => t.value === log.type) || LOG_TYPES[0]
@@ -236,7 +236,7 @@ export default function HealthPage() {
           </Card>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
           {/* Medical Profile Card */}
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white overflow-hidden">
             <CardHeader>
@@ -246,7 +246,7 @@ export default function HealthPage() {
               </CardTitle>
               <CardDescription className="text-rose-100 font-medium">Quick reference for {profile?.displayName}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div>
                 <Label className="text-[10px] uppercase font-bold tracking-widest opacity-80">Allergies</Label>
                 <div className="flex flex-wrap gap-2 mt-2">

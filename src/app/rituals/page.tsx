@@ -120,8 +120,8 @@ export default function RitualsPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-6xl mx-auto pb-20">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:pr-0 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-6xl mx-auto pb-20">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:pr-0 pr-14">
         <div>
           <Badge className="bg-primary text-white font-black uppercase tracking-[0.2em] text-[10px] mb-2 px-3">Legacy Feature</Badge>
           <h1 className="text-4xl font-black tracking-tight text-primary uppercase italic">Family Rituals</h1>
@@ -129,7 +129,7 @@ export default function RitualsPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-[1.5rem] h-14 px-8 font-black uppercase tracking-widest text-[11px] bg-primary shadow-2xl shadow-primary/20 group">
+            <Button className="rounded-[1.5rem] h-14 px-4 font-black uppercase tracking-widest text-[11px] bg-primary shadow-2xl shadow-primary/20 group">
               <Plus className="h-5 w-5 mr-3 group-hover:rotate-90 transition-transform" /> Create Tradition
             </Button>
           </DialogTrigger>
@@ -138,7 +138,7 @@ export default function RitualsPage() {
               <DialogTitle className="text-2xl font-black uppercase">Anchor a New Ritual</DialogTitle>
               <DialogDescription className="font-bold text-[10px] uppercase tracking-widest">Rituals define your family identity.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6 py-6 p-4">
+            <div className="grid gap-3 py-6 p-4">
               <div className="grid gap-2">
                 <Label className="font-black uppercase text-[10px] tracking-widest">Name</Label>
                 <Input placeholder="e.g. Sunday Braai Setup" value={title} onChange={(e) => setTitle(e.target.value)} className="h-12 rounded-2xl" />
@@ -173,14 +173,14 @@ export default function RitualsPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {loading ? (
               [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-[3rem]" />)
             ) : rituals?.length === 0 ? (
               <Card className="col-span-full py-24 bg-white rounded-[4rem] border-4 border-dashed border-muted/50 flex flex-col items-center text-center">
-                <div className="h-24 w-24 bg-muted/20 rounded-[2.5rem] flex items-center justify-center mb-6">
+                <div className="h-24 w-24 bg-muted/20 rounded-[2.5rem] flex items-center justify-center mb-3">
                   <Target className="h-12 w-12 text-muted-foreground/20" />
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tighter">The Universe is Waiting</h3>
@@ -228,13 +228,13 @@ export default function RitualsPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-4">
           <Card className="rounded-[3rem] bg-gradient-to-br from-amber-400 to-orange-600 text-white p-10 relative overflow-hidden shadow-2xl shadow-orange-500/20">
             <div className="absolute top-0 right-0 p-6 opacity-20">
               <Trophy className="h-24 w-24" />
             </div>
             <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Consistency Score</h3>
-            <div className="text-6xl font-black mb-6">94%</div>
+            <div className="text-6xl font-black mb-3">94%</div>
             <div className="space-y-4">
                <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest opacity-80">
                   <span>Daily Ritual Streak</span>
@@ -244,12 +244,12 @@ export default function RitualsPage() {
                   <div className="h-full bg-white rounded-full shadow-lg" style={{ width: '94%' }} />
                </div>
             </div>
-            <p className="mt-8 text-sm font-bold text-white/80 leading-relaxed italic">
+            <p className="mt-4 text-sm font-bold text-white/80 leading-relaxed italic">
               "The secret to a great family life is hidden in your daily routine."
             </p>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-8 space-y-6">
+          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-4 space-y-4">
             <div className="flex items-center gap-3">
                <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                   <Zap className="h-6 w-6" />

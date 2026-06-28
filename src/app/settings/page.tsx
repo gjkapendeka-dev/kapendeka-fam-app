@@ -63,10 +63,10 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>
+  if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto pb-20">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
@@ -78,9 +78,9 @@ export default function SettingsPage() {
         </Button>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Card className="rounded-[2.5rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-800 text-white p-1">
-          <CardContent className="p-8 space-y-4">
+          <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-5 w-5 text-accent" />
               <h2 className="text-xl font-bold">Universe Identity</h2>

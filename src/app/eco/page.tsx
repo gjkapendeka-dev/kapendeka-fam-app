@@ -40,7 +40,7 @@ export default function EcoUniversePage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto pb-20 pr-14">
       <header className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-xl">
            <Leaf className="h-6 w-6" />
@@ -51,8 +51,8 @@ export default function EcoUniversePage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: "Water Saved", type: "water", icon: Droplets, color: "bg-blue-50 text-blue-600", unit: "L" },
@@ -69,8 +69,8 @@ export default function EcoUniversePage() {
               ))}
            </div>
 
-           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-8">
-              <CardHeader className="p-0 mb-6">
+           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-4">
+              <CardHeader className="p-0 mb-3">
                  <CardTitle className="text-xl font-black uppercase">Impact History</CardTitle>
               </CardHeader>
               <CardContent className="p-0 space-y-4">
@@ -87,13 +87,13 @@ export default function EcoUniversePage() {
            </Card>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
            <Card className="rounded-[2.5rem] border-none shadow-2xl bg-gradient-to-br from-emerald-700 to-green-900 text-white p-10 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
                  <Wind className="h-32 w-32" />
               </div>
               <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Universe Purity</h3>
-              <div className="text-6xl font-black mb-6">A+</div>
+              <div className="text-6xl font-black mb-3">A+</div>
               <div className="space-y-4">
                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest opacity-80">
                     <span>Planetary Alignment</span>

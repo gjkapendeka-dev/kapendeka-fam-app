@@ -82,7 +82,7 @@ export default function PetsPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Pet Care Hub</h1>
@@ -133,7 +133,7 @@ export default function PetsPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           [1, 2].map(i => <div key={i} className="h-80 bg-muted animate-pulse rounded-[2.5rem]" />)
         ) : pets?.length === 0 ? (

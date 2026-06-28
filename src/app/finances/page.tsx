@@ -115,7 +115,7 @@ export default function FinancesPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Finances & Allowances</h1>
@@ -189,7 +189,7 @@ export default function FinancesPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Total Balance</CardTitle>
@@ -262,9 +262,9 @@ export default function FinancesPage() {
             </TableHeader>
             <TableBody>
               {txLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-4"><Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
               ) : transactions?.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-12 text-muted-foreground">No transactions logged yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center py-5 text-muted-foreground">No transactions logged yet.</TableCell></TableRow>
               ) : (
                 transactions?.map((tx) => (
                   <TableRow key={tx.id} className="group transition-colors hover:bg-muted/30">

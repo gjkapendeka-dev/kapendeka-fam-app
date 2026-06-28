@@ -81,7 +81,7 @@ export default function TravelPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Travel & Vacations</h1>
@@ -124,8 +124,8 @@ export default function TravelPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Briefcase className="h-5 w-5 text-primary" />
             Upcoming Journeys
@@ -173,7 +173,7 @@ export default function TravelPage() {
                         </div>
                       </div>
 
-                      <div className="mt-6 flex gap-2">
+                      <div className="mt-3 flex gap-2">
                         <Button variant="outline" size="sm" className="rounded-xl font-bold h-9">
                           <Backpack className="h-4 w-4 mr-2" /> Packing List
                         </Button>
@@ -189,7 +189,7 @@ export default function TravelPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-4">
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-blue-800 text-white p-6">
             <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
               <MapPin className="h-5 w-5 text-accent" />

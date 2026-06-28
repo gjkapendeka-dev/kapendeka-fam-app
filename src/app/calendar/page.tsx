@@ -123,7 +123,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:pr-0 pr-14">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Family Calendar</h1>
@@ -205,7 +205,7 @@ export default function CalendarPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Calendar UI */}
         <Card className="lg:col-span-5 rounded-3xl border-none shadow-xl overflow-hidden bg-white">
           <CardHeader className="bg-primary/5 pb-2">
@@ -241,7 +241,7 @@ export default function CalendarPage() {
         </Card>
 
         {/* Right Column: Day View */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <span className="bg-primary/10 text-primary px-3 py-1 rounded-xl text-lg">

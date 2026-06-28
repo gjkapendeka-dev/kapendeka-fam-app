@@ -91,7 +91,7 @@ export default function SocialPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Family Journal & Social</h1>
@@ -143,9 +143,9 @@ export default function SocialPage() {
         </Dialog>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {[1, 2].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-3xl" />)}
           </div>
         ) : posts?.length === 0 ? (
@@ -157,7 +157,7 @@ export default function SocialPage() {
             <p className="text-muted-foreground font-medium max-w-xs mx-auto mt-2">
               Start the Kapendeka Journal by sharing the first memory of the week!
             </p>
-            <Button variant="outline" className="mt-6 rounded-xl border-primary/20 text-primary font-bold" onClick={() => setIsDialogOpen(true)}>
+            <Button variant="outline" className="mt-3 rounded-xl border-primary/20 text-primary font-bold" onClick={() => setIsDialogOpen(true)}>
               Create First Post
             </Button>
           </div>
@@ -201,7 +201,7 @@ export default function SocialPage() {
                     </div>
                   )}
                 </CardContent>
-                <CardFooter className="border-t pt-4 flex items-center gap-6">
+                <CardFooter className="border-t pt-4 flex items-center gap-3">
                   <button 
                     onClick={() => handleLike(post.id, post.likes)}
                     className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${isLiked ? 'text-rose-500' : 'text-muted-foreground hover:text-rose-500'}`}

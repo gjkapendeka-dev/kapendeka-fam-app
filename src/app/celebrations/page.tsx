@@ -82,7 +82,7 @@ export default function CelebrationsPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Celebrations & Milestones</h1>
@@ -133,14 +133,14 @@ export default function CelebrationsPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <PartyPopper className="h-6 w-6 text-primary" />
             Upcoming Joy
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {loading ? (
               [1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-muted animate-pulse rounded-3xl" />)
             ) : celebrations?.length === 0 ? (
@@ -167,7 +167,7 @@ export default function CelebrationsPage() {
                     <p className="text-sm font-medium text-muted-foreground mt-1">
                       {celeb.date ? format(new Date(celeb.date), "MMMM dd") : "TBD"}
                     </p>
-                    <div className="mt-6 flex items-center justify-between">
+                    <div className="mt-3 flex items-center justify-between">
                       <Button variant="ghost" size="sm" className="font-bold text-accent h-8 rounded-lg px-2">
                         <Gift className="h-4 w-4 mr-1.5" /> Gift Ideas
                       </Button>
@@ -180,7 +180,7 @@ export default function CelebrationsPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-4">
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-accent to-blue-600 text-white overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -121,4 +121,18 @@
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
+
+  /* Compact Card defaults */
+  .compact-card > .card-header,
+  [class*='CardHeader'] {
+    padding-top: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Mobile bottom padding accounts for nav trigger only */
+  @media (max-width: 768px) {
+    .page-content {
+      padding-bottom: 5rem;
+    }
+  }
 }

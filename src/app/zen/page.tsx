@@ -51,7 +51,7 @@ export default function ZenSpacePage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20 pr-14">
       <header className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center shadow-xl">
            <Wind className="h-6 w-6" />
@@ -62,10 +62,10 @@ export default function ZenSpacePage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-4">
         <Card className="rounded-[3rem] border-none shadow-2xl bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-12 text-center overflow-hidden relative">
           <div className="absolute -top-10 -left-10 h-64 w-64 bg-sky-100/40 rounded-full blur-3xl" />
-          <div className="relative z-10 space-y-8">
+          <div className="relative z-10 space-y-4">
             {isMeditating ? (
               <div className="space-y-12 animate-in zoom-in duration-500">
                  <div className="h-48 w-48 rounded-full border-8 border-sky-200 border-t-sky-500 animate-spin mx-auto flex items-center justify-center">
@@ -77,10 +77,10 @@ export default function ZenSpacePage() {
                  </Button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                  <h2 className="text-4xl font-black uppercase tracking-tighter text-sky-900">Enter the Void</h2>
                  <p className="text-muted-foreground font-medium max-w-sm mx-auto uppercase text-xs tracking-widest">Find your center. The Hub will track your tranquility nodes.</p>
-                 <div className="flex justify-center gap-4 py-8">
+                 <div className="flex justify-center gap-4 py-4">
                     {[
                       { icon: Sun, label: "Morning" },
                       { icon: Moon, label: "Night" },
@@ -100,8 +100,8 @@ export default function ZenSpacePage() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <Card className="rounded-[2.5rem] border-none shadow-lg bg-white p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+           <Card className="rounded-[2.5rem] border-none shadow-lg bg-white p-4">
               <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
                  <Heart className="h-4 w-4" /> Universe Daily Wisdom
               </h4>
@@ -109,7 +109,7 @@ export default function ZenSpacePage() {
                  "In the silence of the hub, the family nodes find their strongest alignment."
               </p>
            </Card>
-           <Card className="rounded-[2.5rem] border-none shadow-lg bg-white p-8">
+           <Card className="rounded-[2.5rem] border-none shadow-lg bg-white p-4">
               <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
                  <Zap className="h-4 w-4" /> Tranquility XP
               </h4>

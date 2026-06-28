@@ -153,8 +153,8 @@ export default function ChatPage() {
         </header>
 
         {/* Messages List */}
-        <ScrollArea className="flex-1 p-4 md:p-6 bg-slate-50/50 no-scrollbar">
-          <div className="space-y-6 md:space-y-8">
+        <ScrollArea className="flex-1 p-3 md:p-4 bg-slate-50/50 no-scrollbar">
+          <div className="space-y-4 md:space-y-5">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
@@ -204,7 +204,7 @@ export default function ChatPage() {
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="p-4 md:p-8 border-t shrink-0 bg-white">
+        <div className="p-3 md:p-5 border-t shrink-0 bg-white">
           <form onSubmit={handleSendMessage} className="relative max-w-4xl mx-auto">
             <Input 
               placeholder={`Message #${activeChannel}...`}

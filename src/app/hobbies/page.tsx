@@ -87,7 +87,7 @@ export default function HobbiesPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Hobbies & Hobbies</h1>
@@ -134,9 +134,9 @@ export default function HobbiesPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {loading ? (
               [1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-[2.5rem]" />)
             ) : hobbies?.length === 0 ? (
@@ -151,7 +151,7 @@ export default function HobbiesPage() {
                 return (
                   <Card key={hobby.id} className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden group hover:shadow-lg transition-all">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center justify-between mb-3">
                         <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${iconInfo.color}`}>
                           <iconInfo.icon className="h-6 w-6" />
                         </div>
@@ -168,7 +168,7 @@ export default function HobbiesPage() {
                         </div>
                         <Progress value={((hobby.progress?.xp || 0) / 500) * 100} className="h-1.5" />
                       </div>
-                      <div className="mt-6 flex items-center justify-between">
+                      <div className="mt-3 flex items-center justify-between">
                         <Button variant="ghost" size="sm" className="font-bold text-primary h-8 px-2 rounded-lg">
                           Log Session
                         </Button>
@@ -182,7 +182,7 @@ export default function HobbiesPage() {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -85,7 +85,7 @@ export default function NewsPage() {
   ]
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Kapendeka News</h1>
@@ -133,7 +133,7 @@ export default function NewsPage() {
           <TabsTrigger value="global" className="flex-1 rounded-lg font-bold">Global Brief</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="family" className="space-y-6 mt-8">
+        <TabsContent value="family" className="space-y-4 mt-4">
           {loading ? (
             [1, 2].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-[2rem]" />)
           ) : articles?.length === 0 ? (
@@ -166,7 +166,7 @@ export default function NewsPage() {
                     <p className="text-sm text-muted-foreground font-medium leading-relaxed flex-1 line-clamp-2">
                       {article.content}
                     </p>
-                    <div className="mt-6 flex items-center justify-between">
+                    <div className="mt-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={`https://picsum.photos/seed/${article.authorId}/100/100`} />
@@ -186,8 +186,8 @@ export default function NewsPage() {
           ))}
         </TabsContent>
 
-        <TabsContent value="global" className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TabsContent value="global" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {globalNews.map((news, i) => (
               <Card key={i} className="rounded-2xl border-none shadow-sm bg-muted/10 p-6 flex flex-col space-y-4">
                 <div className="flex justify-between items-start">

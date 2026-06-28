@@ -57,7 +57,7 @@ export default function QuestPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
            <div className="h-12 w-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xl">
@@ -84,8 +84,8 @@ export default function QuestPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
            {loading ? (
              [1, 2].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-[2.5rem]" />)
            ) : (quests || []).length === 0 ? (
@@ -100,7 +100,7 @@ export default function QuestPage() {
                const pct = (completedCount / quest.steps.length) * 100
                return (
                  <Card key={quest.id} className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden group">
-                    <CardHeader className="p-8 pb-4">
+                    <CardHeader className="p-4 pb-4">
                        <div className="flex justify-between items-start mb-4">
                           <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[9px] uppercase tracking-widest px-3">
                              {quest.pointsReward} XP REWARD
@@ -110,7 +110,7 @@ export default function QuestPage() {
                        <CardTitle className="text-2xl font-black uppercase tracking-tight">{quest.title}</CardTitle>
                        <CardDescription className="font-bold text-xs">{quest.description}</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8 pt-0 space-y-6">
+                    <CardContent className="p-4 pt-0 space-y-4">
                        <div className="space-y-2">
                           <div className="flex justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                              <span>Exploration Progress</span>
@@ -142,9 +142,9 @@ export default function QuestPage() {
            )}
         </div>
 
-        <div className="lg:col-span-4 space-y-8">
-           <Card className="rounded-[2rem] border-none shadow-2xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-8">
-              <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
+        <div className="lg:col-span-4 space-y-4">
+           <Card className="rounded-[2rem] border-none shadow-2xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-4">
+              <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center mb-3">
                  <Trophy className="h-8 w-8 text-yellow-400 fill-yellow-400" />
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">Master Explorer</h3>

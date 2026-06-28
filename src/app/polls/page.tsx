@@ -67,7 +67,7 @@ export default function PollsPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-4xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black uppercase italic text-primary tracking-tighter">Family Polls</h1>
@@ -100,7 +100,7 @@ export default function PollsPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-3">
         {loading ? (
           <div className="space-y-4">
             {[1, 2].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-[2rem]" />)}
@@ -116,14 +116,14 @@ export default function PollsPage() {
             const total = votesArray.length
             return (
               <Card key={poll.id} className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
-                <CardHeader className="p-8 pb-4">
+                <CardHeader className="p-4 pb-4">
                   <div className="flex justify-between items-start">
                     <Badge className="bg-primary/5 text-primary border-none font-black text-[8px] uppercase">{poll.status}</Badge>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">By {poll.createdBy}</span>
                   </div>
                   <CardTitle className="text-2xl font-black tracking-tight mt-4">{poll.question}</CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 pt-0 space-y-4">
+                <CardContent className="p-4 pt-0 space-y-4">
                   {poll.options.map((opt: string, i: number) => {
                     const count = votesArray.filter(v => v === i).length
                     const pct = total > 0 ? (count / total) * 100 : 0

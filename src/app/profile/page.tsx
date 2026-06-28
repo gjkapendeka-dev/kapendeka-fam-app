@@ -79,14 +79,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto pb-20">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto pb-20">
       <header>
         <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">My Identity</h1>
         <p className="text-muted-foreground font-medium">Manage your presence in the Kapendeka Universe</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 pb-8 relative">
               <div className="absolute -bottom-6 left-8">
@@ -101,8 +101,8 @@ export default function ProfilePage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-12 p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="pt-12 p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Display Name</Label>
                   <Input 
@@ -135,15 +135,15 @@ export default function ProfilePage() {
                   </Select>
                 </div>
               </div>
-              <Button onClick={handleUpdate} disabled={saving} className="w-full md:w-auto px-8 rounded-xl h-12 font-bold shadow-lg shadow-primary/20">
+              <Button onClick={handleUpdate} disabled={saving} className="w-full md:w-auto px-4 rounded-xl h-12 font-bold shadow-lg shadow-primary/20">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Update Profile
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-8">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-4">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 Universe Members
@@ -168,9 +168,9 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-indigo-600 to-primary text-white p-8">
-            <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+        <div className="space-y-4">
+          <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-indigo-600 to-primary text-white p-4">
+            <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-3">
               <Award className="h-6 w-6 text-accent" />
             </div>
             <h3 className="text-xl font-bold mb-2">Universe Stats</h3>
@@ -189,9 +189,9 @@ export default function ProfilePage() {
             </div>
           </Card>
 
-          <Card className="rounded-[2rem] border-none shadow-sm bg-accent/5 p-8">
+          <Card className="rounded-[2rem] border-none shadow-sm bg-accent/5 p-4">
             <h3 className="text-lg font-bold mb-4">Invite Family</h3>
-            <p className="text-sm text-muted-foreground font-medium mb-6">Use this code to bring new members into the Kapendeka universe.</p>
+            <p className="text-sm text-muted-foreground font-medium mb-3">Use this code to bring new members into the Kapendeka universe.</p>
             <div className="relative">
               <Input 
                 value={profile?.familyId || ""} 

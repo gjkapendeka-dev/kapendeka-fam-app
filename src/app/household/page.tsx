@@ -130,7 +130,7 @@ export default function HouseholdPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Household Tasks</h1>
@@ -201,10 +201,10 @@ export default function HouseholdPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           <Tabs defaultValue="chores" className="w-full">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-3">
               <TabsList className="bg-muted/50 p-1 rounded-xl">
                 <TabsTrigger value="chores" className="rounded-lg font-bold px-6">Chores</TabsTrigger>
                 <TabsTrigger value="todos" className="rounded-lg font-bold px-6">Todos</TabsTrigger>
@@ -291,7 +291,7 @@ export default function HouseholdPage() {
           </Tabs>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Card className="rounded-3xl border-none shadow-xl bg-gradient-to-br from-indigo-600 to-primary text-white overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">

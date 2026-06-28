@@ -86,7 +86,7 @@ export default function LocationSharingPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Location Sharing</h1>
@@ -101,8 +101,8 @@ export default function LocationSharingPage() {
         </Card>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Family Status
@@ -160,13 +160,13 @@ export default function LocationSharingPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-8">
-          <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-blue-800 text-white p-8">
-            <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+        <div className="lg:col-span-4 space-y-4">
+          <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-blue-800 text-white p-4">
+            <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-3">
               <ShieldCheck className="h-6 w-6 text-accent" />
             </div>
             <h3 className="text-2xl font-bold mb-4">Universe Safety</h3>
-            <p className="text-primary-foreground/80 font-medium leading-relaxed mb-6">
+            <p className="text-primary-foreground/80 font-medium leading-relaxed mb-3">
               Location sharing is strictly opt-in and private to your family. No one outside the Kapendeka Universe can see your location.
             </p>
             <div className="space-y-3">

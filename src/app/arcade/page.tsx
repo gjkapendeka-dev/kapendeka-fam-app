@@ -91,7 +91,7 @@ function PianoGame() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-2 overflow-x-hidden">
+    <div className="flex flex-col items-center space-y-4 py-4 px-2 overflow-x-hidden">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Kids' Magic Piano</h3>
         <p className="text-muted-foreground font-medium text-sm">Tap the keys to make music!</p>
@@ -177,15 +177,15 @@ function WordSearchGame() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 py-6 items-start px-2">
+    <div className="flex flex-col lg:flex-row gap-3 py-6 items-start px-2">
       <Card className="w-full lg:w-80 rounded-3xl border-none shadow-sm bg-muted/10">
-        <CardHeader className="p-4 md:p-6">
+        <CardHeader className="p-3 md:p-4">
           <CardTitle className="text-lg flex items-center gap-2">
             <Type className="h-5 w-5 text-primary" />
             Word List
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0 space-y-4">
+        <CardContent className="p-3 md:p-4 pt-0 space-y-4">
           <div className="flex gap-2">
             <Input 
               placeholder="NEW WORD" 
@@ -262,7 +262,7 @@ function TicTacToe() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4 relative">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4 relative">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Tic-Tac-Toe</h3>
         <p className="text-muted-foreground font-medium text-sm mt-2">
@@ -281,7 +281,7 @@ function TicTacToe() {
           </button>
         ))}
       </div>
-      <Button onClick={resetLocal} variant="outline" className="h-12 px-8 rounded-full font-bold border-primary text-primary">
+      <Button onClick={resetLocal} variant="outline" className="h-12 px-4 rounded-full font-bold border-primary text-primary">
         Reset Game
       </Button>
     </div>
@@ -340,7 +340,7 @@ function MemoryMatch() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Brain Boost Memory</h3>
         <p className="text-muted-foreground font-medium text-sm">Find all matching pairs!</p>
@@ -366,7 +366,7 @@ function MemoryMatch() {
           )
         })}
       </div>
-      <Button onClick={initialize} variant="outline" className="rounded-xl font-bold h-12 px-8">
+      <Button onClick={initialize} variant="outline" className="rounded-xl font-bold h-12 px-4">
         <RefreshCw className="h-4 w-4 mr-2" /> New Game
       </Button>
     </div>
@@ -415,7 +415,7 @@ function SnakeGame() {
   }, [moveSnake])
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <div className="text-center">
         <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Snake Score: {score}</p>
       </div>
@@ -428,7 +428,7 @@ function SnakeGame() {
           <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center space-y-4">
             <Trophy className="h-12 w-12 text-yellow-500" />
             <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Game Over</h4>
-            <Button onClick={() => { setSnake([{ x: 10, y: 10 }]); setGameOver(false); setScore(0); }} className="bg-primary text-white rounded-xl font-bold px-8">Try Again</Button>
+            <Button onClick={() => { setSnake([{ x: 10, y: 10 }]); setGameOver(false); setScore(0); }} className="bg-primary text-white rounded-xl font-bold px-4">Try Again</Button>
           </div>
         )}
       </div>
@@ -479,9 +479,9 @@ function MathMaster() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <h3 className="text-2xl font-bold text-primary">Math Master</h3>
-      <div className="bg-primary/5 p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-6 w-full max-w-sm border-2 border-primary/10 shadow-inner">
+      <div className="bg-primary/5 p-4 md:p-5 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-4 w-full max-w-sm border-2 border-primary/10 shadow-inner">
         <div className="text-4xl md:text-5xl font-black text-primary flex items-center justify-center gap-4">
           <span>{q.n1}</span>
           <span className="text-accent">{q.op === '*' ? '×' : q.op}</span>
@@ -541,7 +541,7 @@ function DoodleBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-8 px-2 w-full overflow-hidden">
+    <div className="flex flex-col items-center space-y-4 py-4 px-2 w-full overflow-hidden">
       <h3 className="text-2xl font-bold text-primary">Doodle Board</h3>
       <div className="relative w-full max-w-2xl aspect-video bg-white rounded-3xl border-4 border-muted/50 shadow-inner overflow-hidden cursor-crosshair touch-none">
         <canvas
@@ -592,7 +592,7 @@ function WhackATask() {
   }, [active])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <h3 className="text-2xl font-bold text-primary">Whack-a-Task!</h3>
       <div className="grid grid-cols-3 gap-3 bg-amber-100/50 p-4 sm:p-6 rounded-[2.5rem] shadow-inner">
         {moles.map((isUp, i) => (
@@ -603,9 +603,9 @@ function WhackATask() {
           </div>
         ))}
       </div>
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-4">
         <div className="text-2xl font-black text-primary">Score: {score}</div>
-        <Button className="rounded-xl px-8 h-12 font-bold bg-accent" onClick={() => setActive(!active)}>{active ? 'Stop' : 'Start'}</Button>
+        <Button className="rounded-xl px-4 h-12 font-bold bg-accent" onClick={() => setActive(!active)}>{active ? 'Stop' : 'Start'}</Button>
       </div>
     </div>
   )
@@ -615,7 +615,7 @@ function WhackATask() {
 function TetrisGame() {
   const [grid] = React.useState(Array(20).fill(null).map(() => Array(10).fill(0)))
   return (
-    <div className="flex flex-col items-center space-y-6 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <h3 className="text-2xl font-bold text-primary">Tetris (Coming Soon)</h3>
       <div className="relative w-[180px] md:w-[200px] aspect-[1/2] bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-10 grid-rows-20 gap-px p-px shadow-2xl">
         {grid.map((row, ri) => row.map((_, ci) => <div key={`${ri}-${ci}`} className="bg-slate-800/30 rounded-sm" />))}
@@ -667,14 +667,14 @@ function SimonSays() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <h3 className="text-2xl font-bold text-primary">Simon Pattern</h3>
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {colors.map((c, i) => (
           <button key={i} onClick={() => handlePress(i)} className={cn("w-28 h-28 sm:w-32 sm:h-32 rounded-[2.5rem] shadow-lg transition-all active:scale-90", c, activeColor === i ? "scale-110 brightness-150" : "opacity-80")} />
         ))}
       </div>
-      <Button className="h-12 px-8 rounded-xl font-bold" onClick={() => { setSequence([]); setUserSequence([]); setPlaying(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
+      <Button className="h-12 px-4 rounded-xl font-bold" onClick={() => { setSequence([]); setUserSequence([]); setPlaying(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
     </div>
   )
 }
@@ -724,7 +724,7 @@ function RockPaperScissors() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+    <div className="flex flex-col items-center space-y-10 py-5 px-4">
       <h3 className="text-2xl font-bold text-primary">Rock Paper Scissors</h3>
       <div className="flex gap-2 sm:gap-4 flex-wrap justify-center">
         {moves.map(m => <Button key={m} onClick={() => play(m)} className="rounded-2xl h-16 w-24 sm:w-28 font-black text-base shadow-lg shadow-primary/5">{m}</Button>)}
@@ -762,13 +762,13 @@ function ReactionTest() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4 w-full h-full">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4 w-full h-full">
       <div onClick={state === "idle" || state === "result" ? start : handleClick} className={cn("w-full max-w-md h-64 rounded-[3rem] flex items-center justify-center text-3xl font-black text-white cursor-pointer transition-colors shadow-2xl active:scale-95 duration-100", 
         state === "idle" ? "bg-primary" : state === "waiting" ? "bg-rose-500" : state === "ready" ? "bg-emerald-500" : "bg-blue-600"
       )}>
         {state === "idle" ? "Tap to Start" : state === "waiting" ? "Wait for Green, ..." : state === "ready" ? "TAP NOW!" : `${time}ms!`}
       </div>
-      {state === "result" && <Button variant="outline" className="h-12 px-8 rounded-xl font-bold" onClick={start}>Try Again</Button>}
+      {state === "result" && <Button variant="outline" className="h-12 px-4 rounded-xl font-bold" onClick={start}>Try Again</Button>}
     </div>
   )
 }
@@ -789,7 +789,7 @@ function SpeedClicker() {
   }, [active, timeLeft])
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+    <div className="flex flex-col items-center space-y-10 py-5 px-4">
       <div className="text-center space-y-1">
         <h3 className="text-5xl font-black text-primary tracking-tighter">{clicks} Clicks</h3>
         <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">{timeLeft}s Remaining</p>
@@ -801,7 +801,7 @@ function SpeedClicker() {
       >
         {timeLeft === 10 && clicks === 0 ? "START" : "CLICK!"}
       </button>
-      {timeLeft === 0 && <Button className="h-12 px-8 rounded-xl font-bold" onClick={() => { setClicks(0); setTimeLeft(10) }}>Reset</Button>}
+      {timeLeft === 0 && <Button className="h-12 px-4 rounded-xl font-bold" onClick={() => { setClicks(0); setTimeLeft(10) }}>Reset</Button>}
     </div>
   )
 }
@@ -823,7 +823,7 @@ function ColorFinder() {
   React.useEffect(() => { generate() }, [generate])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 px-4">
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
       <h3 className="text-2xl font-bold text-primary">Find the Odd Color</h3>
       <div className="grid grid-cols-2 gap-4">
         {colors.map((c, i) => (
@@ -851,7 +851,7 @@ function DiceRoller() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+    <div className="flex flex-col items-center space-y-10 py-5 px-4">
       <div className={cn("w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center text-6xl md:text-7xl font-black border-4 border-muted/20 text-primary", rolling && "animate-bounce")}>
         {val}
       </div>
@@ -875,11 +875,11 @@ function NumberGuess() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-10 px-4">
+    <div className="flex flex-col items-center space-y-4 py-5 px-4">
       <h3 className="text-3xl md:text-4xl font-black text-primary uppercase text-center leading-tight">{msg}</h3>
       <div className="flex gap-2 w-full max-w-xs">
         <Input type="number" inputMode="numeric" value={guess} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check()} placeholder="?" className="h-16 text-3xl font-black text-center rounded-2xl" />
-        <Button onClick={check} className="h-16 px-8 bg-accent rounded-2xl font-black text-lg">CHECK</Button>
+        <Button onClick={check} className="h-16 px-4 bg-accent rounded-2xl font-black text-lg">CHECK</Button>
       </div>
     </div>
   )
@@ -899,7 +899,7 @@ function TypingGame() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+    <div className="flex flex-col items-center space-y-10 py-5 px-4">
       <div className="text-center space-y-2">
         <div className="text-4xl sm:text-6xl font-black text-primary tracking-widest uppercase italic">{word}</div>
         <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest">Type the word above!</p>
@@ -929,7 +929,7 @@ function SlotMachine() {
   const win = !spinning && reels[0] === reels[1] && reels[1] === reels[2]
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+    <div className="flex flex-col items-center space-y-10 py-5 px-4">
       <div className="flex gap-3 md:gap-4 p-6 sm:p-10 bg-muted/20 rounded-[3rem] shadow-inner">
         {reels.map((r, i) => (
           <div key={i} className="w-20 h-24 sm:w-24 sm:h-32 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl sm:text-5xl border-b-8 border-muted active:translate-y-1 transition-transform">
@@ -961,7 +961,7 @@ export default function ArcadePage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 overflow-x-hidden">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div className="flex flex-col">
           <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Universe Arcade</h1>
@@ -983,7 +983,7 @@ export default function ArcadePage() {
       </header>
 
       <Tabs defaultValue="piano" className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-8 justify-start no-scrollbar touch-pan-x">
+        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-4 justify-start no-scrollbar touch-pan-x">
           <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Music className="h-4 w-4" /> Piano</TabsTrigger>
           <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Activity className="h-4 w-4" /> Simon</TabsTrigger>
           <TabsTrigger value="pop" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Circle className="h-4 w-4" /> Pop</TabsTrigger>

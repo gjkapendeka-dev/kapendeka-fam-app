@@ -215,7 +215,7 @@ export default function MealPlannerPage() {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 overflow-x-hidden">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div>
           <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Meal Planner</h1>
@@ -308,7 +308,7 @@ export default function MealPlannerPage() {
 
       {/* AI Search Section */}
       <Card className="rounded-[2rem] md:rounded-[3rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white p-0.5">
-        <CardContent className="p-6 md:p-8 space-y-6">
+        <CardContent className="p-4 md:p-5 space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-accent animate-pulse" />
@@ -329,7 +329,7 @@ export default function MealPlannerPage() {
             <Button 
               onClick={handleSuggest}
               disabled={isAiLoading || !queryStr}
-              className="h-14 px-8 rounded-2xl bg-accent text-white font-black uppercase tracking-widest hover:bg-accent/90 shadow-lg shadow-accent/20 active:scale-[0.98] transition-all"
+              className="h-14 px-4 rounded-2xl bg-accent text-white font-black uppercase tracking-widest hover:bg-accent/90 shadow-lg shadow-accent/20 active:scale-[0.98] transition-all"
             >
               {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Get AI Suggestions"}
             </Button>
@@ -337,13 +337,13 @@ export default function MealPlannerPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           <h3 className="text-xl font-bold flex items-center gap-2 uppercase tracking-tighter">
             <ChefHat className="h-5 w-5 text-primary" />
             {aiSuggestions.length > 0 ? "AI Recommended" : "Recipe Box"}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             {recipesLoading ? (
               [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-3xl" />)
             ) : (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).length > 0 ? (
@@ -384,7 +384,7 @@ export default function MealPlannerPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <h3 className="text-xl font-bold flex items-center gap-2 uppercase tracking-tighter">
             <Calendar className="h-5 w-5 text-primary" />
             Weekly Plan

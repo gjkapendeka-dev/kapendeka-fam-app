@@ -91,7 +91,7 @@ export default function SchoolPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Academic Hub</h1>
@@ -141,8 +141,8 @@ export default function SchoolPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -199,7 +199,7 @@ export default function SchoolPage() {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4">
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-800 text-white overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

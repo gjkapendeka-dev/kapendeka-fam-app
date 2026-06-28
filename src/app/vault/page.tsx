@@ -86,7 +86,7 @@ export default function VaultPage() {
   const isParent = profile?.role === 'parent' || profile?.role === 'admin'
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/20">
@@ -138,9 +138,9 @@ export default function VaultPage() {
         )}
       </header>
 
-      <div className="grid gap-6">
+      <div className="grid gap-3">
         {!isParent && (
-          <Card className="rounded-[2rem] border-none bg-amber-50 p-8 flex items-center gap-6">
+          <Card className="rounded-[2rem] border-none bg-amber-50 p-4 flex items-center gap-3">
             <AlertTriangle className="h-12 w-12 text-amber-500 shrink-0" />
             <div>
               <h3 className="text-xl font-bold text-amber-800">Limited Access</h3>
@@ -182,8 +182,8 @@ export default function VaultPage() {
           ))}
         </div>
 
-        <Card className="rounded-[2.5rem] border-none bg-primary p-8 text-white">
-          <div className="flex flex-col md:flex-row items-center gap-8">
+        <Card className="rounded-[2.5rem] border-none bg-primary p-4 text-white">
+          <div className="flex flex-col md:flex-row items-center gap-4">
             <div className="space-y-4 flex-1">
               <h3 className="text-2xl font-bold flex items-center gap-2">
                 <ShieldCheck className="h-6 w-6 text-accent" />

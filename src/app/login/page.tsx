@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const auth = useAuth()
-  const [email, setEmail] = React.useState("")
+  const [email, setEmail] = React.useState("info@kapendeka.co.za")
   const [password, setPassword] = React.useState("")
   const [isRegistering, setIsRegistering] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
@@ -35,7 +35,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
       }
-      router.push("/")
+      router.push("/select-profile")
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -59,9 +59,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops)] from-primary/10 via-background to-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
       <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-xl">
-        <CardHeader className="text-center pb-2">
+        <CardHeader className="text-center pb-2 pt-6">
           <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-3xl flex items-center justify-center shadow-lg mb-4">
             <Home className="h-8 w-8" />
           </div>
@@ -72,18 +72,16 @@ export default function LoginPage() {
             Enter the Family Universe
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 p-6">
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Family Account</Label>
               <Input 
                 id="email" 
-                type="email" 
-                placeholder="you@universe.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="rounded-xl h-12"
-                required 
+                type="text" 
+                value="*hidden*"
+                className="rounded-xl h-12 text-muted-foreground bg-muted/50 cursor-not-allowed text-center tracking-widest"
+                readOnly
               />
             </div>
             <div className="space-y-2">
@@ -98,30 +96,9 @@ export default function LoginPage() {
               />
             </div>
             <Button className="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/20" disabled={loading}>
-              {loading ? "Please wait, ..." : (isRegistering ? "Create Account" : "Sign In")}
+              {loading ? "Please wait..." : "Access Universe"}
             </Button>
           </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground font-bold">Or continue with</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full h-12 rounded-xl font-bold border-muted-foreground/20" onClick={handleGoogleSignIn}>
-            <Sparkles className="h-4 w-4 mr-2 text-accent" /> Google Universe
-          </Button>
-
-          <div className="text-center">
-            <button 
-              type="button" 
-              onClick={() => setIsRegistering(!isRegistering)}
-              className="text-sm font-bold text-primary hover:underline"
-            >
-              {isRegistering ? "Already have an account? Sign in" : "New to the Hub? Register here"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>

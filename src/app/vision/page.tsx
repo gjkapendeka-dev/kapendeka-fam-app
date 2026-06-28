@@ -70,8 +70,8 @@ export default function VisionBoardPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 pr-14">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 pr-14">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-4">
            <div className="h-12 w-12 rounded-2xl bg-yellow-400 text-white flex items-center justify-center shadow-xl">
               <Lightbulb className="h-6 w-6" />
@@ -99,7 +99,7 @@ export default function VisionBoardPage() {
             </DialogTrigger>
             <DialogContent className="rounded-[2.5rem]">
               <DialogHeader><DialogTitle className="text-xl font-black uppercase">Dream Big</DialogTitle></DialogHeader>
-              <div className="grid gap-6 py-6">
+              <div className="grid gap-3 py-6">
                   <div className="grid gap-2">
                     <Label className="font-bold text-[10px] uppercase opacity-50">What is the Vision?</Label>
                     <Input placeholder="e.g. New Family Home" value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-xl h-12" />
@@ -115,7 +115,7 @@ export default function VisionBoardPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {loading ? (
           [1, 2, 3, 4].map(i => <div key={i} className="aspect-square bg-muted animate-pulse rounded-[2.5rem]" />)
         ) : (visions || []).length === 0 ? (

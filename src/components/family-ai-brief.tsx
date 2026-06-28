@@ -60,7 +60,7 @@ export function FamilyAIBrief() {
 
   return (
     <Card className="rounded-[2rem] border-none bg-gradient-to-br from-indigo-50 to-white shadow-xl shadow-indigo-100/20 overflow-hidden">
-      <CardContent className="p-6 md:p-8">
+      <CardContent className="p-4 md:p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2 text-indigo-600">
             <Sparkles className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />

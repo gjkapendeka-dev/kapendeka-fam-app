@@ -29,10 +29,10 @@ export default function RootLayout({
             <div className="flex min-h-screen w-full bg-background overflow-x-hidden">
               <AppSidebar />
               <SidebarInset className="flex flex-col relative w-full">
-                <div className="md:hidden fixed top-4 right-4 z-[60]">
-                  <SidebarTrigger className="h-12 w-12 text-primary bg-white shadow-xl rounded-2xl active:scale-90 transition-transform" />
+                <div className="md:hidden fixed top-3 right-3 z-[60]">
+                  <SidebarTrigger className="h-10 w-10 text-primary bg-white shadow-lg rounded-xl active:scale-90 transition-transform" />
                 </div>
-                <main className="flex-1 overflow-y-auto overflow-x-hidden pt-2">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden">
                   {children}
                 </main>
               </SidebarInset>

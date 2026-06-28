@@ -105,7 +105,7 @@ export default function ShoppingPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-6 max-w-7xl mx-auto h-full">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto h-full">
       <header className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {!showListSelector && (
@@ -136,7 +136,7 @@ export default function ShoppingPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
         {/* Mobile List Selector / Desktop Sidebar */}
         <div className={`${showListSelector ? "block" : "hidden lg:block"} lg:col-span-4 space-y-4`}>
           <div className="space-y-2">
@@ -167,7 +167,7 @@ export default function ShoppingPage() {
         </div>
 
         {/* List Content */}
-        <div className={`${!showListSelector ? "block" : "hidden lg:block"} lg:col-span-8 space-y-6 h-full`}>
+        <div className={`${!showListSelector ? "block" : "hidden lg:block"} lg:col-span-8 space-y-4 h-full`}>
           {activeList ? (
             <Card className="rounded-[2rem] border-none shadow-xl bg-white overflow-hidden flex flex-col min-h-[400px]">
               <CardHeader className="bg-muted/30 pb-4 border-b">

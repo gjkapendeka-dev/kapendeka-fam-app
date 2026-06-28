@@ -90,7 +90,7 @@ export default function FaithPage() {
   ]
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Church & Faith</h1>
@@ -140,9 +140,9 @@ export default function FaithPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: Faith Journal Entries */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center gap-2 text-foreground">
               <BookOpen className="h-6 w-6 text-primary" />
@@ -199,7 +199,7 @@ export default function FaithPage() {
         </div>
 
         {/* Right: Prayer Wall & Daily Devotional */}
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-4">
           {/* Prayer Wall */}
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden">
             <CardHeader className="pb-2">

@@ -52,16 +52,16 @@ export default function GamesRewardsPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header>
         <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Rewards & Levels</h1>
         <p className="text-muted-foreground font-medium">Gamifying the Kapendeka Universe Hub</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: Stats & Leaderboard */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Card className="rounded-3xl border-none shadow-xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Current Points</CardTitle>
@@ -137,7 +137,7 @@ export default function GamesRewardsPage() {
         </div>
 
         {/* Right: Rewards Shop */}
-        <div className="lg:col-span-4 space-y-8">
+        <div className="lg:col-span-4 space-y-4">
           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
             <CardHeader className="bg-accent/5 pb-4">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-accent">

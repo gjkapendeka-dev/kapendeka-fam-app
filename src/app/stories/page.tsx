@@ -72,7 +72,7 @@ export default function StoryStudioPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-6xl mx-auto pb-24 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-6xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4 mb-2">
            <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-2xl">
@@ -94,13 +94,13 @@ export default function StoryStudioPage() {
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="rounded-[2.5rem] border-none shadow-2xl bg-white p-8">
-            <CardHeader className="p-0 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1 space-y-4">
+          <Card className="rounded-[2.5rem] border-none shadow-2xl bg-white p-4">
+            <CardHeader className="p-0 mb-3">
               <CardTitle className="text-xl font-black uppercase">Setup Adventure</CardTitle>
             </CardHeader>
-            <CardContent className="p-0 space-y-6">
+            <CardContent className="p-0 space-y-4">
               <div className="space-y-2">
                 <Label className="font-black text-[10px] uppercase tracking-widest">Universe Genre</Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -153,17 +153,17 @@ export default function StoryStudioPage() {
 
         <div className="lg:col-span-2">
           {activeStory ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <Card className="rounded-[3rem] border-none shadow-2xl bg-gradient-to-br from-indigo-900 via-slate-900 to-black p-10 text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
                      <Sparkles className="h-32 w-32" />
                   </div>
                   <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none mb-4">{activeStory.title}</h2>
-                  <Badge className="bg-accent text-white border-none font-black text-[9px] uppercase tracking-widest px-4 mb-8">Adventure Unfolding</Badge>
+                  <Badge className="bg-accent text-white border-none font-black text-[9px] uppercase tracking-widest px-4 mb-4">Adventure Unfolding</Badge>
                   
                   <div className="space-y-12">
                     {activeStory.segments.map((seg, i) => (
-                      <div key={i} className="space-y-6">
+                      <div key={i} className="space-y-4">
                         <div className="text-xl md:text-2xl font-medium leading-relaxed opacity-90 first-letter:text-5xl first-letter:font-black first-letter:text-accent first-letter:float-left first-letter:mr-3">
                           {seg.text}
                         </div>
@@ -187,7 +187,7 @@ export default function StoryStudioPage() {
             </div>
           ) : (
             <div className="h-full min-h-[500px] bg-muted/20 rounded-[4rem] border-4 border-dashed border-muted/50 flex flex-col items-center justify-center text-center p-12">
-               <Library className="h-24 w-24 text-muted-foreground/10 mb-6" />
+               <Library className="h-24 w-24 text-muted-foreground/10 mb-3" />
                <h3 className="text-2xl font-black uppercase tracking-tighter text-muted-foreground">The Archive is Empty</h3>
                <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] max-w-xs mt-2">Generate a story above to witness the Kapendeka Universe legends.</p>
             </div>

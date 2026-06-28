@@ -78,7 +78,7 @@ export default function LanguageLearningPage() {
   }
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Polyglot Universe</h1>
@@ -117,9 +117,9 @@ export default function LanguageLearningPage() {
         </Dialog>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Progress Board */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             Family Learning Progress
@@ -137,7 +137,7 @@ export default function LanguageLearningPage() {
               progressList?.map((p) => (
                 <Card key={p.id} className="rounded-2xl border-none shadow-sm group hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
                           {p.language.substring(0, 2).toUpperCase()}
@@ -159,7 +159,7 @@ export default function LanguageLearningPage() {
                       </div>
                       <Progress value={Math.min((p.vocabularyCount / 500) * 100, 100)} className="h-2" />
                     </div>
-                    <div className="mt-6 flex gap-2">
+                    <div className="mt-3 flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1 rounded-xl font-bold border-primary/20 text-primary">
                         <PlayCircle className="h-4 w-4 mr-2" /> Daily Lesson
                       </Button>
@@ -175,7 +175,7 @@ export default function LanguageLearningPage() {
         </div>
 
         {/* Learning Hub & Resources */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

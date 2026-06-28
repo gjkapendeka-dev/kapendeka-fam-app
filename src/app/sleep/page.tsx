@@ -121,7 +121,7 @@ export default function SleepPage() {
   }, [logs])
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Rest & Sleep</h1>
@@ -176,7 +176,7 @@ export default function SleepPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="rounded-3xl border-none shadow-xl bg-indigo-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80">Avg. Sleep Duration</CardTitle>
@@ -212,8 +212,8 @@ export default function SleepPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
           {/* Sleep Chart */}
           <Card className="rounded-[2rem] border-none shadow-xl bg-white overflow-hidden">
             <CardHeader className="bg-indigo-50/50 pb-2 border-b">
@@ -247,7 +247,7 @@ export default function SleepPage() {
                 {loading ? (
                   [1, 2, 3].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)
                 ) : logs?.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground font-medium">No sleep logs found. Start tracking your rest!</div>
+                  <div className="text-center py-5 text-muted-foreground font-medium">No sleep logs found. Start tracking your rest!</div>
                 ) : (
                   logs?.map((log) => {
                     const qualityInfo = SLEEP_QUALITIES.find(q => q.value === log.quality) || SLEEP_QUALITIES[1]
@@ -279,7 +279,7 @@ export default function SleepPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Wind-down Suggestions */}
           <Card className="rounded-3xl border-none shadow-xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-primary/10">
