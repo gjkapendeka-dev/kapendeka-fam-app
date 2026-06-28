@@ -90,7 +90,7 @@ export function useUser() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, selectedProfileId, pathname, router, switchProfile]);
+  }, [user, selectedProfileId, pathname, router, switchProfile, loading]);
 
   // Provide a method to manually set the profile after PIN success
   const selectProfile = (id: string) => {
