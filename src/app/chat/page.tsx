@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -50,6 +49,13 @@ export default function ChatPage() {
   const [showSidebar, setShowSidebar] = React.useState(true)
   const [newMessage, setNewMessage] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
+
+  // Initial check for mobile
+  React.useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setShowSidebar(false)
+    }
+  }, [])
 
   // Auto-hide sidebar on mobile once a channel is selected
   const handleChannelSelect = (id: string) => {
@@ -110,35 +116,35 @@ export default function ChatPage() {
   const currentChannel = CHANNELS.find(c => c.id === activeChannel)
 
   return (
-    <div className="flex h-[calc(100vh-1rem)] overflow-hidden bg-background relative">
+    <div className="flex h-[calc(100vh-1rem)] overflow-hidden bg-background relative selection:bg-primary/10">
       {/* Sidebar: Channels */}
       <div className={`${
         showSidebar ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      } absolute lg:relative z-20 w-full lg:w-80 h-full border-r bg-white transition-transform duration-300 ease-in-out flex flex-col`}>
+      } absolute lg:relative z-30 w-full lg:w-80 h-full border-r bg-white transition-transform duration-300 ease-in-out flex flex-col shadow-2xl lg:shadow-none`}>
         <div className="p-6 border-b flex items-center justify-between">
-          <h2 className="text-xl font-bold flex items-center gap-2">
+          <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Universe Hub
           </h2>
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowSidebar(false)}>
+          <Button variant="ghost" size="icon" className="lg:hidden h-11 w-11 rounded-2xl active:bg-muted" onClick={() => setShowSidebar(false)}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
         </div>
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-1">
+        <ScrollArea className="flex-1 p-4 no-scrollbar">
+          <div className="space-y-2">
             {CHANNELS.map((channel) => (
               <button
                 key={channel.id}
                 onClick={() => handleChannelSelect(channel.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                className={`w-full flex items-center gap-3 p-4 rounded-[1.25rem] transition-all active:scale-[0.98] ${
                   activeChannel === channel.id
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20"
                     : "hover:bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Hash className="h-4 w-4 shrink-0" />
+                <Hash className="h-4 w-4 shrink-0 opacity-50" />
                 <div className="text-left">
-                  <div className="text-sm font-bold">{channel.name}</div>
+                  <div className="text-sm font-black uppercase tracking-tight">{channel.name}</div>
                 </div>
               </button>
             ))}
@@ -147,39 +153,41 @@ export default function ChatPage() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white w-full h-full relative">
+      <div className="flex-1 flex flex-col bg-white w-full h-full relative overflow-hidden">
         {/* Chat Header */}
-        <header className="h-16 md:h-20 border-b flex items-center justify-between px-4 md:px-6 shrink-0 bg-white/80 backdrop-blur-md z-10">
+        <header className="h-16 md:h-20 border-b flex items-center justify-between px-4 md:px-6 shrink-0 bg-white/95 backdrop-blur-md z-20 pr-14 md:pr-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10" onClick={() => setShowSidebar(true)}>
-              <Users className="h-5 w-5 text-primary" />
+            <Button variant="ghost" size="icon" className="lg:hidden h-11 w-11 rounded-2xl bg-primary/5 text-primary active:scale-90 transition-transform" onClick={() => setShowSidebar(true)}>
+              <Users className="h-5 w-5" />
             </Button>
             <div className="min-w-0">
-              <h1 className="text-base md:text-lg font-bold truncate">{currentChannel?.name}</h1>
-              <p className="text-[10px] md:text-xs text-muted-foreground font-medium truncate">{currentChannel?.description}</p>
+              <h1 className="text-sm md:text-lg font-black uppercase tracking-tight truncate">{currentChannel?.name}</h1>
+              <p className="text-[9px] md:text-xs text-muted-foreground font-bold uppercase tracking-widest truncate">{currentChannel?.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+          <div className="hidden sm:flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
               <Search className="h-4 w-4 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
               <MoreVertical className="h-4 w-4 text-muted-foreground" />
             </Button>
           </div>
         </header>
 
         {/* Messages List */}
-        <ScrollArea className="flex-1 p-4 md:p-6 bg-slate-50/30">
-          <div className="space-y-4 md:space-y-6">
+        <ScrollArea className="flex-1 p-4 md:p-6 bg-slate-50/50 no-scrollbar">
+          <div className="space-y-6 md:space-y-8">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
               </div>
             ) : messages?.length === 0 ? (
               <div className="text-center py-20">
-                <Hash className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-                <h3 className="font-bold text-muted-foreground">Start the conversation</h3>
+                <div className="h-16 w-16 bg-muted/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4">
+                    <Hash className="h-8 w-8 text-muted-foreground/30" />
+                </div>
+                <h3 className="font-black uppercase text-[10px] text-muted-foreground tracking-[0.2em]">Start the conversation</h3>
               </div>
             ) : (
               messages?.map((msg) => {
@@ -187,22 +195,22 @@ export default function ChatPage() {
                 return (
                   <div 
                     key={msg.id} 
-                    className={`flex items-start gap-2 md:gap-3 ${isMe ? "flex-row-reverse" : ""}`}
+                    className={`flex items-start gap-2 md:gap-4 ${isMe ? "flex-row-reverse" : ""}`}
                   >
-                    <Avatar className="h-8 w-8 md:h-10 md:w-10 border shadow-sm shrink-0">
+                    <Avatar className="h-9 w-9 md:h-12 md:w-12 border-2 border-white shadow-md shrink-0">
                       <AvatarImage src={`https://picsum.photos/seed/${msg.fromUser}/100/100`} />
-                      <AvatarFallback>{msg.fromUserName?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="bg-primary text-white font-black text-xs">{msg.fromUserName?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className={`flex flex-col space-y-1 max-w-[85%] md:max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
+                    <div className={`flex flex-col space-y-1.5 max-w-[82%] md:max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
                       <div className="flex items-center gap-2 px-1">
-                        <span className="text-[10px] md:text-xs font-bold text-foreground">
+                        <span className="text-[10px] md:text-xs font-black text-foreground uppercase tracking-tight">
                           {isMe ? "You" : msg.fromUserName}
                         </span>
-                        <span className="text-[9px] text-muted-foreground">
+                        <span className="text-[8px] md:text-[9px] text-muted-foreground font-bold uppercase">
                           {msg.timestamp ? format(new Date(msg.timestamp.seconds * 1000), "HH:mm") : "..."}
                         </span>
                       </div>
-                      <div className={`p-3 md:p-4 rounded-2xl shadow-sm text-sm md:text-base font-medium leading-relaxed ${
+                      <div className={`p-4 rounded-[1.5rem] shadow-sm text-sm md:text-base font-medium leading-relaxed ${
                         isMe 
                         ? "bg-primary text-primary-foreground rounded-tr-none" 
                         : "bg-white text-foreground border rounded-tl-none"
@@ -214,27 +222,27 @@ export default function ChatPage() {
                 )
               })
             )}
-            <div ref={scrollRef} />
+            <div ref={scrollRef} className="h-4" />
           </div>
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="p-3 md:p-6 border-t shrink-0 bg-white">
-          <form onSubmit={handleSendMessage} className="relative">
+        <div className="p-4 md:p-8 border-t shrink-0 bg-white">
+          <form onSubmit={handleSendMessage} className="relative max-w-4xl mx-auto">
             <Input 
               placeholder={`Message #${activeChannel}...`}
-              className="h-12 md:h-14 pl-4 pr-14 rounded-2xl border-none bg-muted/40 font-medium text-sm md:text-base focus-visible:ring-accent/20"
+              className="h-14 pl-5 pr-16 rounded-2xl border-none bg-muted/40 font-medium text-base md:text-lg focus-visible:ring-accent/30 shadow-inner"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={isSending}
             />
-            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button 
                 type="submit" 
                 disabled={!newMessage.trim() || isSending}
-                className="h-10 w-10 rounded-xl bg-accent shadow-lg shadow-accent/20"
+                className="h-11 w-11 rounded-xl bg-accent shadow-xl shadow-accent/20 active:scale-90 transition-transform"
               >
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </Button>
             </div>
           </form>

@@ -217,34 +217,34 @@ export default function MealPlannerPage() {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 overflow-x-hidden">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Meal Planner & Recipe Box</h1>
-          <p className="text-muted-foreground font-medium">Smart planning for the Kapendeka universe</p>
+          <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Meal Planner</h1>
+          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">Kapendeka Universe Recipes</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button 
             variant="outline" 
-            className="rounded-xl h-11 px-6 font-bold border-primary/20 text-primary"
+            className="rounded-xl h-10 px-4 font-bold border-primary/20 text-primary active:scale-95"
             onClick={() => router.push("/shopping")}
           >
-            <ShoppingBasket className="h-4 w-4 mr-2" /> Shopping Lists
+            <ShoppingBasket className="h-4 w-4 mr-2" /> Shopping
           </Button>
           
           <Dialog open={isCameraOpen} onOpenChange={(open) => { if (open) startCamera(); else stopCamera(); setIsCameraOpen(open); }}>
             <DialogTrigger asChild>
-              <Button className="rounded-xl h-11 px-6 font-bold bg-accent shadow-lg shadow-accent/20">
-                <Camera className="h-4 w-4 mr-2" /> Scan Recipe
+              <Button className="rounded-xl h-10 px-4 font-bold bg-accent shadow-lg shadow-accent/20 active:scale-95">
+                <Camera className="h-4 w-4 mr-2" /> Scan
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-2xl sm:max-w-2xl overflow-hidden">
-              <DialogHeader>
-                <DialogTitle>AI Recipe Scanner</DialogTitle>
-                <DialogDescription>Point your camera at a cookbook or a meal to identify it.</DialogDescription>
+            <DialogContent className="rounded-[2rem] sm:max-w-2xl overflow-hidden p-0 h-[80vh] flex flex-col">
+              <DialogHeader className="p-6 pb-0">
+                <DialogTitle className="text-xl font-black uppercase tracking-tighter">Universe AI Scanner</DialogTitle>
+                <DialogDescription className="font-bold text-[10px] uppercase tracking-widest">Point at a cookbook or dish</DialogDescription>
               </DialogHeader>
               
-              <div className="relative aspect-video rounded-xl bg-black overflow-hidden mt-4">
+              <div className="relative flex-1 bg-black overflow-hidden mt-4 mx-2 rounded-2xl">
                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
                 <canvas ref={canvasRef} className="hidden" />
                 
@@ -252,7 +252,7 @@ export default function MealPlannerPage() {
                   <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
                     <Alert variant="destructive" className="bg-black/80 border-rose-500 text-white">
                       <AlertTitle>Camera Required</AlertTitle>
-                      <AlertDescription>Please grant camera access to use the scanning feature.</AlertDescription>
+                      <AlertDescription>Enable camera access in settings.</AlertDescription>
                     </Alert>
                   </div>
                 )}
@@ -260,19 +260,19 @@ export default function MealPlannerPage() {
                 {isScanning && (
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin text-accent" />
-                    <p className="font-bold text-lg animate-pulse uppercase tracking-widest">Universe AI Analyzing...</p>
+                    <p className="font-black text-xs animate-pulse uppercase tracking-[0.2em]">Analyzing...</p>
                   </div>
                 )}
               </div>
 
-              <DialogFooter className="mt-6 flex gap-2">
-                <Button variant="outline" onClick={stopCamera} disabled={isScanning}>Cancel</Button>
+              <DialogFooter className="p-6 grid grid-cols-2 gap-3">
+                <Button variant="outline" className="rounded-xl h-12" onClick={stopCamera} disabled={isScanning}>Cancel</Button>
                 <Button 
                   onClick={captureAndScan} 
                   disabled={isScanning || !hasCameraPermission}
-                  className="bg-accent hover:bg-accent/90"
+                  className="bg-accent hover:bg-accent/90 rounded-xl h-12 font-black uppercase"
                 >
-                  {isScanning ? "Processing..." : "Capture & Identify"}
+                  {isScanning ? "Processing..." : "Capture"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -280,28 +280,28 @@ export default function MealPlannerPage() {
 
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button className="rounded-xl h-11 px-6 font-bold bg-primary shadow-lg shadow-primary/20">
-                <Plus className="h-4 w-4 mr-2" /> Add Recipe
+              <Button className="rounded-xl h-10 px-4 font-bold bg-primary shadow-lg shadow-primary/20 active:scale-95">
+                <Plus className="h-4 w-4 mr-2" /> Add
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-2xl">
+            <DialogContent className="rounded-[2rem]">
               <DialogHeader>
-                <DialogTitle>New Recipe</DialogTitle>
-                <DialogDescription>Add a favorite dish to the family collection.</DialogDescription>
+                <DialogTitle className="text-xl font-black uppercase tracking-tighter">New Recipe</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="recipe-title">Title</Label>
+                  <Label htmlFor="recipe-title" className="font-black uppercase text-[10px] tracking-widest opacity-60">Recipe Name</Label>
                   <Input 
                     id="recipe-title" 
                     placeholder="e.g. Mama's Chakalaka" 
+                    className="h-12 rounded-xl"
                     value={newRecipeTitle}
                     onChange={(e) => setNewRecipeTitle(e.target.value)}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddRecipe} disabled={!newRecipeTitle}>Create Recipe</Button>
+                <Button className="w-full h-12 rounded-xl font-black uppercase tracking-widest" onClick={handleAddRecipe} disabled={!newRecipeTitle}>Create Recipe</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -309,21 +309,21 @@ export default function MealPlannerPage() {
       </header>
 
       {/* AI Search Section */}
-      <Card className="rounded-3xl border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white p-1">
-        <CardContent className="p-8 space-y-6">
+      <Card className="rounded-[2rem] md:rounded-[3rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white p-0.5">
+        <CardContent className="p-6 md:p-8 space-y-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-accent animate-pulse" />
-              <h2 className="text-2xl font-bold">What's for dinner?</h2>
+              <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-accent animate-pulse" />
+              <h2 className="text-xl md:text-2xl font-bold">What's for dinner?</h2>
             </div>
-            <p className="text-primary-foreground/80 font-medium">Ask AI to suggest a meal based on your preferences or scan a photo to add a recipe.</p>
+            <p className="text-[10px] md:text-sm text-primary-foreground/80 font-medium uppercase tracking-widest">AI-Powered suggestions from your Hub</p>
           </div>
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex flex-col gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
-                placeholder="Suggest a healthy dinner with chicken..." 
-                className="h-14 pl-12 rounded-2xl border-none bg-white/90 text-primary-foreground font-medium text-lg placeholder:text-muted-foreground focus-visible:ring-accent"
+                placeholder="chicken for Tuesday..." 
+                className="h-14 pl-12 rounded-2xl border-none bg-white/95 text-primary font-bold placeholder:text-muted-foreground/60 text-lg focus-visible:ring-accent"
                 value={queryStr}
                 onChange={(e) => setQueryStr(e.target.value)}
               />
@@ -331,7 +331,7 @@ export default function MealPlannerPage() {
             <Button 
               onClick={handleSuggest}
               disabled={isAiLoading || !queryStr}
-              className="h-14 px-8 rounded-2xl bg-accent text-white font-bold hover:bg-accent/90 shadow-lg shadow-accent/20"
+              className="h-14 px-8 rounded-2xl bg-accent text-white font-black uppercase tracking-widest hover:bg-accent/90 shadow-lg shadow-accent/20 active:scale-[0.98] transition-all"
             >
               {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Get AI Suggestions"}
             </Button>
@@ -341,36 +341,36 @@ export default function MealPlannerPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <h3 className="text-xl font-bold flex items-center gap-2">
+          <h3 className="text-xl font-bold flex items-center gap-2 uppercase tracking-tighter">
             <ChefHat className="h-5 w-5 text-primary" />
-            {aiSuggestions.length > 0 ? "AI Recommended Recipes" : "Family Recipe Box"}
+            {aiSuggestions.length > 0 ? "AI Recommended" : "Recipe Box"}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             {recipesLoading ? (
-              [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-2xl" />)
+              [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-3xl" />)
             ) : (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).length > 0 ? (
               (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).map((recipe, i) => (
-                <Card key={recipe.id || i} className="group overflow-hidden rounded-2xl hover:shadow-xl transition-all border-none shadow-md cursor-pointer">
-                  <div className="h-48 bg-muted relative overflow-hidden">
+                <Card key={recipe.id || i} className="group overflow-hidden rounded-[1.5rem] md:rounded-2xl hover:shadow-xl transition-all border-none shadow-md cursor-pointer active:scale-[0.98]">
+                  <div className="h-44 md:h-48 bg-muted relative overflow-hidden">
                     <img 
                       src={`https://picsum.photos/seed/${recipe.id || i + 50}/600/400`} 
                       alt={recipe.title} 
                       className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" 
                     />
                     <div className="absolute top-3 right-3">
-                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm">
+                      <Button size="icon" variant="secondary" className="h-9 w-9 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{recipe.title}</h4>
-                      <span className="text-xs text-muted-foreground font-bold">{recipe.prepTime || "25 min"}</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-lg group-hover:text-primary transition-colors truncate pr-2">{recipe.title}</h4>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground shrink-0">{recipe.prepTime || "25m"}</span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {(recipe.tags || []).map((tag: string) => (
-                        <Badge key={tag} variant="outline" className="text-[10px] font-bold uppercase py-0 px-2 border-primary/20 text-primary">
+                        <Badge key={tag} variant="outline" className="text-[9px] font-black uppercase py-0.5 px-2 border-primary/10 text-primary/70">
                           {tag}
                         </Badge>
                       ))}
@@ -379,54 +379,54 @@ export default function MealPlannerPage() {
                 </Card>
               ))
             ) : (
-              <div className="col-span-full py-12 text-center bg-muted/20 rounded-2xl border-2 border-dashed">
-                <p className="text-muted-foreground font-medium">Your recipe box is empty. Scan a photo or add your first favorite!</p>
+              <div className="col-span-full py-16 text-center bg-muted/20 rounded-[2rem] border-2 border-dashed">
+                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Recipe Box Empty</p>
               </div>
             )}
           </div>
         </div>
 
         <div className="space-y-6">
-          <h3 className="text-xl font-bold flex items-center gap-2">
+          <h3 className="text-xl font-bold flex items-center gap-2 uppercase tracking-tighter">
             <Calendar className="h-5 w-5 text-primary" />
-            Weekly Meal Plan
+            Weekly Plan
           </h3>
-          <Card className="rounded-2xl border-none shadow-sm overflow-hidden">
-            <div className="bg-muted/30 p-4 font-bold text-sm text-center border-b uppercase tracking-tighter">
-              {currentPlan?.weekStart ? `Week of ${currentPlan.weekStart}` : 'Plan Your Week'}
+          <Card className="rounded-[1.5rem] md:rounded-2xl border-none shadow-sm overflow-hidden bg-white">
+            <div className="bg-muted/30 p-4 font-black text-[10px] text-center border-b uppercase tracking-[0.2em] text-primary/60">
+              {currentPlan?.weekStart ? `Week of ${currentPlan.weekStart}` : 'Schedule Your Week'}
             </div>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-4 space-y-2">
               {daysOfWeek.map((day) => {
                 const meal = currentPlan?.days?.[day]?.dinner
                 const recipe = recipes?.find(r => r.id === meal)
                 return (
-                  <div key={day} className="flex items-center gap-4 group cursor-pointer hover:bg-muted/20 p-2 rounded-xl transition-colors">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">
+                  <div key={day} className="flex items-center gap-4 group cursor-pointer hover:bg-muted/30 p-2 rounded-xl transition-all active:scale-[0.98]">
+                    <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center font-black text-primary text-[10px] uppercase">
                       {day.substring(0, 3)}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold truncate">
                         {recipe?.title || 'Dinner not set'}
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-medium">Dinner</div>
+                      <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Dinner</div>
                     </div>
-                    <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Plus className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                   </div>
                 )
               })}
               <Button 
                 variant="outline" 
-                className="w-full mt-4 font-bold rounded-xl h-11 border-primary/20 text-primary"
+                className="w-full mt-4 font-black uppercase tracking-widest text-xs h-12 rounded-xl border-primary/10 text-primary active:scale-95"
                 onClick={handleGenerateShoppingList}
                 disabled={isGeneratingList}
               >
                 {isGeneratingList ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing Recipes...
+                    Analyzing...
                   </>
                 ) : (
-                  "Generate AI Shopping List"
+                  "Generate AI List"
                 )}
               </Button>
             </CardContent>

@@ -6,7 +6,6 @@ import {
   Music, 
   Search, 
   Grid3x3, 
-  RotateCw, 
   ArrowLeft, 
   ArrowRight, 
   ArrowDown, 
@@ -91,23 +90,23 @@ function PianoGame() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-8 py-8 px-2 overflow-x-hidden">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Kids' Magic Piano</h3>
-        <p className="text-muted-foreground font-medium">Tap the keys to make music!</p>
+        <p className="text-muted-foreground font-medium text-sm">Tap the keys to make music!</p>
       </div>
-      <div className="flex gap-1 md:gap-2 p-4 bg-muted/30 rounded-[2rem] shadow-inner overflow-x-auto w-full max-w-2xl justify-center">
+      <div className="flex gap-1 p-2 md:p-4 bg-muted/30 rounded-3xl shadow-inner overflow-x-auto w-full max-w-2xl justify-start md:justify-center no-scrollbar">
         {PIANO_KEYS.map((k) => (
           <button
             key={k.note}
             onClick={() => playNote(k.freq, k.note)}
             className={`
-              relative w-12 md:w-16 h-40 md:h-64 rounded-xl transition-all active:scale-95 active:bg-primary/10 border-b-8 border-muted shadow-lg
+              relative w-12 md:w-16 h-40 md:h-64 rounded-xl transition-all active:scale-95 active:bg-primary/10 border-b-8 border-muted shadow-lg shrink-0
               ${activeNote === k.note ? "bg-primary/20 -translate-y-2 border-b-0" : "bg-white"}
             `}
           >
-            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-black text-xs md:text-sm text-muted-foreground/50">{k.text}</span>
-            <div className={`absolute top-4 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full ${activeNote === k.note ? 'bg-primary' : 'bg-muted'}`} />
+            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-black text-[10px] md:text-sm text-muted-foreground/50">{k.text}</span>
+            <div className={`absolute top-4 left-1/2 -translate-x-1/2 w-2 h-2 md:w-3 md:h-3 rounded-full ${activeNote === k.note ? 'bg-primary' : 'bg-muted'}`} />
           </button>
         ))}
       </div>
@@ -177,43 +176,44 @@ function WordSearchGame() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 py-8 items-start">
-      <Card className="w-full lg:w-80 rounded-3xl border-none shadow-sm">
-        <CardHeader>
+    <div className="flex flex-col lg:flex-row gap-6 py-6 items-start px-2">
+      <Card className="w-full lg:w-80 rounded-3xl border-none shadow-sm bg-muted/10">
+        <CardHeader className="p-4 md:p-6">
           <CardTitle className="text-lg flex items-center gap-2">
             <Type className="h-5 w-5 text-primary" />
             Word List
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-4 md:p-6 pt-0 space-y-4">
           <div className="flex gap-2">
             <Input 
               placeholder="NEW WORD" 
+              className="h-11 rounded-xl"
               value={newWord} 
               onChange={(e) => setNewWord(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === 'Enter' && addWord()}
             />
-            <Button size="icon" onClick={addWord}><Plus className="h-4 w-4" /></Button>
+            <Button size="icon" className="h-11 w-11 rounded-xl" onClick={addWord}><Plus className="h-4 w-4" /></Button>
           </div>
           <div className="flex flex-wrap gap-2">
             {words.map(w => (
-              <Badge key={w} className="bg-primary/10 text-primary border-none font-bold uppercase">
+              <Badge key={w} className="bg-primary/10 text-primary border-none font-bold uppercase text-[10px] py-1">
                 {w}
               </Badge>
             ))}
           </div>
-          <Button variant="outline" className="w-full rounded-xl font-bold" onClick={generateGrid}>
+          <Button variant="outline" className="w-full h-11 rounded-xl font-bold border-primary/20 text-primary" onClick={generateGrid}>
             <RefreshCw className="h-4 w-4 mr-2" /> Regenerate
           </Button>
         </CardContent>
       </Card>
 
-      <div className="flex-1 flex justify-center">
-        <div className="grid grid-cols-10 gap-1 p-2 bg-muted/20 rounded-2xl border border-muted/50">
+      <div className="w-full flex-1 flex justify-center">
+        <div className="grid grid-cols-10 gap-1 p-2 bg-muted/20 rounded-2xl border border-muted/50 w-fit">
           {grid.map((row, ri) => row.map((char, ci) => (
             <div 
               key={`${ri}-${ci}`} 
-              className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-white rounded-lg font-black text-sm md:text-lg text-primary shadow-sm hover:bg-primary/5 cursor-pointer transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-white rounded-lg font-black text-xs sm:text-sm md:text-lg text-primary shadow-sm active:bg-primary/10 cursor-pointer transition-colors"
             >
               {char}
             </div>
@@ -256,27 +256,27 @@ function TicTacToe() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Tic-Tac-Toe</h3>
-        <p className="text-muted-foreground font-medium">
+        <p className="text-muted-foreground font-medium text-sm">
           {winner ? `Winner: ${winner}!` : isDraw ? "It's a Draw!" : `Next Player: ${xIsNext ? 'X' : 'O'}`}
         </p>
       </div>
-      <div className="grid grid-cols-3 gap-2 bg-muted/20 p-4 rounded-3xl shadow-inner">
+      <div className="grid grid-cols-3 gap-3 bg-muted/20 p-4 rounded-[2rem] shadow-inner">
         {board.map((cell, i) => (
           <button
             key={i}
             onClick={() => handleClick(i)}
-            className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl flex items-center justify-center text-3xl font-black shadow-sm active:scale-95 transition-all"
+            className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex items-center justify-center text-3xl font-black shadow-sm active:scale-95 transition-all"
           >
             {cell === 'X' && <X className="h-10 w-10 text-primary" />}
             {cell === 'O' && <Circle className="h-10 w-10 text-accent" />}
           </button>
         ))}
       </div>
-      <Button onClick={() => setBoard(Array(9).fill(null))} variant="outline" className="rounded-xl font-bold">
-        <RefreshCw className="h-4 w-4 mr-2" /> Reset Game
+      <Button onClick={() => setBoard(Array(9).fill(null))} variant="outline" className="rounded-xl font-bold h-12 px-8">
+        <RefreshCw className="h-4 w-4 mr-2" /> Reset
       </Button>
     </div>
   )
@@ -337,7 +337,7 @@ function MemoryMatch() {
     <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Brain Boost Memory</h3>
-        <p className="text-muted-foreground font-medium">Find all matching pairs!</p>
+        <p className="text-muted-foreground font-medium text-sm">Find all matching pairs!</p>
       </div>
       <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-md w-full">
         {cards.map((card, i) => {
@@ -347,20 +347,20 @@ function MemoryMatch() {
               key={i}
               onClick={() => handleClick(i)}
               className={cn(
-                "aspect-square rounded-2xl flex items-center justify-center transition-all duration-500 preserve-3d shadow-sm",
-                isFlipped ? "bg-white rotate-y-180" : "bg-primary text-white"
+                "aspect-square rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm",
+                isFlipped ? "bg-white" : "bg-primary text-white active:scale-95"
               )}
             >
               {isFlipped ? (
-                <card.Icon className="h-8 w-8 text-primary animate-in zoom-in" />
+                <card.Icon className="h-7 w-7 sm:h-8 sm:w-8 text-primary animate-in zoom-in" />
               ) : (
-                <Shapes className="h-6 w-6 opacity-20" />
+                <Shapes className="h-5 w-5 sm:h-6 sm:w-6 opacity-20" />
               )}
             </button>
           )
         })}
       </div>
-      <Button onClick={initialize} variant="outline" className="rounded-xl font-bold">
+      <Button onClick={initialize} variant="outline" className="rounded-xl font-bold h-12 px-8">
         <RefreshCw className="h-4 w-4 mr-2" /> New Game
       </Button>
     </div>
@@ -404,16 +404,16 @@ function SnakeGame() {
   }, [snake, dir, food, gameOver])
 
   React.useEffect(() => {
-    const interval = setInterval(moveSnake, 150)
+    const interval = setInterval(moveSnake, 180)
     return () => clearInterval(interval)
   }, [moveSnake])
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-8">
+    <div className="flex flex-col items-center space-y-6 py-8 px-4">
       <div className="text-center">
-        <p className="text-xs font-bold uppercase text-muted-foreground">Score: {score}</p>
+        <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Snake Score: {score}</p>
       </div>
-      <div className="relative w-full max-w-[300px] aspect-square bg-slate-900 rounded-2xl border-4 border-slate-800 grid grid-cols-20 grid-rows-20 overflow-hidden">
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-20 grid-rows-20 overflow-hidden">
         {snake.map((s, i) => (
           <div key={i} className="bg-emerald-400 rounded-sm" style={{ gridColumnStart: s.x + 1, gridRowStart: s.y + 1 }} />
         ))}
@@ -422,17 +422,17 @@ function SnakeGame() {
           <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center space-y-4">
             <Trophy className="h-12 w-12 text-yellow-500" />
             <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Game Over</h4>
-            <Button onClick={() => { setSnake([{ x: 10, y: 10 }]); setGameOver(false); setScore(0); }} className="bg-primary text-white rounded-xl font-bold">Try Again</Button>
+            <Button onClick={() => { setSnake([{ x: 10, y: 10 }]); setGameOver(false); setScore(0); }} className="bg-primary text-white rounded-xl font-bold px-8">Try Again</Button>
           </div>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         <div />
-        <Button variant="secondary" onClick={() => dir.y !== 1 && setDir({ x: 0, y: -1 })}><ArrowUp className="h-5 w-5" /></Button>
+        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.y !== 1 && setDir({ x: 0, y: -1 })}><ArrowUp className="h-5 w-5" /></Button>
         <div />
-        <Button variant="secondary" onClick={() => dir.x !== 1 && setDir({ x: -1, y: 0 })}><ArrowLeft className="h-5 w-5" /></Button>
-        <Button variant="secondary" onClick={() => dir.y !== -1 && setDir({ x: 0, y: 1 })}><ArrowDown className="h-5 w-5" /></Button>
-        <Button variant="secondary" onClick={() => dir.x !== -1 && setDir({ x: 1, y: 0 })}><ArrowRight className="h-5 w-5" /></Button>
+        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.x !== 1 && setDir({ x: -1, y: 0 })}><ArrowLeft className="h-5 w-5" /></Button>
+        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.y !== -1 && setDir({ x: 0, y: 1 })}><ArrowDown className="h-5 w-5" /></Button>
+        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.x !== -1 && setDir({ x: 1, y: 0 })}><ArrowRight className="h-5 w-5" /></Button>
       </div>
     </div>
   )
@@ -475,8 +475,8 @@ function MathMaster() {
   return (
     <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <h3 className="text-2xl font-bold text-primary">Math Master</h3>
-      <div className="bg-primary/5 p-8 rounded-[3rem] text-center space-y-6 w-full max-w-sm border-2 border-primary/10">
-        <div className="text-5xl font-black text-primary flex items-center justify-center gap-4">
+      <div className="bg-primary/5 p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-6 w-full max-w-sm border-2 border-primary/10 shadow-inner">
+        <div className="text-4xl md:text-5xl font-black text-primary flex items-center justify-center gap-4">
           <span>{q.n1}</span>
           <span className="text-accent">{q.op === '*' ? '×' : q.op}</span>
           <span>{q.n2}</span>
@@ -484,11 +484,11 @@ function MathMaster() {
           <span className="text-muted-foreground/30">?</span>
         </div>
         <div className="flex gap-2">
-          <Input className="h-14 text-center text-2xl font-bold" type="number" value={guess} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check()} />
-          <Button className="h-14 px-6 bg-accent" onClick={check}>GO</Button>
+          <Input className="h-14 text-center text-2xl font-bold rounded-2xl" type="number" inputMode="numeric" value={guess} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check()} />
+          <Button className="h-14 px-6 bg-accent rounded-2xl font-black" onClick={check}>GO</Button>
         </div>
         {feedback && <div className="font-bold text-lg animate-bounce">{feedback}</div>}
-        <div className="text-xs font-bold uppercase text-muted-foreground">Score: {score}</div>
+        <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Score: {score}</div>
       </div>
     </div>
   )
@@ -506,8 +506,8 @@ function DoodleBoard() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX || e.touches[0].clientX) - rect.left
-    const y = (e.clientY || e.touches[0].clientY) - rect.top
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top
     ctx.beginPath()
     ctx.moveTo(x, y)
     ctx.lineWidth = 5
@@ -522,10 +522,11 @@ function DoodleBoard() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX || e.touches[0].clientX) - rect.left
-    const y = (e.clientY || e.touches[0].clientY) - rect.top
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top
     ctx?.lineTo(x, y)
     ctx?.stroke()
+    if (e.touches) e.preventDefault()
   }
 
   const clear = () => {
@@ -534,9 +535,9 @@ function DoodleBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-8 px-4">
+    <div className="flex flex-col items-center space-y-6 py-8 px-2 w-full overflow-hidden">
       <h3 className="text-2xl font-bold text-primary">Doodle Board</h3>
-      <div className="relative w-full max-w-2xl aspect-video bg-white rounded-3xl border-4 border-muted/50 shadow-inner overflow-hidden cursor-crosshair">
+      <div className="relative w-full max-w-2xl aspect-video bg-white rounded-3xl border-4 border-muted/50 shadow-inner overflow-hidden cursor-crosshair touch-none">
         <canvas
           ref={canvasRef}
           width={800}
@@ -551,11 +552,11 @@ function DoodleBoard() {
           onTouchEnd={() => setIsDrawing(false)}
         />
       </div>
-      <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-2xl">
+      <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-2xl overflow-x-auto w-full max-w-sm justify-center no-scrollbar">
         {["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"].map(c => (
-          <button key={c} onClick={() => setColor(c)} className={cn("h-8 w-8 rounded-full border-2", color === c ? "scale-125 border-primary" : "border-white")} style={{ backgroundColor: c }} />
+          <button key={c} onClick={() => setColor(c)} className={cn("h-8 w-8 rounded-full border-2 shrink-0 transition-transform active:scale-125", color === c ? "scale-110 border-primary" : "border-white")} style={{ backgroundColor: c }} />
         ))}
-        <Button variant="outline" size="icon" onClick={clear}><Eraser className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-none shadow-sm" onClick={clear}><Eraser className="h-4 w-4" /></Button>
       </div>
     </div>
   )
@@ -585,20 +586,20 @@ function WhackATask() {
   }, [active])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <h3 className="text-2xl font-bold text-primary">Whack-a-Task!</h3>
-      <div className="grid grid-cols-3 gap-4 bg-amber-100 p-6 rounded-[2.5rem] shadow-inner">
+      <div className="grid grid-cols-3 gap-3 bg-amber-100/50 p-4 sm:p-6 rounded-[2.5rem] shadow-inner">
         {moles.map((isUp, i) => (
-          <div key={i} className="relative w-20 h-20 md:w-24 md:h-24 bg-amber-900/20 rounded-full overflow-hidden">
+          <div key={i} className="relative w-20 h-20 sm:w-24 sm:h-24 bg-amber-900/10 rounded-full overflow-hidden">
             <button onClick={() => whack(i)} className={cn("absolute inset-0 transition-all duration-200", isUp ? "translate-y-0" : "translate-y-full")}>
-              <div className="bg-primary p-4 rounded-2xl shadow-lg"><Smile className="h-10 w-10 text-white" /></div>
+              <div className="bg-primary p-4 rounded-2xl shadow-lg h-full flex items-center justify-center"><Smile className="h-10 w-10 text-white" /></div>
             </button>
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
         <div className="text-2xl font-black text-primary">Score: {score}</div>
-        <Button onClick={() => setActive(!active)}>{active ? 'Stop' : 'Start'}</Button>
+        <Button className="rounded-xl px-8 h-12 font-bold bg-accent" onClick={() => setActive(!active)}>{active ? 'Stop' : 'Start'}</Button>
       </div>
     </div>
   )
@@ -608,10 +609,13 @@ function WhackATask() {
 function TetrisGame() {
   const [grid] = React.useState(Array(20).fill(null).map(() => Array(10).fill(0)))
   return (
-    <div className="flex flex-col items-center space-y-6 py-8">
+    <div className="flex flex-col items-center space-y-6 py-8 px-4">
       <h3 className="text-2xl font-bold text-primary">Tetris (Coming Soon)</h3>
-      <div className="relative w-[200px] aspect-[1/2] bg-slate-900 rounded-2xl border-4 border-slate-800 grid grid-cols-10 grid-rows-20 gap-px p-px">
-        {grid.map((row, ri) => row.map((_, ci) => <div key={`${ri}-${ci}`} className="bg-slate-800/50 rounded-sm" />))}
+      <div className="relative w-[180px] md:w-[200px] aspect-[1/2] bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-10 grid-rows-20 gap-px p-px shadow-2xl">
+        {grid.map((row, ri) => row.map((_, ci) => <div key={`${ri}-${ci}`} className="bg-slate-800/30 rounded-sm" />))}
+        <div className="absolute inset-0 flex items-center justify-center">
+            <Badge className="bg-white/10 text-white border-none font-black text-[9px] uppercase tracking-widest">Level 1 Incoming</Badge>
+        </div>
       </div>
     </div>
   )
@@ -622,7 +626,7 @@ function SimonSays() {
   const [sequence, setSequence] = React.useState<number[]>([])
   const [userSequence, setUserSequence] = React.useState<number[]>([])
   const [activeColor, setActiveColor] = React.useState<number | null>(null)
-  const [playing, setActive] = React.useState(false)
+  const [playing, setPlaying] = React.useState(false)
   const colors = ["bg-rose-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"]
 
   const nextRound = (currentSeq: number[]) => {
@@ -645,7 +649,7 @@ function SimonSays() {
     const nextUserSeq = [...userSequence, i]
     if (nextUserSeq[nextUserSeq.length - 1] !== sequence[nextUserSeq.length - 1]) {
       alert("Oops! Game Over")
-      setActive(false); setSequence([]); setUserSequence([])
+      setPlaying(false); setSequence([]); setUserSequence([])
       return
     }
     if (nextUserSeq.length === sequence.length) {
@@ -657,14 +661,14 @@ function SimonSays() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <h3 className="text-2xl font-bold text-primary">Simon Pattern</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {colors.map((c, i) => (
-          <button key={i} onClick={() => handlePress(i)} className={cn("w-24 h-24 md:w-32 md:h-32 rounded-3xl shadow-lg transition-all", c, activeColor === i ? "scale-110 brightness-150" : "opacity-80")} />
+          <button key={i} onClick={() => handlePress(i)} className={cn("w-28 h-28 sm:w-32 sm:h-32 rounded-[2.5rem] shadow-lg transition-all active:scale-90", c, activeColor === i ? "scale-110 brightness-150" : "opacity-80")} />
         ))}
       </div>
-      <Button onClick={() => { setSequence([]); setUserSequence([]); setActive(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
+      <Button className="h-12 px-8 rounded-xl font-bold" onClick={() => { setSequence([]); setUserSequence([]); setPlaying(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
     </div>
   )
 }
@@ -689,10 +693,10 @@ function BalloonPop() {
   }, [])
 
   return (
-    <div className="relative w-full h-[400px] bg-sky-100 rounded-3xl overflow-hidden border-4 border-sky-200">
-      <div className="absolute top-4 left-4 z-10 font-black text-primary text-xl">Score: {score}</div>
+    <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
+      <div className="absolute top-6 left-6 z-10 font-black text-primary text-xl md:text-2xl tracking-tighter">Pop Score: {score}</div>
       {balloons.map(b => (
-        <button key={b.id} onClick={() => { setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 rounded-full shadow-lg transition-transform active:scale-150", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
+        <button key={b.id} onClick={() => { setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
       ))}
     </div>
   )
@@ -714,15 +718,15 @@ function RockPaperScissors() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-10 py-10 px-4">
       <h3 className="text-2xl font-bold text-primary">Rock Paper Scissors</h3>
-      <div className="flex gap-4">
-        {moves.map(m => <Button key={m} onClick={() => play(m)} className="rounded-2xl h-16 w-24 font-bold">{m}</Button>)}
+      <div className="flex gap-2 sm:gap-4 flex-wrap justify-center">
+        {moves.map(m => <Button key={m} onClick={() => play(m)} className="rounded-2xl h-16 w-24 sm:w-28 font-black text-base shadow-lg shadow-primary/5">{m}</Button>)}
       </div>
       {user && (
-        <div className="text-center space-y-2 animate-in zoom-in">
-          <div className="text-lg font-bold">You: {user} vs AI: {ai}</div>
-          <div className="text-3xl font-black text-primary uppercase">{result}</div>
+        <div className="text-center space-y-4 animate-in zoom-in slide-in-from-bottom-2 duration-300">
+          <div className="text-sm md:text-lg font-bold text-muted-foreground uppercase tracking-widest">You <span className="text-primary">{user}</span> vs AI <span className="text-accent">{ai}</span></div>
+          <div className="text-4xl md:text-5xl font-black text-primary uppercase italic tracking-tighter">{result}</div>
         </div>
       )}
     </div>
@@ -752,13 +756,13 @@ function ReactionTest() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8 w-full">
-      <div onClick={state === "idle" || state === "result" ? start : handleClick} className={cn("w-full max-w-md h-64 rounded-[3rem] flex items-center justify-center text-2xl font-bold text-white cursor-pointer transition-colors shadow-xl", 
-        state === "idle" ? "bg-primary" : state === "waiting" ? "bg-rose-500" : state === "ready" ? "bg-emerald-500" : "bg-blue-500"
+    <div className="flex flex-col items-center space-y-8 py-8 px-4 w-full h-full">
+      <div onClick={state === "idle" || state === "result" ? start : handleClick} className={cn("w-full max-w-md h-64 rounded-[3rem] flex items-center justify-center text-3xl font-black text-white cursor-pointer transition-colors shadow-2xl active:scale-95 duration-100", 
+        state === "idle" ? "bg-primary" : state === "waiting" ? "bg-rose-500" : state === "ready" ? "bg-emerald-500" : "bg-blue-600"
       )}>
         {state === "idle" ? "Tap to Start" : state === "waiting" ? "Wait for Green..." : state === "ready" ? "TAP NOW!" : `${time}ms!`}
       </div>
-      {state === "result" && <Button variant="outline" onClick={start}>Try Again</Button>}
+      {state === "result" && <Button variant="outline" className="h-12 px-8 rounded-xl font-bold" onClick={start}>Try Again</Button>}
     </div>
   )
 }
@@ -779,19 +783,19 @@ function SpeedClicker() {
   }, [active, timeLeft])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-10 py-10 px-4">
       <div className="text-center space-y-1">
-        <h3 className="text-3xl font-black text-primary">{clicks} Clicks</h3>
-        <p className="text-muted-foreground font-bold">{timeLeft}s Left</p>
+        <h3 className="text-5xl font-black text-primary tracking-tighter">{clicks} Clicks</h3>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">{timeLeft}s Remaining</p>
       </div>
       <button 
         disabled={timeLeft === 0 && clicks > 0} 
         onClick={() => { if (!active && timeLeft === 10) setActive(true); if (active) setClicks(c => c + 1) }} 
-        className="w-48 h-48 rounded-full bg-accent text-white font-black text-2xl shadow-2xl active:scale-95 transition-transform"
+        className="w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-accent text-white font-black text-3xl shadow-2xl active:scale-90 transition-transform shadow-accent/20 border-8 border-white"
       >
         {timeLeft === 10 && clicks === 0 ? "START" : "CLICK!"}
       </button>
-      {timeLeft === 0 && <Button onClick={() => { setClicks(0); setTimeLeft(10) }}>Reset</Button>}
+      {timeLeft === 0 && <Button className="h-12 px-8 rounded-xl font-bold" onClick={() => { setClicks(0); setTimeLeft(10) }}>Reset</Button>}
     </div>
   )
 }
@@ -813,14 +817,14 @@ function ColorFinder() {
   React.useEffect(() => { generate() }, [generate])
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-8 py-8 px-4">
       <h3 className="text-2xl font-bold text-primary">Find the Odd Color</h3>
       <div className="grid grid-cols-2 gap-4">
         {colors.map((c, i) => (
-          <button key={i} onClick={() => { if (i === target) { setScore(s => s + 1); generate() } else { setScore(0); generate() } }} className="w-24 h-24 rounded-3xl shadow-lg" style={{ backgroundColor: c }} />
+          <button key={i} onClick={() => { if (i === target) { setScore(s => s + 1); generate() } else { setScore(0); generate() } }} className="w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] shadow-lg active:scale-95 transition-transform" style={{ backgroundColor: c }} />
         ))}
       </div>
-      <div className="text-xl font-bold">Score: {score}</div>
+      <div className="text-lg font-black uppercase text-primary tracking-widest">Score: {score}</div>
     </div>
   )
 }
@@ -841,11 +845,11 @@ function DiceRoller() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
-      <div className={cn("w-32 h-32 bg-white rounded-3xl shadow-2xl flex items-center justify-center text-6xl font-black border-4 border-muted/20", rolling && "animate-bounce")}>
+    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+      <div className={cn("w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center text-6xl md:text-7xl font-black border-4 border-muted/20 text-primary", rolling && "animate-bounce")}>
         {val}
       </div>
-      <Button onClick={roll} disabled={rolling} className="rounded-xl h-14 w-40 text-lg font-bold">ROLL DICE</Button>
+      <Button onClick={roll} disabled={rolling} className="rounded-2xl h-16 w-48 text-xl font-black shadow-xl shadow-primary/10">ROLL DICE</Button>
     </div>
   )
 }
@@ -854,7 +858,7 @@ function DiceRoller() {
 function NumberGuess() {
   const [num, setTarget] = React.useState(Math.floor(Math.random() * 100) + 1)
   const [guess, setGuess] = React.useState("")
-  const [msg, setMsg] = React.useState("Guess between 1 and 100")
+  const [msg, setMsg] = React.useState("Guess between 1-100")
 
   const check = () => {
     const val = parseInt(guess)
@@ -865,11 +869,11 @@ function NumberGuess() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
-      <h3 className="text-3xl font-black text-primary uppercase text-center">{msg}</h3>
+    <div className="flex flex-col items-center space-y-8 py-10 px-4">
+      <h3 className="text-3xl md:text-4xl font-black text-primary uppercase text-center leading-tight">{msg}</h3>
       <div className="flex gap-2 w-full max-w-xs">
-        <Input type="number" value={guess} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check()} placeholder="?" className="h-14 text-2xl font-bold text-center" />
-        <Button onClick={check} className="h-14 px-8 bg-accent">GUESS</Button>
+        <Input type="number" inputMode="numeric" value={guess} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && check()} placeholder="?" className="h-16 text-3xl font-black text-center rounded-2xl" />
+        <Button onClick={check} className="h-16 px-8 bg-accent rounded-2xl font-black text-lg">CHECK</Button>
       </div>
     </div>
   )
@@ -877,25 +881,25 @@ function NumberGuess() {
 
 // --- 18. KID TYPER ---
 function TypingGame() {
-  const words = ["HUB", "FAMILY", "JOY", "STAR", "BRAVE", "KIND", "HAPPY"]
+  const words = ["HUB", "FAMILY", "JOY", "STAR", "BRAVE", "KIND", "HAPPY", " Kapendeka"]
   const [word, setWord] = React.useState(words[0])
   const [input, setInput] = React.useState("")
   const [score, setScore] = React.useState(0)
 
   const handleChange = (val: string) => {
-    if (val.toUpperCase() === word) {
+    if (val.toUpperCase().trim() === word.toUpperCase().trim()) {
       setScore(s => s + 1); setInput(""); setWord(words[Math.floor(Math.random() * words.length)])
     } else setInput(val)
   }
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
+    <div className="flex flex-col items-center space-y-10 py-10 px-4">
       <div className="text-center space-y-2">
-        <div className="text-5xl font-black text-primary tracking-widest">{word}</div>
-        <p className="text-muted-foreground font-bold">Type the word!</p>
+        <div className="text-4xl sm:text-6xl font-black text-primary tracking-widest uppercase italic">{word}</div>
+        <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest">Type the word above!</p>
       </div>
-      <Input value={input} onChange={(e) => handleChange(e.target.value)} className="h-16 text-center text-3xl font-bold rounded-2xl w-full max-w-xs" />
-      <div className="text-xl font-bold">Words: {score}</div>
+      <Input autoFocus value={input} onChange={(e) => handleChange(e.target.value)} className="h-16 text-center text-3xl font-black rounded-2xl w-full max-w-xs bg-muted/20 border-none shadow-inner" />
+      <div className="text-sm font-black uppercase text-primary tracking-widest bg-primary/10 px-4 py-1 rounded-full">Words: {score}</div>
     </div>
   )
 }
@@ -919,16 +923,16 @@ function SlotMachine() {
   const win = !spinning && reels[0] === reels[1] && reels[1] === reels[2]
 
   return (
-    <div className="flex flex-col items-center space-y-8 py-8">
-      <div className="flex gap-4 p-8 bg-muted/20 rounded-[3rem] shadow-inner">
+    <div className="flex flex-col items-center space-y-10 py-10 px-4">
+      <div className="flex gap-3 md:gap-4 p-6 sm:p-10 bg-muted/20 rounded-[3rem] shadow-inner">
         {reels.map((r, i) => (
-          <div key={i} className="w-20 h-24 bg-white rounded-2xl shadow-lg flex items-center justify-center text-4xl border-b-8 border-muted">
+          <div key={i} className="w-20 h-24 sm:w-24 sm:h-32 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl sm:text-5xl border-b-8 border-muted active:translate-y-1 transition-transform">
             {r}
           </div>
         ))}
       </div>
       {win && <div className="text-3xl font-black text-primary animate-bounce">JACKPOT! 🏆</div>}
-      <Button onClick={spin} disabled={spinning} className="h-16 px-12 rounded-2xl font-bold text-xl bg-accent shadow-lg shadow-accent/20">SPIN</Button>
+      <Button onClick={spin} disabled={spinning} className="h-16 px-16 rounded-[2rem] font-black text-xl bg-accent shadow-2xl shadow-accent/20 active:scale-95 transition-all">SPIN</Button>
     </div>
   )
 }
@@ -936,58 +940,58 @@ function SlotMachine() {
 // --- MAIN PAGE ---
 export default function ArcadePage() {
   return (
-    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-20">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col p-4 md:p-8 space-y-8 max-w-7xl mx-auto pb-24 overflow-x-hidden">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Universe Arcade</h1>
-          <p className="text-muted-foreground font-medium">19 Games live for the Kapendeka Universe</p>
+          <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Universe Arcade</h1>
+          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">19 Games Live for the Hub</p>
         </div>
-        <Badge className="bg-accent text-white border-none font-bold uppercase px-3 py-1 w-fit">Fun & Learning</Badge>
+        <Badge className="bg-accent text-white border-none font-bold uppercase px-3 py-1 w-fit text-[9px] md:text-xs tracking-widest">Premium Fun</Badge>
       </header>
 
       <Tabs defaultValue="piano" className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-wrap h-auto mb-8 justify-start">
-          <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2"><Music className="h-4 w-4" /> Piano</TabsTrigger>
-          <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2"><Activity className="h-4 w-4" /> Simon</TabsTrigger>
-          <TabsTrigger value="pop" className="rounded-xl font-bold py-2 px-4 gap-2"><Circle className="h-4 w-4" /> Pop</TabsTrigger>
-          <TabsTrigger value="rps" className="rounded-xl font-bold py-2 px-4 gap-2"><Hand className="h-4 w-4" /> RPS</TabsTrigger>
-          <TabsTrigger value="react" className="rounded-xl font-bold py-2 px-4 gap-2"><Zap className="h-4 w-4" /> Reaction</TabsTrigger>
-          <TabsTrigger value="click" className="rounded-xl font-bold py-2 px-4 gap-2"><MousePointer2 className="h-4 w-4" /> Clicker</TabsTrigger>
-          <TabsTrigger value="colors" className="rounded-xl font-bold py-2 px-4 gap-2"><Palette className="h-4 w-4" /> Colors</TabsTrigger>
-          <TabsTrigger value="dice" className="rounded-xl font-bold py-2 px-4 gap-2"><Dices className="h-4 w-4" /> Dice</TabsTrigger>
-          <TabsTrigger value="guess" className="rounded-xl font-bold py-2 px-4 gap-2"><HelpCircle className="h-4 w-4" /> Guess</TabsTrigger>
-          <TabsTrigger value="slots" className="rounded-xl font-bold py-2 px-4 gap-2"><Sparkles className="h-4 w-4" /> Slots</TabsTrigger>
-          <TabsTrigger value="words" className="rounded-xl font-bold py-2 px-4 gap-2"><Search className="h-4 w-4" /> Words</TabsTrigger>
-          <TabsTrigger value="tic" className="rounded-xl font-bold py-2 px-4 gap-2"><X className="h-4 w-4" /> Tic-Tac-Toe</TabsTrigger>
-          <TabsTrigger value="memory" className="rounded-xl font-bold py-2 px-4 gap-2"><Brain className="h-4 w-4" /> Memory</TabsTrigger>
-          <TabsTrigger value="snake" className="rounded-xl font-bold py-2 px-4 gap-2"><Gamepad2 className="h-4 w-4" /> Snake</TabsTrigger>
-          <TabsTrigger value="math" className="rounded-xl font-bold py-2 px-4 gap-2"><Calculator className="h-4 w-4" /> Math</TabsTrigger>
-          <TabsTrigger value="typer" className="rounded-xl font-bold py-2 px-4 gap-2"><Keyboard className="h-4 w-4" /> Typer</TabsTrigger>
-          <TabsTrigger value="doodle" className="rounded-xl font-bold py-2 px-4 gap-2"><PenTool className="h-4 w-4" /> Doodle</TabsTrigger>
-          <TabsTrigger value="whack" className="rounded-xl font-bold py-2 px-4 gap-2"><Hammer className="h-4 w-4" /> Whack</TabsTrigger>
-          <TabsTrigger value="tetris" className="rounded-xl font-bold py-2 px-4 gap-2"><Grid3x3 className="h-4 w-4" /> Tetris</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-8 justify-start no-scrollbar touch-pan-x">
+          <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Music className="h-4 w-4" /> Piano</TabsTrigger>
+          <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Activity className="h-4 w-4" /> Simon</TabsTrigger>
+          <TabsTrigger value="pop" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Circle className="h-4 w-4" /> Pop</TabsTrigger>
+          <TabsTrigger value="rps" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Hand className="h-4 w-4" /> RPS</TabsTrigger>
+          <TabsTrigger value="react" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Zap className="h-4 w-4" /> Reaction</TabsTrigger>
+          <TabsTrigger value="click" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><MousePointer2 className="h-4 w-4" /> Clicker</TabsTrigger>
+          <TabsTrigger value="colors" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Palette className="h-4 w-4" /> Colors</TabsTrigger>
+          <TabsTrigger value="dice" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Dices className="h-4 w-4" /> Dice</TabsTrigger>
+          <TabsTrigger value="guess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><HelpCircle className="h-4 w-4" /> Guess</TabsTrigger>
+          <TabsTrigger value="slots" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Sparkles className="h-4 w-4" /> Slots</TabsTrigger>
+          <TabsTrigger value="words" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Search className="h-4 w-4" /> Words</TabsTrigger>
+          <TabsTrigger value="tic" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><X className="h-4 w-4" /> Tic-Tac-Toe</TabsTrigger>
+          <TabsTrigger value="memory" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Brain className="h-4 w-4" /> Memory</TabsTrigger>
+          <TabsTrigger value="snake" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Gamepad2 className="h-4 w-4" /> Snake</TabsTrigger>
+          <TabsTrigger value="math" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Calculator className="h-4 w-4" /> Math</TabsTrigger>
+          <TabsTrigger value="typer" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Keyboard className="h-4 w-4" /> Typer</TabsTrigger>
+          <TabsTrigger value="doodle" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><PenTool className="h-4 w-4" /> Doodle</TabsTrigger>
+          <TabsTrigger value="whack" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Hammer className="h-4 w-4" /> Whack</TabsTrigger>
+          <TabsTrigger value="tetris" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Grid3x3 className="h-4 w-4" /> Tetris</TabsTrigger>
         </TabsList>
 
         <div className="mt-4">
-          <TabsContent value="piano"><Card className="rounded-[3rem] overflow-hidden bg-white shadow-xl"><PianoGame /></Card></TabsContent>
-          <TabsContent value="simon"><Card className="rounded-[3rem] bg-white shadow-xl"><SimonSays /></Card></TabsContent>
-          <TabsContent value="pop"><Card className="rounded-[3rem] bg-white shadow-xl"><BalloonPop /></Card></TabsContent>
-          <TabsContent value="rps"><Card className="rounded-[3rem] bg-white shadow-xl"><RockPaperScissors /></Card></TabsContent>
-          <TabsContent value="react"><Card className="rounded-[3rem] bg-white shadow-xl"><ReactionTest /></Card></TabsContent>
-          <TabsContent value="click"><Card className="rounded-[3rem] bg-white shadow-xl"><SpeedClicker /></Card></TabsContent>
-          <TabsContent value="colors"><Card className="rounded-[3rem] bg-white shadow-xl"><ColorFinder /></Card></TabsContent>
-          <TabsContent value="dice"><Card className="rounded-[3rem] bg-white shadow-xl"><DiceRoller /></Card></TabsContent>
-          <TabsContent value="guess"><Card className="rounded-[3rem] bg-white shadow-xl"><NumberGuess /></Card></TabsContent>
-          <TabsContent value="slots"><Card className="rounded-[3rem] bg-white shadow-xl"><SlotMachine /></Card></TabsContent>
-          <TabsContent value="words"><Card className="rounded-[3rem] p-6 bg-white shadow-xl"><WordSearchGame /></Card></TabsContent>
-          <TabsContent value="tic"><Card className="rounded-[3rem] bg-white shadow-xl"><TicTacToe /></Card></TabsContent>
-          <TabsContent value="memory"><Card className="rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
-          <TabsContent value="snake"><Card className="rounded-[3rem] bg-white shadow-xl"><SnakeGame /></Card></TabsContent>
-          <TabsContent value="math"><Card className="rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
-          <TabsContent value="typer"><Card className="rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
-          <TabsContent value="doodle"><Card className="rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
-          <TabsContent value="whack"><Card className="rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>
-          <TabsContent value="tetris"><Card className="rounded-[3rem] bg-white shadow-xl"><TetrisGame /></Card></TabsContent>
+          <TabsContent value="piano"><Card className="rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-white shadow-xl"><PianoGame /></Card></TabsContent>
+          <TabsContent value="simon"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SimonSays /></Card></TabsContent>
+          <TabsContent value="pop"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><BalloonPop /></Card></TabsContent>
+          <TabsContent value="rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><RockPaperScissors /></Card></TabsContent>
+          <TabsContent value="react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><ReactionTest /></Card></TabsContent>
+          <TabsContent value="click"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SpeedClicker /></Card></TabsContent>
+          <TabsContent value="colors"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><ColorFinder /></Card></TabsContent>
+          <TabsContent value="dice"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DiceRoller /></Card></TabsContent>
+          <TabsContent value="guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><NumberGuess /></Card></TabsContent>
+          <TabsContent value="slots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SlotMachine /></Card></TabsContent>
+          <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl"><WordSearchGame /></Card></TabsContent>
+          <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TicTacToe /></Card></TabsContent>
+          <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
+          <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame /></Card></TabsContent>
+          <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
+          <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
+          <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
+          <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>
+          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TetrisGame /></Card></TabsContent>
         </div>
       </Tabs>
     </div>
