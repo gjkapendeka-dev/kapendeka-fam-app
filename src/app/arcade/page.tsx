@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useSupabase, useCollection, useUser } from "@/supabase"
 import { 
   Gamepad, 
   Music, 
