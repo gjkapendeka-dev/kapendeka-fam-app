@@ -32,7 +32,14 @@ import {
   LogOut,
   User,
   Target,
-  Sparkles
+  Sparkles,
+  BarChart4,
+  Library,
+  Lightbulb,
+  Compass,
+  Leaf,
+  Wind,
+  HelpCircle
 } from "lucide-react"
 
 import {
@@ -57,7 +64,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Family Rituals", href: "/rituals", icon: Target },
+  { name: "Family Polls", href: "/polls", icon: BarChart4 },
+  { name: "AI Story Studio", href: "/stories", icon: Library },
   { name: "Universe Arcade", href: "/arcade", icon: Gamepad },
+  { name: "Trivia Quest", href: "/trivia", icon: HelpCircle },
+  { name: "Universe Quests", href: "/quest", icon: Compass },
+  { name: "Vision Board", href: "/vision", icon: Lightbulb },
+  { name: "Eco-Universe", href: "/eco", icon: Leaf },
+  { name: "Zen Space", href: "/zen", icon: Wind },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Chores & Tasks", href: "/household", icon: CheckSquare },
   { name: "Meals & Recipes", href: "/meals", icon: Utensils },
