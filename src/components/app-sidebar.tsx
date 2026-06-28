@@ -153,12 +153,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="My Profile" isActive={pathname === "/profile"} className="h-11 rounded-xl bg-white shadow-md shadow-primary/5 border border-primary/5">
               <Link href="/profile" className="flex items-center gap-3">
-                <Avatar className="h-7 w-7 rounded-lg border-2 border-primary/10">
-                  <AvatarImage src={`https://picsum.photos/seed/${profile?.id}/50/50`} />
-                  <AvatarFallback className="text-[9px] font-black bg-primary text-white uppercase italic">KP</AvatarFallback>
+                <Avatar className="h-7 w-7 rounded-lg border-2 border-primary/10 bg-white">
+                  <AvatarImage src={profile?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${profile?.id}`} className="object-cover" />
+                  <AvatarFallback className="text-[9px] font-black bg-primary text-white uppercase italic">{profile?.display_name?.substring(0, 2) || "KP"}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="font-black text-[10px] uppercase tracking-tight truncate">{profile?.displayName || "Profile"}</span>
+                  <span className="font-black text-[10px] uppercase tracking-tight truncate">{profile?.display_name || "Profile"}</span>
                   <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">{profile?.role || "Node"}</span>
                 </div>
               </Link>

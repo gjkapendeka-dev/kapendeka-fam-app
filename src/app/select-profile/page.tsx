@@ -113,9 +113,9 @@ export default function SelectProfilePage() {
                 className="flex flex-col items-center gap-3 cursor-pointer group"
               >
                 <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl md:rounded-[2rem] border-4 border-transparent group-hover:border-primary/50 group-hover:scale-105 transition-all duration-300 shadow-xl overflow-hidden bg-muted flex items-center justify-center">
-                  <Avatar className="h-full w-full rounded-none">
-                    <AvatarImage src={`https://picsum.photos/seed/${p.id}/200/200`} />
-                    <AvatarFallback className="text-2xl md:text-4xl font-black bg-primary/10 text-primary uppercase italic">
+                  <Avatar className="h-full w-full rounded-2xl bg-white">
+                    <AvatarImage src={p.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${p.id}`} className="object-cover" />
+                    <AvatarFallback className="rounded-2xl text-2xl font-bold bg-primary text-white">
                       {p.display_name.substring(0, 2)}
                     </AvatarFallback>
                   </Avatar>
@@ -138,8 +138,8 @@ export default function SelectProfilePage() {
         <div className="w-full max-w-sm mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
           <Card className="rounded-[2rem] border-none shadow-2xl bg-white/80 backdrop-blur-xl">
             <CardHeader className="text-center pt-8">
-              <div className="mx-auto h-24 w-24 rounded-[1.5rem] overflow-hidden shadow-xl mb-4">
-                <img src={`https://picsum.photos/seed/${selectedForPin.id}/200/200`} alt="Avatar" className="w-full h-full object-cover" />
+              <div className="mx-auto h-24 w-24 rounded-[1.5rem] overflow-hidden shadow-xl mb-4 bg-white">
+                <img src={selectedForPin.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${selectedForPin.id}`} alt="Avatar" className="w-full h-full object-cover" />
               </div>
               <CardTitle className="text-2xl font-headline font-bold">Hi, {selectedForPin.display_name}</CardTitle>
               <CardDescription>Enter your 4-digit profile PIN</CardDescription>
