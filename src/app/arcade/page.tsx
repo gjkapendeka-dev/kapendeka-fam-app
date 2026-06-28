@@ -1016,6 +1016,17 @@ function SlotMachine() {
 function Leaderboard() {
   const supabase = useSupabase();
   const { profile } = useUser();
+  const tournamentQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("arcade_tournaments")
+      .select("*")
+      .eq("family_id", profile.familyId)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+  }, [supabase, profile?.familyId])
+  const { data: tournaments } = useCollection(tournamentQuery)
+  const activeTournament = tournaments?.[0] || null
   const [scores, setScores] = React.useState([]);
 
   React.useEffect(() => {
@@ -1066,7 +1077,14 @@ function Leaderboard() {
                       <div className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{i + 1}</div>
                       <div className="flex items-center gap-2">
                         <img src={s.profiles?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.profiles?.id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
+                        
                         <span className="font-bold text-sm">{s.profiles?.display_name}</span>
+                        {i === 0 && activeTournament?.game_name === game && (
+                          <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ml-1 shadow-sm border border-yellow-300">
+                            <Crown className="h-3 w-3" /> Champ
+                          </div>
+                        )}
+
                       </div>
                     </div>
                     <div className="font-bold text-primary">
@@ -1084,6 +1102,22 @@ function Leaderboard() {
 }
 
 export default function ArcadePage() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
+  const tournamentQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("arcade_tournaments")
+      .select("*")
+      .eq("family_id", profile.familyId)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+  }, [supabase, profile?.familyId])
+  const { data: tournaments } = useCollection(tournamentQuery)
+  const activeTournament = tournaments?.[0] || null
+
+
   const toggleLandscape = async () => {
     try {
       if (!document.fullscreenElement) {
@@ -1121,6 +1155,20 @@ export default function ArcadePage() {
         </div>
       </header>
 
+      
+      {activeTournament && (
+        <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-r from-yellow-400 to-amber-600 text-white overflow-hidden mb-2">
+          <CardHeader className="py-4 px-6 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2 shadow-sm"><Flame className="h-6 w-6 text-white animate-pulse" /> Weekend Tournament</CardTitle>
+              <CardDescription className="text-white/80 font-bold">Play {activeTournament.game_name} to win the Gold Badge!</CardDescription>
+            </div>
+            <div className="hidden md:flex h-12 w-12 bg-white/20 rounded-xl items-center justify-center">
+              <Trophy className="h-6 w-6 text-yellow-100" />
+            </div>
+          </CardHeader>
+        </Card>
+      )}
       <Tabs defaultValue="leaderboard" className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-4 justify-start no-scrollbar touch-pan-x">
           <TabsTrigger value="leaderboard" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Trophy className="h-4 w-4" /> Leaderboard</TabsTrigger>

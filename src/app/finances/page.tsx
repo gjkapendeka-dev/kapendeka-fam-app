@@ -122,6 +122,13 @@ export default function FinancesPage() {
           <p className="text-muted-foreground font-medium">Tracking the Kapendeka Family wealth in ZAR</p>
         </div>
         <div className="flex items-center gap-2">
+          
+          {profile?.role === 'parent' && (
+            <Button onClick={handleDistributeAllowance} disabled={isDistributing} className="rounded-xl h-11 px-6 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20">
+              {isDistributing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-2" />} Distribute Allowances
+            </Button>
+          )}
+
           {profile?.role === 'parent' && (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
