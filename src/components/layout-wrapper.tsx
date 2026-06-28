@@ -3,10 +3,21 @@
 import { usePathname } from "next/navigation"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
+import { useUser } from "@/supabase"
+import { Loader2 } from "lucide-react"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { loading } = useUser()
   const isAuthPage = pathname === '/login' || pathname === '/select-profile'
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   if (isAuthPage) {
     return <main className="flex-1 w-full min-h-screen">{children}</main>
