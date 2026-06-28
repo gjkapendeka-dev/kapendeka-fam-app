@@ -55,14 +55,14 @@ export default function SocialPage() {
     if (!supabase || !profile?.familyId || !newPostContent) return
 
     const postData = {
-      familyId: profile.familyId,
-      authorId: profile.id,
-      authorName: profile.displayName,
-      authorAvatar: profile.avatarUrl || "",
+      family_id: profile.familyId,
+      author_id: profile.id,
+      author_name: profile.displayName,
+      author_avatar: profile.avatarUrl || "",
       type: postType,
       content: newPostContent,
-      mediaUrls: [],
-      createdAt: new Date().toISOString(),
+      media_urls: [],
+      created_at: new Date().toISOString(),
       likes: []
     }
 
@@ -169,17 +169,17 @@ export default function SocialPage() {
                 <CardHeader className="flex flex-row items-center gap-4 pb-4">
                   <Avatar className="h-12 w-12 border-2 border-primary/10">
                     <AvatarImage src={`https://picsum.photos/seed/${post.authorId}/100/100`} />
-                    <AvatarFallback>{post.authorName?.substring(0, 2).toUpperCase() || "KP"}</AvatarFallback>
+                    <AvatarFallback>{post.author_name?.substring(0, 2).toUpperCase() || "KP"}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg">{post.authorName || "Family Member"}</span>
+                      <span className="font-bold text-lg">{post.author_name || "Family Member"}</span>
                       <Badge variant="secondary" className="bg-primary/5 text-primary border-none text-[8px] font-bold uppercase tracking-widest px-2">
                         {post.type}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground font-medium">
-                      {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : "Just now"}
+                      {post.created_at ? formatDistanceToNow(new Date(post.created_at.seconds * 1000), { addSuffix: true }) : "Just now"}
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">

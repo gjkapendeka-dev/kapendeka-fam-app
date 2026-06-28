@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import confetti from "canvas-confetti"
 import { Compass, Plus, MapPin, CheckCircle2, ChevronRight, Trophy, Zap, Loader2, Target, Maximize } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -84,10 +85,26 @@ export default function QuestPage() {
     
     if (allDone && profile?.role !== 'parent') {
       supabase.from("profiles").update({ points: (profile.points || 0) + quest.points_reward }).eq("id", profile.id).then(() => {
+        
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#34d399', '#fcd34d', '#fbbf24']
+      })
+
         toast({ title: "Quest Completed!", description: `Earned ${quest.points_reward} bonus XP!` })
       })
     } else if (allDone) {
-      toast({ title: "Quest Completed!", description: "Kids earn XP for this!" })
+      
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#34d399', '#fcd34d', '#fbbf24']
+      })
+
+        toast({ title: "Quest Completed!", description: "Kids earn XP for this!" })
     }
   }
 
