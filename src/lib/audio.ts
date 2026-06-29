@@ -104,6 +104,61 @@ class AudioEngine {
     }
   }
 
+  
+  public playBoom() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    // 1. Deep sub bass drop (808 style)
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+    
+    osc.type = 'sine';
+    // Rapid pitch drop from 150Hz to 10Hz
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    
+    // Volume envelope
+    oscGain.gain.setValueAtTime(1, ctx.currentTime);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.0);
+    
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+    
+    // 2. Add some distortion/noise for the "crunch" of the boom
+    const bufferSize = ctx.sampleRate * 0.5;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1; // white noise
+    }
+    
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.setValueAtTime(800, ctx.currentTime);
+    noiseFilter.frequency.exponentialRampToValueAtTime(10, ctx.currentTime + 0.5);
+    
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.5, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    
+    // Start both
+    osc.start();
+    osc.stop(ctx.currentTime + 1.0);
+    noise.start();
+    
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  }
+
   public playExplosion() {
     const ctx = this.getContext();
     if (!ctx) return;

@@ -1603,7 +1603,7 @@ function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
     const newGrid = [...grid.map(row => [...row])];
     
     if (newGrid[r][c].isMine) {
-      audio.playExplosion();
+      audio.playBoom();
       newGrid.forEach(row => row.forEach(cell => { if (cell.isMine) cell.isRevealed = true; }));
       setGrid(newGrid);
       setGameOver(true);
