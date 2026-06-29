@@ -56,24 +56,24 @@ export default function SchoolPage() {
   const [dueDate, setDueDate] = React.useState("")
 
   const homeworkQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
-    return supabase.from("homework").select("*").eq("familyId", profile.familyId).order("dueDate", { ascending: true })
-  }, [supabase, profile?.familyId])
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("homework").select("*").eq("family_id", profile.family_id).order("due_date", { ascending: true })
+  }, [supabase, profile?.family_id])
 
   const { data: assignments, loading, refresh } = useCollection(homeworkQuery)
 
   const handleAddAssignment = () => {
-    if (!supabase || !profile?.familyId || !title) return
+    if (!supabase || !profile?.family_id || !title) return
 
     setIsSubmitting(true)
     const data = {
-      familyId: profile.familyId,
+      family_id: profile.family_id,
       title,
       subject,
-      childName,
+      child_name: childName,
       status: "pending",
-      dueDate: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
+      created_at: new Date().toISOString(),
     }
 
     supabase.from("homework").insert([data])
@@ -94,7 +94,7 @@ export default function SchoolPage() {
     try {
        const fileExt = file.name.split('.').pop()
        const fileName = `${Math.random()}.${fileExt}`
-       const filePath = `${profile?.familyId}/${id}/${fileName}`
+       const filePath = `${profile?.family_id}/${id}/${fileName}`
        
        const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, file)
        if (uploadError) throw uploadError
@@ -103,7 +103,7 @@ export default function SchoolPage() {
        
        await supabase.from("homework").update({ 
          status: "done", 
-         attachmentUrl: data.publicUrl 
+         attachment_url: data.publicUrl 
        }).eq("id", id)
        
        toast({ title: "Turned In!", description: "File uploaded successfully.", className: "bg-emerald-500 text-white" })
@@ -147,7 +147,7 @@ export default function SchoolPage() {
            </div>
           <p className="text-muted-foreground font-bold text-sm">Keep track of all your assignments and turn them in!</p>
         </div>
-        {profile?.role === "adult" && (
+        {(profile?.role === "adult" || profile?.role === "parent") && (
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
              <DialogTrigger asChild>
                <Button className="rounded-xl h-11 px-6 font-black uppercase tracking-wider bg-primary shadow-lg shadow-primary/20">
@@ -219,8 +219,8 @@ export default function SchoolPage() {
                   
                   <h4 className="font-black text-xl mb-1">{a.title}</h4>
                   <div className="flex items-center text-xs font-bold text-muted-foreground gap-4 mb-6">
-                     <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {format(new Date(a.dueDate), "MMM d")}</span>
-                     <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.childName}</span>
+                     <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {format(new Date(a.due_date), "MMM d")}</span>
+                     <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
                   </div>
 
                   {a.status === "pending" ? (
@@ -247,8 +247,8 @@ export default function SchoolPage() {
                      </div>
                   ) : (
                      <div className="flex flex-col gap-2">
-                        {a.attachmentUrl && (
-                           <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
+                        {a.attachment_url && (
+                           <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
                               <LinkIcon className="h-4 w-4 mr-2" /> View Attachment
                            </a>
                         )}
