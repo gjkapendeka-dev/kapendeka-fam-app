@@ -1896,6 +1896,7 @@ export default function ArcadePage() {
   const [lobbyChannel, setLobbyChannel] = React.useState<any>(null);
   const [incomingChallenge, setIncomingChallenge] = React.useState<any>(null);
   const [activeMatch, setActiveMatch] = React.useState<{id: string, game: string, role: string} | null>(null);
+  const [activeTab, setActiveTab] = React.useState('leaderboard');
 
   React.useEffect(() => {
     if (!supabase || !profile) return;
@@ -2059,7 +2060,7 @@ export default function ArcadePage() {
           </CardHeader>
         </Card>
       )}
-      <Tabs defaultValue="leaderboard" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-4 justify-start no-scrollbar touch-pan-x">
           <TabsTrigger value="leaderboard" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Trophy className="h-4 w-4" /> Leaderboard</TabsTrigger>
           <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Music className="h-4 w-4" /> Piano</TabsTrigger>
