@@ -565,7 +565,7 @@ function FrenchMaster() {
     { en: 'Water', fr: 'Eau' }, { en: 'Sun', fr: 'Soleil' },
     { en: 'Tree', fr: 'Arbre' }, { en: 'Friend', fr: 'Ami' },
     { en: 'Hello', fr: 'Bonjour' }, { en: 'Goodbye', fr: 'Au revoir' },
-    { en: 'Please', fr: 'S\\'il vous plaît' }, { en: 'Thank you', fr: 'Merci' }
+    { en: 'Please', fr: "S'il vous plaît" }, { en: 'Thank you', fr: 'Merci' }
   ]
 
   const [q, setQ] = React.useState<any>(null)
