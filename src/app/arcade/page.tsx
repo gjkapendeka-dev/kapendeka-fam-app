@@ -774,6 +774,7 @@ function WhackATask() {
 function TinashePattern() {
   const supabase = useSupabase();
   const { profile } = useUser();
+  const { toast } = useToast();
 
   const [difficulty, setDifficulty] = React.useState<"easy" | "medium" | "hard">("easy")
   const [sequence, setSequence] = React.useState<number[]>([])
@@ -807,14 +808,19 @@ function TinashePattern() {
     const nextUserSeq = [...userSequence, i]
     if (nextUserSeq[nextUserSeq.length - 1] !== sequence[nextUserSeq.length - 1]) {
       audio.playBoom(); // Dramatic loud noise!
+      setTimeout(() => audio.playSad(), 1000); // Sad sound after boom
       saveGameScore(supabase, profile, "Tinashe Pattern", sequence.length - 1);
-      alert("Oops! Game Over")
+      toast({ title: "😭 Oops! Game Over", description: "You missed the pattern! Try again!", variant: "destructive" })
       setPlaying(false); setSequence([]); setUserSequence([])
       return
     }
     if (nextUserSeq.length === sequence.length) {
       setUserSequence([])
-      setTimeout(() => { audio.playWin(); nextRound(sequence) }, 1000)
+      setTimeout(() => { 
+        audio.playWin(); 
+        toast({ title: "🎉 Amazing!", description: "You got the pattern right! Next level!" })
+        nextRound(sequence) 
+      }, 1000)
     } else {
       setUserSequence(nextUserSeq)
     }
@@ -916,7 +922,7 @@ function BalloonPop() {
           </div>
         )}
         {balloons.map(b => (
-          <button key={b.id} onPointerDown={(e) => { e.preventDefault(); if(playing) { setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) } }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-[2rem] shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }}>
+          <button key={b.id} onPointerDown={(e) => { e.preventDefault(); if(playing) { audio.playBoom(); setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) } }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-[2rem] shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }}>
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-4 bg-sky-300" />
           </button>
         ))}

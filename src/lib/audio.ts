@@ -195,6 +195,38 @@ class AudioEngine {
     }
   }
 
+  
+  public playSad() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    const now = ctx.currentTime;
+    
+    // Sad descending slide (trombone style "womp womp")
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+    osc.frequency.setValueAtTime(200, now + 0.6);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 1.2);
+    
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(now + 1.2);
+    
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([100, 200, 300]);
+    }
+  }
+
   public playWin() {
     const ctx = this.getContext();
     if (!ctx) return;

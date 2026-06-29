@@ -192,19 +192,16 @@ export default function HobbiesPage() {
               <CardDescription className="text-indigo-100">Top contributors this week</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                { name: "George", hobby: "Gardening", xp: 120 },
-                { name: "Junior", hobby: "Chess", xp: 85 },
-              ].map((m, i) => (
+              {(hobbies || []).slice().sort((a: any, b: any) => (b.progress?.xp || 0) - (a.progress?.xp || 0)).slice(0, 5).map((m: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-white/10 p-3 rounded-2xl">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-lg opacity-50">#{i+1}</span>
                     <div>
-                      <div className="font-bold text-sm">{m.name}</div>
-                      <div className="text-[10px] opacity-70 uppercase font-bold">{m.hobby}</div>
+                      <div className="font-bold text-sm">{m.userName || 'Member'}</div>
+                      <div className="text-[10px] opacity-70 uppercase font-bold">{m.name}</div>
                     </div>
                   </div>
-                  <Badge className="bg-white/20 text-white border-none">+{m.xp} XP</Badge>
+                  <Badge className="bg-white/20 text-white border-none">+{m.progress?.xp || 0} XP</Badge>
                 </div>
               ))}
             </CardContent>
