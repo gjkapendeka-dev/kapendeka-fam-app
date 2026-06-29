@@ -6,6 +6,8 @@ import { Compass, Plus, MapPin, CheckCircle2, ChevronRight, Trophy, Zap, Loader2
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useUser, useCollection, useSupabase } from "@/supabase"
@@ -21,7 +23,7 @@ export default function QuestPage() {
   const [newQuest, setNewQuest] = React.useState({ title: "", description: "", points_reward: 500, step1: "", step2: "", step3: "" })
 
   const handleCreateQuest = async () => {
-    if (!supabase || !profile?.familyId) return
+    if (!supabase || !profile?.family_id) return
     setIsSubmitting(true)
     
     const steps = []
@@ -30,7 +32,7 @@ export default function QuestPage() {
     if (newQuest.step3) steps.push({ label: newQuest.step3, hint: "Required", completed: false })
 
     const { error } = await supabase.from("quests").insert([{
-      family_id: profile.familyId,
+      family_id: profile.family_id,
       title: newQuest.title,
       description: newQuest.description,
       points_reward: newQuest.points_reward,
@@ -47,9 +49,9 @@ export default function QuestPage() {
 
 
   const questsQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
-    return supabase.from("quests").select("*").eq("familyId", profile.familyId)
-  }, [supabase, profile?.familyId])
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("quests").select("*").eq("family_id", profile.family_id)
+  }, [supabase, profile?.family_id])
 
   const { data: quests, loading } = useCollection(questsQuery)
 
