@@ -68,7 +68,7 @@ const saveGameScore = async (supabase: any, profile: any, game: string, score: n
   if (!supabase || !profile) return
   
   const payload: any = {
-    family_id: profile.family_id,
+    family_id: profile.familyId, // Fix family_id mapping
     member_id: profile.id,
     game: game,
     updated_at: new Date().toISOString()
@@ -1954,10 +1954,10 @@ function Leaderboard() {
     const fetchScores = async () => {
       const { data } = await supabase
         .from('arcade_scores')
-        .select('*')
-        .eq('family_id', profile.family_id)
-        .gte('created_at', startOfWeek)
-        .order('score', { ascending: false });
+        .select('*, profiles!arcade_scores_member_id_fkey(display_name)')
+        .eq('family_id', profile.familyId) // Fix familyId
+        .gte('updated_at', startOfWeek) // Fix created_at -> updated_at
+        .order('best_score', { ascending: false }); // Fix score -> best_score
 
       if (data) setScores(data);
     };
@@ -1993,7 +1993,7 @@ function Leaderboard() {
                       <div className="flex items-center gap-2">
                         <img src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.user_id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
                         
-                        <span className="font-bold text-sm">{s.user_name || "Family Member"}</span>
+                        <span className="font-bold text-sm">{s.profiles?.display_name || "Family Member"}</span>
                         {i === 0 && activeTournament?.game_name === game && (
                           <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ml-1 shadow-sm border border-yellow-300">
                             <Trophy className="h-3 w-3" /> Champ
@@ -2003,7 +2003,7 @@ function Leaderboard() {
                       </div>
                     </div>
                     <div className="font-bold text-primary">
-                      {s.score ? `${s.score} pts` : (s.type === 'win' ? 'Won' : 'Played')}
+                      {s.best_score ? `${s.best_score} pts` : (s.wins ? `${s.wins} Wins` : 'Played')}
                     </div>
                   </div>
                 ))}
