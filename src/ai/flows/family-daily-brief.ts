@@ -41,7 +41,7 @@ const briefPrompt = ai.definePrompt({
   name: 'familyDailyBriefPrompt',
   input: { schema: FamilyBriefInputSchema },
   output: { schema: FamilyBriefOutputSchema },
-  prompt: `You are the Kapendeka Universe AI Assistant. Your goal is to provide a helpful, warm, and concise daily brief for {{{userName}}}.
+  prompt: `You are the Kapendeka World AI Assistant. Your goal is to provide a helpful, warm, and concise daily brief for {{{userName}}}.
 
 Use the following family data:
 - Events: {{#each events}}{{{title}}} at {{{startTime}}}, {{/each}}

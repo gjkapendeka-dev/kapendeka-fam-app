@@ -122,7 +122,7 @@ export default function ProfilePage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
         <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">My Identity</h1>
-        <p className="text-muted-foreground font-medium">Manage your presence in the Kapendeka Universe</p>
+        <p className="text-muted-foreground font-medium">Manage your presence in the Kapendeka World</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

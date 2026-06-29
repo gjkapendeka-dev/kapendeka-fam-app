@@ -189,7 +189,7 @@ export default function StoryStudioPage() {
             <div className="h-full min-h-[500px] bg-muted/20 rounded-[4rem] border-4 border-dashed border-muted/50 flex flex-col items-center justify-center text-center p-12">
                <Library className="h-24 w-24 text-muted-foreground/10 mb-3" />
                <h3 className="text-2xl font-black uppercase tracking-tighter text-muted-foreground">The Archive is Empty</h3>
-               <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] max-w-xs mt-2">Generate a story above to witness the Kapendeka Universe legends.</p>
+               <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] max-w-xs mt-2">Generate a story above to witness the Kapendeka World legends.</p>
             </div>
           )}
         </div>

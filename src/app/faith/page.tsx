@@ -140,7 +140,7 @@ export default function FaithPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Church & Faith</h1>
-          <p className="text-muted-foreground font-medium">Tracking the spiritual growth of the Kapendeka Universe</p>
+          <p className="text-muted-foreground font-medium">Tracking the spiritual growth of the Kapendeka World</p>
         </div>
         <div className="flex items-center gap-2">
           <Dialog open={isEntryOpen} onOpenChange={setIsEntryOpen}>
@@ -253,7 +253,7 @@ export default function FaithPage() {
                 <HandHeart className="h-5 w-5 text-accent" />
                 Family Prayer Wall
               </CardTitle>
-              <CardDescription className="text-primary-foreground/70 font-medium">Interceding for the Kapendeka Universe</CardDescription>
+              <CardDescription className="text-primary-foreground/70 font-medium">Interceding for the Kapendeka World</CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-3">

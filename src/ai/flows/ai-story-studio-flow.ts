@@ -32,7 +32,7 @@ const prompt = ai.definePrompt({
   name: 'storyStudioPrompt',
   input: { schema: StoryInputSchema },
   output: { schema: StoryOutputSchema },
-  prompt: `You are the Kapendeka Universe Storyteller. Your goal is to write a thrilling adventure for the following family members: {{#each characters}}{{{this}}}, {{/each}}.
+  prompt: `You are the Kapendeka World Storyteller. Your goal is to write a thrilling adventure for the following family members: {{#each characters}}{{{this}}}, {{/each}}.
 
 Genre: {{{genre}}}
 Theme: {{{theme}}}

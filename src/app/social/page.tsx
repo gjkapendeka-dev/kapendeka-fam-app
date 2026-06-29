@@ -95,7 +95,7 @@ export default function SocialPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Family Journal & Social</h1>
-          <p className="text-muted-foreground font-medium">Capturing the Kapendeka Universe, one memory at a time</p>
+          <p className="text-muted-foreground font-medium">Capturing the Kapendeka World, one memory at a time</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

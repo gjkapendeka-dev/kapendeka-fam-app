@@ -86,7 +86,7 @@ export default function SettingsPage() {
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
-          <p className="text-muted-foreground font-medium">Manage the Kapendeka Universe configurations</p>
+          <p className="text-muted-foreground font-medium">Manage the Kapendeka World configurations</p>
         </div>
         {profile?.role === 'parent' && (
           <Button onClick={handleSave} disabled={saving} className="rounded-xl h-11 px-6 shadow-lg shadow-primary/20">

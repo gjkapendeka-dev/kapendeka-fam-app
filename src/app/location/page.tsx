@@ -167,7 +167,7 @@ export default function LocationSharingPage() {
             </div>
             <h3 className="text-2xl font-bold mb-4">Universe Safety</h3>
             <p className="text-primary-foreground/80 font-medium leading-relaxed mb-3">
-              Location sharing is strictly opt-in and private to your family. No one outside the Kapendeka Universe can see your location.
+              Location sharing is strictly opt-in and private to your family. No one outside the Kapendeka World can see your location.
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10">

@@ -86,7 +86,7 @@ export default function CelebrationsPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Celebrations & Milestones</h1>
-          <p className="text-muted-foreground font-medium">Never miss a beat in the Kapendeka Universe</p>
+          <p className="text-muted-foreground font-medium">Never miss a beat in the Kapendeka World</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

@@ -65,7 +65,7 @@ export default function GamesRewardsPage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header>
         <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Rewards & Levels</h1>
-        <p className="text-muted-foreground font-medium">Gamifying the Kapendeka Universe Hub</p>
+        <p className="text-muted-foreground font-medium">Gamifying the Kapendeka World Hub</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">

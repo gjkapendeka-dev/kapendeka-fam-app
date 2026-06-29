@@ -189,7 +189,7 @@ export default function LanguageLearningPage() {
                 <Trophy className="h-5 w-5 text-yellow-400" />
                 Language Masters
               </CardTitle>
-              <CardDescription className="text-indigo-100">Top learners in the Kapendeka Universe</CardDescription>
+              <CardDescription className="text-indigo-100">Top learners in the Kapendeka World</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {[

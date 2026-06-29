@@ -133,7 +133,7 @@ export default function HouseholdPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Household Tasks</h1>
-          <p className="text-muted-foreground font-medium">Keep the Kapendeka Universe running smoothly</p>
+          <p className="text-muted-foreground font-medium">Keep the Kapendeka World running smoothly</p>
         </div>
         {profile?.role === 'parent' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

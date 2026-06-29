@@ -92,7 +92,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5">
-                Kapendeka Universe Premium
+                Kapendeka World Premium
               </Badge>
             </div>
             <h1 className="text-xl md:text-4xl font-headline font-bold tracking-tight text-foreground mt-1 leading-tight">
@@ -306,7 +306,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-lg md:text-xl font-black uppercase tracking-tighter mb-4">Command Center</h3>
             <p className="text-xs md:text-sm font-medium text-white/70 leading-relaxed mb-3">
-              The Kapendeka Universe is operating with 99% continuity. All nodes aligned.
+              The Kapendeka World is operating with 99% continuity. All nodes aligned.
             </p>
             <div className="flex gap-4">
                <div className="flex flex-col">

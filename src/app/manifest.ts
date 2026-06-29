@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Kapendeka Universe',
+    name: 'Kapendeka World',
     short_name: 'Kapendeka Hub',
     description: 'The premium gamified family management hub.',
     start_url: '/',

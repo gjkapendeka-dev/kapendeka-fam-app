@@ -481,6 +481,7 @@ function MathMaster() {
   const [guess, setGuess] = React.useState("")
   const [score, setScore] = React.useState(0)
   const [feedback, setFeedback] = React.useState<string | null>(null)
+  const [playing, setPlaying] = React.useState(false)
 
   const generate = React.useCallback(() => {
     const n1 = Math.floor(Math.random() * 12) + 1
@@ -496,12 +497,13 @@ function MathMaster() {
   }, [])
 
   React.useEffect(() => {
-    generate()
-  }, [generate])
+    if (playing) generate()
+  }, [playing, generate])
 
   const check = () => {
+    if (!playing) return
     if (parseInt(guess) === q.ans) {
-      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Math Master", ns); return ns; })
+      setScore(s => s + 1)
       setFeedback("Correct! ✨")
       setTimeout(generate, 1000)
     } else {
@@ -509,10 +511,29 @@ function MathMaster() {
     }
   }
 
+  const startGame = () => {
+    setScore(0)
+    setPlaying(true)
+  }
+
+  const endGame = () => {
+    setPlaying(false)
+    saveGameScore(supabase, profile, "Math Master", score, "score")
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4">
-      <h3 className="text-2xl font-bold text-primary">Math Master</h3>
-      <div className="bg-primary/5 p-4 md:p-5 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-4 w-full max-w-sm border-2 border-primary/10 shadow-inner">
+      <div className="flex items-center justify-between w-full max-w-sm">
+        <h3 className="text-2xl font-bold text-primary">Math Master</h3>
+        {playing && <Button onClick={endGame} variant="destructive" className="rounded-xl font-bold px-4">End Game</Button>}
+      </div>
+      <div className="bg-primary/5 p-4 md:p-5 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-4 w-full max-w-sm border-2 border-primary/10 shadow-inner relative overflow-hidden">
+        {!playing ? (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center z-10 space-y-2">
+            {score > 0 && <div className="text-xl font-bold text-primary">Score: {score}</div>}
+            <Button onClick={startGame} className="px-8 py-6 rounded-2xl font-black text-xl shadow-xl shadow-primary/20">START GAME</Button>
+          </div>
+        ) : null}
         <div className="text-4xl md:text-5xl font-black text-primary flex items-center justify-center gap-4">
           <span>{q.n1}</span>
           <span className="text-accent">{q.op === '*' ? '×' : q.op}</span>
@@ -610,8 +631,18 @@ function WhackATask() {
 
   const whack = (i: number) => {
     if (moles[i]) {
-      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Whack-a-Task", ns); return ns; })
+      setScore(s => s + 1)
       const next = [...moles]; next[i] = false; setMoles(next)
+    }
+  }
+
+  const toggleActive = () => {
+    if (active) {
+      setActive(false)
+      saveGameScore(supabase, profile, "Whack-a-Task", score, "score")
+    } else {
+      setScore(0)
+      setActive(true)
     }
   }
 
@@ -639,7 +670,7 @@ function WhackATask() {
       </div>
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-4">
         <div className="text-2xl font-black text-primary">Score: {score}</div>
-        <Button className="rounded-xl px-4 h-12 font-bold bg-accent" onClick={() => setActive(!active)}>{active ? 'Stop' : 'Start'}</Button>
+        <Button className="rounded-xl px-4 h-12 font-bold bg-accent text-white" onClick={toggleActive}>{active ? 'End Game' : 'Start Game'}</Button>
       </div>
     </div>
   )
@@ -710,30 +741,62 @@ function BalloonPop() {
 
   const [balloons, setBalloons] = React.useState<{id: number, x: number, y: number, color: string}[]>([])
   const [score, setScore] = React.useState(0)
+  const [playing, setPlaying] = React.useState(false)
+  const [gameOver, setGameOver] = React.useState(false)
 
   React.useEffect(() => {
+    if (!playing) return;
     const interval = setInterval(() => {
       setBalloons(prev => [...prev, { id: Date.now(), x: Math.random() * 80 + 10, y: 100, color: ["bg-rose-400", "bg-blue-400", "bg-emerald-400", "bg-amber-400"][Math.floor(Math.random() * 4)] }])
     }, 1500)
     return () => clearInterval(interval)
-  }, [])
+  }, [playing])
 
   React.useEffect(() => {
+    if (!playing) return;
     const move = setInterval(() => {
       setBalloons(prev => prev.map(b => ({ ...b, y: b.y - 2 })).filter(b => b.y > -10))
     }, 50)
     return () => clearInterval(move)
-  }, [])
+  }, [playing])
+
+  const startGame = () => {
+    setScore(0)
+    setBalloons([])
+    setPlaying(true)
+    setGameOver(false)
+  }
+
+  const endGame = () => {
+    setPlaying(false)
+    setGameOver(true)
+    saveGameScore(supabase, profile, "Pop", score, "score")
+  }
 
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4 w-full sm:min-w-[400px] md:min-w-[600px] overflow-hidden">
       <div className="flex items-center justify-between w-full mb-2">
         <h3 className="text-2xl font-bold text-primary">Balloon Pop</h3>
-        <div className="font-black text-primary text-xl md:text-2xl tracking-tighter bg-primary/10 px-4 py-2 rounded-2xl">Score: {score}</div>
+        <div className="flex gap-4 items-center">
+          <div className="font-black text-primary text-xl md:text-2xl tracking-tighter bg-primary/10 px-4 py-2 rounded-2xl">Score: {score}</div>
+          {playing && <Button onClick={endGame} variant="destructive" className="rounded-xl font-bold">End Game</Button>}
+        </div>
       </div>
       <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
+        {!playing && !gameOver && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-20">
+            <Button onClick={startGame} className="px-8 py-6 rounded-2xl font-black text-xl shadow-xl shadow-primary/20">START GAME</Button>
+          </div>
+        )}
+        {gameOver && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md z-20 space-y-4">
+            <h2 className="text-4xl font-black text-primary uppercase">Game Over</h2>
+            <p className="text-xl font-bold text-muted-foreground">Final Score: {score}</p>
+            <Button onClick={startGame} className="px-8 py-6 rounded-2xl font-black text-xl shadow-xl shadow-primary/20">PLAY AGAIN</Button>
+          </div>
+        )}
         {balloons.map(b => (
-          <button key={b.id} onPointerDown={(e) => { e.preventDefault(); setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Pop", ns); return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-[2rem] shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }}>
+          <button key={b.id} onPointerDown={(e) => { e.preventDefault(); if(playing) { setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) } }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-[2rem] shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }}>
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-4 bg-sky-300" />
           </button>
         ))}
@@ -941,23 +1004,82 @@ function ColorFinder() {
 function DiceRoller() {
   const [val, setVal] = React.useState(1)
   const [rolling, setRolling] = React.useState(false)
+  const diceRef = React.useRef<HTMLDivElement>(null)
 
   const roll = () => {
     setRolling(true)
-    let count = 0
-    const interval = setInterval(() => {
-      setVal(Math.floor(Math.random() * 6) + 1)
-      count++
-      if (count > 10) { clearInterval(interval); setRolling(false) }
-    }, 50)
+    const xRand = Math.floor(Math.random() * 4) + 1
+    const yRand = Math.floor(Math.random() * 4) + 1
+    const result = Math.floor(Math.random() * 6) + 1
+    
+    setVal(result)
+    
+    if (diceRef.current) {
+      const rotations: Record<number, string> = {
+        1: 'rotateX(0deg) rotateY(0deg)',
+        2: 'rotateY(-90deg)',
+        3: 'rotateY(180deg)',
+        4: 'rotateY(90deg)',
+        5: 'rotateX(-90deg)',
+        6: 'rotateX(90deg)'
+      }
+      
+      const spinX = xRand * 360
+      const spinY = yRand * 360
+      const targetRotation = rotations[result]
+      
+      const matchX = targetRotation.match(/rotateX\(([-]?\d+)deg\)/)
+      const matchY = targetRotation.match(/rotateY\(([-]?\d+)deg\)/)
+      
+      let finalX = spinX + (matchX ? parseInt(matchX[1]) : 0)
+      let finalY = spinY + (matchY ? parseInt(matchY[1]) : 0)
+
+      diceRef.current.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`
+    }
+
+    setTimeout(() => setRolling(false), 1000)
   }
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-5 px-4">
-      <div className={cn("w-32 h-32 md:w-40 md:h-40 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center text-6xl md:text-7xl font-black border-4 border-muted/20 text-primary", rolling && "animate-bounce")}>
-        {val}
+    <div className="flex flex-col items-center space-y-16 py-12 px-4" style={{ perspective: '1000px' }}>
+      <div 
+        ref={diceRef}
+        className="relative w-32 h-32 transition-transform duration-1000 ease-out"
+        style={{ transformStyle: 'preserve-3d', transform: 'rotateX(0deg) rotateY(0deg)' }}
+      >
+         {/* 1 (Front) */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex items-center justify-center shadow-lg" style={{ transform: 'translateZ(64px)' }}>
+           <div className="w-6 h-6 bg-primary rounded-full"></div>
+         </div>
+         {/* 3 (Back) */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex justify-between p-5 shadow-lg" style={{ transform: 'rotateY(180deg) translateZ(64px)' }}>
+           <div className="w-6 h-6 bg-primary rounded-full self-start"></div>
+           <div className="w-6 h-6 bg-primary rounded-full self-center"></div>
+           <div className="w-6 h-6 bg-primary rounded-full self-end"></div>
+         </div>
+         {/* 4 (Right) -> 4 dots */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex justify-between p-5 shadow-lg" style={{ transform: 'rotateY(90deg) translateZ(64px)' }}>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+         </div>
+         {/* 2 (Left) -> 2 dots */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex justify-between p-5 shadow-lg" style={{ transform: 'rotateY(-90deg) translateZ(64px)' }}>
+           <div className="w-6 h-6 bg-primary rounded-full self-start"></div>
+           <div className="w-6 h-6 bg-primary rounded-full self-end"></div>
+         </div>
+         {/* 5 (Top) */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex justify-between p-5 shadow-lg" style={{ transform: 'rotateX(90deg) translateZ(64px)' }}>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+           <div className="w-6 h-6 bg-primary rounded-full self-center"></div>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+         </div>
+         {/* 6 (Bottom) */}
+         <div className="absolute w-full h-full bg-white border border-slate-200 rounded-2xl flex justify-between p-5 shadow-lg" style={{ transform: 'rotateX(-90deg) translateZ(64px)' }}>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+           <div className="flex flex-col justify-between"><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div><div className="w-6 h-6 bg-primary rounded-full"></div></div>
+         </div>
       </div>
-      <Button onClick={roll} disabled={rolling} className="rounded-2xl h-16 w-48 text-xl font-black shadow-xl shadow-primary/10">ROLL DICE</Button>
+      <Button onClick={roll} disabled={rolling} className="rounded-2xl h-16 w-48 text-xl font-black shadow-xl shadow-primary/20">ROLL DICE</Button>
     </div>
   )
 }
@@ -1681,14 +1803,14 @@ function Leaderboard() {
   const supabase = useSupabase();
   const { profile } = useUser();
   const tournamentQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
+    if (!supabase || !profile?.family_id) return null
     return supabase.from("arcade_tournaments")
       .select("*")
-      .eq("family_id", profile.familyId)
+      .eq("family_id", profile.family_id)
       .eq("active", true)
       .order("created_at", { ascending: false })
       .limit(1)
-  }, [supabase, profile?.familyId])
+  }, [supabase, profile?.family_id])
   const { data: tournaments } = useCollection(tournamentQuery)
   const activeTournament = tournaments?.[0] || null
   const [scores, setScores] = React.useState([]);
@@ -1702,10 +1824,10 @@ function Leaderboard() {
     const fetchScores = async () => {
       const { data } = await supabase
         .from('arcade_scores')
-        .select('*, profiles!arcade_scores_member_id_fkey(display_name, avatar_url, id)')
+        .select('*')
         .eq('family_id', profile.family_id)
-        .gte('updated_at', startOfWeek)
-        .order('best_score', { ascending: false });
+        .gte('created_at', startOfWeek)
+        .order('score', { ascending: false });
 
       if (data) setScores(data);
     };
@@ -1739,9 +1861,9 @@ function Leaderboard() {
                     <div className="flex items-center gap-3">
                       <div className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{i + 1}</div>
                       <div className="flex items-center gap-2">
-                        <img src={s.profiles?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.profiles?.id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
+                        <img src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.user_id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
                         
-                        <span className="font-bold text-sm">{s.profiles?.display_name}</span>
+                        <span className="font-bold text-sm">{s.user_name || "Family Member"}</span>
                         {i === 0 && activeTournament?.game_name === game && (
                           <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ml-1 shadow-sm border border-yellow-300">
                             <Trophy className="h-3 w-3" /> Champ
@@ -1751,7 +1873,7 @@ function Leaderboard() {
                       </div>
                     </div>
                     <div className="font-bold text-primary">
-                      {s.best_score ? `${s.best_score} pts` : (s.wins ? 'Won' : 'Played')}
+                      {s.score ? `${s.score} pts` : (s.type === 'win' ? 'Won' : 'Played')}
                     </div>
                   </div>
                 ))}

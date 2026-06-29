@@ -55,11 +55,11 @@ export default function FinancesPage() {
   const [description, setDescription] = React.useState("")
 
   const transactionsQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
-    return supabase.from("transactions")
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("family_transactions")
       .select("*")
-      .eq("familyId", profile.familyId).order("date", { ascending: false })
-  }, [supabase, profile?.familyId])
+      .eq("family_id", profile.family_id).order("date", { ascending: false })
+  }, [supabase, profile?.family_id])
 
   const { data: transactions, loading: txLoading } = useCollection(transactionsQuery)
 
@@ -84,22 +84,22 @@ export default function FinancesPage() {
   }, [transactions])
 
   const handleAddTransaction = async () => {
-    if (!supabase || !profile?.familyId || !amount) return
+    if (!supabase || !profile?.family_id || !amount) return
 
     setLoading(true)
     const txData = {
-      familyId: profile.familyId,
-      userId: profile.id,
-      userName: profile.displayName,
+      family_id: profile.family_id,
+      user_id: profile.id,
+      user_name: profile.first_name || "Family Member",
       amount: parseFloat(amount),
       type,
       category,
       description,
       date: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from("transactions").insert([txData])
+    const { error } = await supabase.from("family_transactions").insert([txData])
     setLoading(false)
     if (!error) {
       setIsDialogOpen(false)
@@ -276,15 +276,11 @@ export default function FinancesPage() {
                 <TableRow><TableCell colSpan={4} className="text-center py-5 text-muted-foreground">No transactions logged yet.</TableCell></TableRow>
               ) : (
                 transactions?.map((tx) => (
-                  <TableRow key={tx.id} className="group transition-colors hover:bg-muted/30">
-                    <TableCell className="font-medium text-muted-foreground">
-                      {tx.date ? format(new Date(tx.date.seconds * 1000), "MMM dd, yyyy") : "Pending, ..."}
-                    </TableCell>
-                    <TableCell className="font-bold">{tx.description || "No description"}</TableCell>
+                  <TableRow key={tx.id}>
+                    <TableCell className="font-medium text-xs md:text-sm">{format(new Date(tx.date), "MMM d, yyyy")}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-bold text-[10px] uppercase bg-muted text-muted-foreground border-none px-2">
-                        {tx.category}
-                      </Badge>
+                      <div className="font-bold">{tx.description}</div>
+                      <div className="text-[10px] md:text-xs text-muted-foreground">{tx.category} • {tx.user_name}</div>
                     </TableCell>
                     <TableCell className={`text-right font-bold ${tx.type === 'income' || tx.type === 'allowance' ? 'text-emerald-500' : 'text-foreground'}`}>
                       {tx.type === 'income' || tx.type === 'allowance' ? '+' : '-'} R {Math.abs(tx.amount).toFixed(2)}

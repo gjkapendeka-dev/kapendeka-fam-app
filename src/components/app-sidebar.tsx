@@ -89,11 +89,11 @@ export function AppSidebar() {
                       asChild
                       isActive={pathname === item.href}
                       tooltip={item.name}
-                      className="h-9 rounded-xl hover:bg-white hover:shadow-md hover:shadow-primary/5 transition-all duration-200"
+                      className={`h-9 rounded-xl transition-all duration-200 ${pathname === item.href ? 'bg-primary/15 shadow-sm shadow-primary/10' : 'hover:bg-white hover:shadow-md hover:shadow-primary/5'}`}
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)} className="flex items-center gap-3">
                         <Icon className={`h-4 w-4 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`font-bold uppercase tracking-tight text-[10px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <span className={`font-bold uppercase tracking-tight text-[10px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary font-black' : 'text-muted-foreground'}`}>
                           {item.name}
                         </span>
                       </Link>

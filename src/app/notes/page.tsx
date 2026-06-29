@@ -103,7 +103,7 @@ export default function NotesPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Notes & Memos</h1>
-          <p className="text-muted-foreground font-medium">Quick sticky notes for the Kapendeka Universe</p>
+          <p className="text-muted-foreground font-medium">Quick sticky notes for the Kapendeka World</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

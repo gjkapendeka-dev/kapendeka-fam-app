@@ -30,7 +30,7 @@ export default function LoginPage() {
       if (isRegistering) {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        toast({ title: "Account created!", description: "Welcome to the Kapendeka Universe. Please check your email to verify." })
+        toast({ title: "Account created!", description: "Welcome to the Kapendeka World. Please check your email to verify." })
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error

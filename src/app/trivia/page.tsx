@@ -102,7 +102,7 @@ export default function TriviaPage() {
              <Trophy className="h-48 w-48" />
           </div>
           <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Universe Trivia</h2>
-          <p className="text-muted-foreground font-medium mb-4 max-w-sm mx-auto">Prove you're the master node of the Kapendeka Universe. Earn XP for every correct answer.</p>
+          <p className="text-muted-foreground font-medium mb-4 max-w-sm mx-auto">Prove you're the master node of the Kapendeka World. Earn XP for every correct answer.</p>
           <Button onClick={handleStart} className="h-16 px-12 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-lg shadow-xl shadow-primary/20 transition-all hover:scale-105">
              <Play className="h-6 w-6 mr-3" /> Begin Challenge
           </Button>

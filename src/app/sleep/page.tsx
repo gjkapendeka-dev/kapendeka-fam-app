@@ -125,7 +125,7 @@ export default function SleepPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Rest & Sleep</h1>
-          <p className="text-muted-foreground font-medium">Tracking the recovery of the Kapendeka Universe</p>
+          <p className="text-muted-foreground font-medium">Tracking the recovery of the Kapendeka World</p>
         </div>
         <div className="flex items-center gap-2">
           <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
