@@ -113,7 +113,7 @@ export default function SchoolPage() {
 
   const { data: assignments, loading } = useCollection(homeworkQuery)
 
-  const handleAddAssignment = () => {
+  const handleAddAssignment = async () => {
     if (!supabase || !profile?.family_id || !title) return
 
     setIsSubmitting(true)
@@ -129,14 +129,19 @@ export default function SchoolPage() {
       created_at: new Date().toISOString(),
     }
 
-    supabase.from("homework").insert([data])
-      .then(() => {
-        setIsDialogOpen(false)
-        setTitle("")
-        refresh()
-        toast({ title: "Assignment Added", description: `Added ${title} for ${childName}.` })
-      })
-      .then(() => setIsSubmitting(false))
+    try {
+      const { error } = await supabase.from("homework").insert([data])
+      if (error) throw error
+      setIsDialogOpen(false)
+      setTitle("")
+      refresh()
+      toast({ title: "Assignment Added", description: `Added ${title} for ${childName}.` })
+    } catch (err: any) {
+      console.error(err)
+      toast({ title: "Error adding homework", description: err.message, variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string, commentTxt: string) => {
