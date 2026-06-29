@@ -52,6 +52,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { audio } from "@/lib/audio"
 import { DPad } from "@/components/ui/dpad"
+import { TicTacToe } from "@/components/arcade/tic-tac-toe"
+import { ConnectFour } from "@/components/arcade/connect-four"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -249,72 +251,6 @@ function WordSearchGame() {
           )))}
         </div>
       </div>
-    </div>
-  )
-}
-
-// --- 3. TIC TAC TOE ---
-function TicTacToe() {
-  const supabase = useSupabase();
-  const { profile } = useUser();
-
-  const [board, setBoard] = React.useState(Array(9).fill(null))
-  const [xIsNext, setXIsNext] = React.useState(true)
-
-  const calculateWinner = (squares: any[]) => {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i]
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a]
-      }
-    }
-    return null
-  }
-
-  const winner = calculateWinner(board)
-  const isDraw = !winner && board.every(s => s !== null)
-
-  const handleClick = (i: number) => {
-    if (board[i] || winner) return
-    const newBoard = board.slice()
-    newBoard[i] = xIsNext ? 'X' : 'O'
-    setBoard(newBoard)
-    setXIsNext(!xIsNext)
-  }
-  
-  const resetLocal = () => {
-    setBoard(Array(9).fill(null))
-    setXIsNext(true)
-  }
-
-  return (
-    <div className="flex flex-col items-center space-y-4 py-4 px-4 relative">
-      <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold text-primary">Tic-Tac-Toe</h3>
-        <p className="text-muted-foreground font-medium text-sm mt-2">
-          {winner ? `Winner: ${winner}!` : isDraw ? "It's a Draw!" : `Next Player: ${xIsNext ? 'X' : 'O'}`}
-        </p>
-      </div>
-      <div className="grid grid-cols-3 gap-3 bg-muted/20 p-4 rounded-[2rem] shadow-inner">
-        {board.map((cell, i) => (
-          <button
-            key={i}
-            onClick={() => handleClick(i)}
-            className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex items-center justify-center text-3xl font-black shadow-sm active:scale-95 transition-all disabled:opacity-80"
-          >
-            {cell === 'X' && <X className="h-10 w-10 text-primary" />}
-            {cell === 'O' && <Circle className="h-10 w-10 text-accent" />}
-          </button>
-        ))}
-      </div>
-      <Button onClick={resetLocal} variant="outline" className="h-12 px-4 rounded-full font-bold border-primary text-primary">
-        Reset Game
-      </Button>
     </div>
   )
 }
@@ -1427,86 +1363,6 @@ function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
   );
 }
 
-// --- 23. CONNECT FOUR ---
-function ConnectFour({ personalBest = 0 }: { personalBest?: number }) {
-  const supabase = useSupabase();
-  const { profile } = useUser();
-  const ROWS = 6;
-  const COLS = 7;
-  const [grid, setGrid] = React.useState<string[][]>(Array(ROWS).fill(0).map(() => Array(COLS).fill("")));
-  const [currentPlayer, setCurrentPlayer] = React.useState('Red');
-  const [winner, setWinner] = React.useState<string | null>(null);
-
-  const dropChip = (col: number) => {
-    if (winner) return;
-    const newGrid = [...grid.map(r => [...r])];
-    for (let r = ROWS - 1; r >= 0; r--) {
-      if (!newGrid[r][col]) {
-        newGrid[r][col] = currentPlayer;
-        setGrid(newGrid);
-        checkWin(newGrid, r, col, currentPlayer);
-        if (!winner) setCurrentPlayer(currentPlayer === 'Red' ? 'Yellow' : 'Red');
-        return;
-      }
-    }
-  };
-
-  const checkWin = (g: string[][], r: number, c: number, player: string) => {
-    const dirs = [[0,1], [1,0], [1,1], [1,-1]];
-    for (let [dr, dc] of dirs) {
-      let count = 1;
-      for (let i = 1; i <= 3; i++) {
-        if (r+dr*i>=0 && r+dr*i<ROWS && c+dc*i>=0 && c+dc*i<COLS && g[r+dr*i][c+dc*i] === player) count++; else break;
-      }
-      for (let i = 1; i <= 3; i++) {
-        if (r-dr*i>=0 && r-dr*i<ROWS && c-dc*i>=0 && c-dc*i<COLS && g[r-dr*i][c-dc*i] === player) count++; else break;
-      }
-      if (count >= 4) {
-        setWinner(player);
-        saveGameScore(supabase, profile, 'Connect 4', 1, 'win');
-        return;
-      }
-    }
-  };
-
-  const reset = () => {
-    setGrid(Array(ROWS).fill(0).map(() => Array(COLS).fill("")));
-    setWinner(null);
-    setCurrentPlayer('Red');
-  };
-
-  return (
-    <div className="flex flex-col items-center p-4 space-y-4 select-none">
-      <h3 className="text-2xl font-bold text-primary">Connect Four</h3>
-      <div className="flex justify-between w-full max-w-sm items-center">
-        {winner ? (
-          <div className="text-xl font-black animate-pulse text-emerald-600">{winner} Wins!</div>
-        ) : (
-          <div className="flex items-center gap-2 font-bold text-muted-foreground">
-            Turn: <div className={`w-4 h-4 rounded-full ${currentPlayer === 'Red' ? 'bg-red-500' : 'bg-yellow-400'}`} /> {currentPlayer}
-          </div>
-        )}
-        <Button size="sm" variant="outline" onClick={reset}>Reset</Button>
-      </div>
-      
-      <div className="bg-blue-600 p-3 rounded-2xl shadow-xl border-b-8 border-blue-800">
-        <div className="grid grid-cols-7 gap-2">
-          {grid[0].map((_, c) => (
-            <button key={`top-${c}`} onClick={() => dropChip(c)} className="w-8 h-8 md:w-10 md:h-10 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center -mt-2 pb-2">
-               <ArrowDown className="h-4 w-4 text-white opacity-50" />
-            </button>
-          ))}
-          {grid.map((row, r) => row.map((cell, c) => (
-            <div key={`${r}-${c}`} className="w-8 h-8 md:w-10 md:h-10 bg-blue-700 rounded-full shadow-inner overflow-hidden relative">
-               <div className={`absolute inset-0 rounded-full transition-transform duration-500 ${cell === 'Red' ? 'bg-red-500 shadow-inner scale-100' : cell === 'Yellow' ? 'bg-yellow-400 shadow-inner scale-100' : 'bg-transparent scale-0'}`} />
-            </div>
-          )))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // --- 24. WORD GUESS ---
 const WORDS = ["APPLE", "TRAIN", "HOUSE", "SMILE", "BRAVE", "SMART", "FUNNY", "HAPPY", "GHOST", "PUPPY", "DREAM", "WATER", "LIGHT", "MAGIC", "WORLD"];
 function WordGuess() {
@@ -1815,6 +1671,89 @@ export default function ArcadePage() {
   const { profile } = useUser();
   const [isMuted, setIsMuted] = React.useState(false);
   
+  // Lobby State
+  const [onlineUsers, setOnlineUsers] = React.useState<any[]>([]);
+  const [lobbyChannel, setLobbyChannel] = React.useState<any>(null);
+  const [incomingChallenge, setIncomingChallenge] = React.useState<any>(null);
+  const [activeMatch, setActiveMatch] = React.useState<{id: string, game: string, role: string} | null>(null);
+
+  React.useEffect(() => {
+    if (!supabase || !profile) return;
+
+    // 1. Join Global Lobby Presence
+    const channel = supabase.channel('arcade_lobby');
+    
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const users: any[] = [];
+        for (const id in state) {
+          users.push(state[id][0]);
+        }
+        setOnlineUsers(users.filter(u => u.id !== profile.id));
+      })
+      .on('broadcast', { event: 'challenge' }, (payload) => {
+        if (payload.payload.targetId === profile.id) {
+          setIncomingChallenge(payload.payload);
+        }
+      })
+      .on('broadcast', { event: 'accept_challenge' }, (payload) => {
+        if (payload.payload.targetId === profile.id) {
+          setActiveMatch({ id: payload.payload.matchId, game: payload.payload.game, role: 'X' });
+          setActiveTab(payload.payload.game);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            id: profile.id,
+            name: profile.first_name,
+            avatar: profile.avatar_url,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    setLobbyChannel(channel);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, profile]);
+
+  const sendChallenge = (targetUser: any, game: string) => {
+    if (!lobbyChannel) return;
+    lobbyChannel.send({
+      type: 'broadcast',
+      event: 'challenge',
+      payload: {
+        targetId: targetUser.id,
+        challengerId: profile?.id,
+        challengerName: profile?.first_name,
+        game: game,
+        matchId: Math.random().toString(36).substring(7)
+      }
+    });
+    alert(`Challenge sent to ${targetUser.name}!`);
+  };
+
+  const acceptChallenge = () => {
+    if (!lobbyChannel || !incomingChallenge) return;
+    lobbyChannel.send({
+      type: 'broadcast',
+      event: 'accept_challenge',
+      payload: {
+        targetId: incomingChallenge.challengerId,
+        matchId: incomingChallenge.matchId,
+        game: incomingChallenge.game
+      }
+    });
+    setActiveMatch({ id: incomingChallenge.matchId, game: incomingChallenge.game, role: 'O' });
+    setActiveTab(incomingChallenge.game);
+    setIncomingChallenge(null);
+  };
+
+  
   React.useEffect(() => {
     setIsMuted(audio.getMuted());
   }, []);
@@ -1943,7 +1882,7 @@ export default function ArcadePage() {
           <TabsContent value="guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><NumberGuess /></Card></TabsContent>
           <TabsContent value="slots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SlotMachine /></Card></TabsContent>
           <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl"><WordSearchGame /></Card></TabsContent>
-          <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TicTacToe /></Card></TabsContent>
+          <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TicTacToe matchId={activeMatch?.game === "Tic-Tac-Toe" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
           <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
           <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
