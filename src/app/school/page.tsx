@@ -55,12 +55,15 @@ export default function SchoolPage() {
   const [childName, setChildName] = React.useState("Junior")
   const [dueDate, setDueDate] = React.useState("")
 
+  const [refreshCount, setRefreshCount] = React.useState(0)
+  const refresh = () => setRefreshCount(c => c + 1)
+
   const homeworkQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("homework").select("*").eq("family_id", profile.family_id).order("due_date", { ascending: true })
-  }, [supabase, profile?.family_id])
+  }, [supabase, profile?.family_id, refreshCount])
 
-  const { data: assignments, loading, refresh } = useCollection(homeworkQuery)
+  const { data: assignments, loading } = useCollection(homeworkQuery)
 
   const handleAddAssignment = () => {
     if (!supabase || !profile?.family_id || !title) return

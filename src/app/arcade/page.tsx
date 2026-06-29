@@ -1813,7 +1813,7 @@ function Leaderboard() {
   }, [supabase, profile?.family_id])
   const { data: tournaments } = useCollection(tournamentQuery)
   const activeTournament = tournaments?.[0] || null
-  const [scores, setScores] = React.useState([]);
+  const [scores, setScores] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (!supabase || !profile?.family_id) return;
@@ -1835,7 +1835,7 @@ function Leaderboard() {
     fetchScores();
   }, [supabase, profile]);
 
-  const grouped = scores.reduce((acc, curr) => {
+  const grouped = scores.reduce((acc: any, curr: any) => {
     if (!acc[curr.game]) acc[curr.game] = [];
     acc[curr.game].push(curr);
     return acc;
@@ -1850,13 +1850,13 @@ function Leaderboard() {
         <p className="text-muted-foreground">No scores yet this week! Start playing!</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(grouped).map(([game, gameScores]) => (
+          {Object.entries(grouped).map(([game, gameScores]: [string, any]) => (
             <Card key={game} className="rounded-3xl border-none shadow-md overflow-hidden bg-white/50">
               <CardHeader className="bg-primary/5 pb-4">
                 <CardTitle className="text-lg font-bold">{game}</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {gameScores.slice(0, 3).map((s, i) => (
+                {gameScores.slice(0, 3).map((s: any, i: number) => (
                   <div key={s.id} className="flex items-center justify-between p-3 border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{i + 1}</div>

@@ -54,7 +54,7 @@ export default function LanguageLearningPage() {
 
   const { data: progressList, loading } = useCollection(progressQuery)
 
-  const handleAddLanguage = () => {
+  const handleAddLanguage = async () => {
     if (!supabase || !profile?.family_id) return
 
     setIsSubmitting(true)
@@ -70,17 +70,17 @@ export default function LanguageLearningPage() {
       created_at: new Date().toISOString()
     }
 
-    supabase.from("language_progress").insert([data])
-      .then((res) => {
-        if (res.error) throw res.error;
-        setIsDialogOpen(false)
-        toast({ title: "Portal Opened!", description: `Starting your ${selectedLang} journey.` })
-      })
-      .catch((err) => {
-        console.error(err);
-        toast({ title: "Error", description: err.message || "Failed to start language.", variant: "destructive" })
-      })
-      .finally(() => setIsSubmitting(false))
+    try {
+      const { error } = await supabase.from("language_progress").insert([data])
+      if (error) throw error;
+      setIsDialogOpen(false)
+      toast({ title: "Portal Opened!", description: `Starting your ${selectedLang} journey.` })
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Error", description: err.message || "Failed to start language.", variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

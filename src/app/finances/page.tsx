@@ -114,6 +114,13 @@ export default function FinancesPage() {
     }
   }
 
+  const [isDistributing, setIsDistributing] = React.useState(false)
+  const handleDistributeAllowance = async () => {
+    setIsDistributing(true)
+    // Stub for now
+    setTimeout(() => setIsDistributing(false), 1000)
+  }
+
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
