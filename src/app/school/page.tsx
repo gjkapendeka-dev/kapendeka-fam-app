@@ -178,12 +178,11 @@ export default function SchoolPage() {
        const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
        
        await supabase.from("homework").update({ 
-         status: "done", 
-         attachment_url: data.publicUrl,
+         submission_url: data.publicUrl,
          comments: commentTxt 
        }).eq("id", id)
        
-       toast({ title: "Turned In!", description: "File uploaded successfully.", className: "bg-emerald-500 text-white" })
+       toast({ title: "File Uploaded!", description: "Work attached successfully.", className: "bg-emerald-500 text-white" })
        refresh()
     } catch (error: any) {
        toast({ title: "Upload Failed", description: error.message, variant: "destructive" })
@@ -353,24 +352,35 @@ export default function SchoolPage() {
                   {a.status === "pending" ? (
                      <div className="flex flex-col gap-3 mt-2">
                         <AssignmentTimer a={a} supabase={supabase} refresh={refresh} />
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button 
-                            onClick={() => toggleStatus(a.id, a.status)}
-                            variant="outline" 
-                            className="flex-1 rounded-xl font-bold h-12"
-                          >
-                             Mark Done
-                          </Button>
+                        <div className="flex flex-col gap-2 mt-2">
+                          {a.attachment_url && (
+                             <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
+                                <LinkIcon className="h-4 w-4 mr-2" /> View Worksheet
+                             </a>
+                          )}
+                          {a.submission_url && (
+                             <a href={a.submission_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors">
+                                <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
+                             </a>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              onClick={() => toggleStatus(a.id, a.status)}
+                              className="flex-1 rounded-xl font-bold h-12 bg-primary text-white"
+                            >
+                               Mark Done
+                            </Button>
+                            
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button className="rounded-xl h-12 px-4 bg-primary text-white font-bold" disabled={uploadingId === a.id}>
+                              <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
                                 {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                                {uploadingId !== a.id && "Turn In"}
+                                {uploadingId !== a.id && "Attach Work"}
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="rounded-2xl">
                               <DialogHeader>
-                                <DialogTitle>Turn In Homework</DialogTitle>
+                                <DialogTitle>Upload Completed Work</DialogTitle>
                                 <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
                               </DialogHeader>
                               <div className="grid gap-4 py-4">
@@ -395,13 +405,20 @@ export default function SchoolPage() {
                               </div>
                             </DialogContent>
                           </Dialog>
+
+                          </div>
                         </div>
                      </div>
                   ) : (
                      <div className="flex flex-col gap-2">
                         {a.attachment_url && (
                            <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
-                              <LinkIcon className="h-4 w-4 mr-2" /> View Attachment
+                              <LinkIcon className="h-4 w-4 mr-2" /> View Worksheet
+                           </a>
+                        )}
+                        {a.submission_url && (
+                           <a href={a.submission_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors">
+                              <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
                            </a>
                         )}
                         {a.comments && (
@@ -410,13 +427,51 @@ export default function SchoolPage() {
                            </div>
                         )}
                         <div className="text-xs font-bold text-slate-500 mt-1">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
-                        <Button 
-                          onClick={() => toggleStatus(a.id, a.status)}
-                          variant="ghost" 
-                          className="w-full rounded-xl text-muted-foreground text-xs"
-                        >
-                           Undo
-                        </Button>
+                        <div className="flex gap-2">
+                           <Button 
+                             onClick={() => toggleStatus(a.id, a.status)}
+                             variant="ghost" 
+                             className="flex-1 rounded-xl text-muted-foreground text-xs"
+                           >
+                              Mark Incomplete
+                           </Button>
+                           
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
+                                {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                {uploadingId !== a.id && "Attach Work"}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Upload Completed Work</DialogTitle>
+                                <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                  <Label>Comments (Optional)</Label>
+                                  <Textarea 
+                                    placeholder="e.g. Struggled with question 4" 
+                                    className="rounded-xl"
+                                    onChange={(e) => setComment(e.target.value)}
+                                  />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label>Upload Photo / Document</Label>
+                                  <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    capture="environment"
+                                    className="rounded-xl"
+                                    onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                  />
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                        </div>
                      </div>
                   )}
                 </CardContent>
