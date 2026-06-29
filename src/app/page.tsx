@@ -96,7 +96,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <h1 className="text-xl md:text-4xl font-headline font-bold tracking-tight text-foreground mt-1 leading-tight">
-              {greeting}, <span className="text-primary">{profile?.displayName?.split(' ')[0] || "Explorer"}</span>
+              {greeting}, <span className="text-primary">{profile?.first_name || "Explorer"}</span>
             </h1>
             <p className="text-muted-foreground font-medium flex items-center gap-1.5 text-xs md:text-sm">
               <CalendarIcon className="h-3 w-3 text-primary/60" />
