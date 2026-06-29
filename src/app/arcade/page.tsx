@@ -1869,7 +1869,7 @@ export default function ArcadePage() {
           <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
         </TabsList>
 
-        <div className="mt-4 landscape:fixed landscape:inset-0 landscape:z-[100] landscape:m-0 landscape:p-4 landscape:bg-[#fafafa] dark:landscape:bg-background landscape:flex landscape:items-center landscape:justify-center landscape:overflow-y-auto">
+        <div className="mt-4 flex flex-col items-center justify-center">
           <TabsContent value="leaderboard"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl min-h-[60vh]"><Leaderboard /></Card></TabsContent>
           <TabsContent value="piano"><Card className="rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-white shadow-xl"><PianoGame /></Card></TabsContent>
           <TabsContent value="simon"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SimonSays /></Card></TabsContent>

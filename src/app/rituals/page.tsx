@@ -62,25 +62,25 @@ export default function RitualsPage() {
   const [points, setPoints] = React.useState("100")
 
   const ritualsQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
-    return supabase.from("rituals").select("*").eq("familyId", profile.familyId)
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("rituals").select("*").eq("family_id", profile.family_id)
     
-  }, [supabase, profile?.familyId])
+  }, [supabase, profile?.family_id])
 
   const { data: rituals, loading } = useCollection(ritualsQuery)
 
   const handleAddRitual = () => {
-    if (!supabase || !profile?.familyId || !title) return
+    if (!supabase || !profile?.family_id || !title) return
 
     setIsSubmitting(true)
     const data = {
-      familyId: profile.familyId,
+      family_id: profile.family_id,
       title,
       description,
-      timeOfDay,
-      pointsValue: parseInt(points),
-      lastCompletedAt: null,
-      createdAt: new Date().toISOString(),
+      time_of_day: timeOfDay,
+      points_value: parseInt(points),
+      last_completed_at: null,
+      created_at: new Date().toISOString(),
     }
 
     supabase.from("rituals").insert([data])
@@ -98,7 +98,7 @@ export default function RitualsPage() {
     
     // Complete ritual logic
     supabase.from("rituals").update({
-      lastCompletedAt: new Date().toISOString()
+      last_completed_at: new Date().toISOString()
     }).eq("id", ritualId)
     
     // Award points
@@ -188,7 +188,7 @@ export default function RitualsPage() {
               </Card>
             ) : (
               rituals?.map((ritual) => {
-                const timeInfo = TIME_OF_DAY.find(t => t.value === ritual.timeOfDay) || TIME_OF_DAY[3]
+                const timeInfo = TIME_OF_DAY.find(t => t.value === ritual.time_of_day) || TIME_OF_DAY[3]
                 return (
                   <Card key={ritual.id} className="rounded-[3rem] border-none shadow-xl shadow-primary/5 bg-white overflow-hidden group hover:shadow-primary/10 transition-all border-l-8 border-l-transparent hover:border-l-primary">
                     <CardHeader className="pb-4">
@@ -197,7 +197,7 @@ export default function RitualsPage() {
                           <timeInfo.icon className="h-6 w-6" />
                         </div>
                         <Badge variant="secondary" className="font-black text-[9px] uppercase tracking-[0.2em] bg-muted/50 border-none px-2">
-                          {ritual.pointsValue} XP
+                          {ritual.points_value} XP
                         </Badge>
                       </div>
                       <CardTitle className="text-2xl font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{ritual.title}</CardTitle>
@@ -206,7 +206,7 @@ export default function RitualsPage() {
                     <CardContent className="p-6 pt-2">
                       <div className="flex gap-2">
                         <Button 
-                          onClick={() => handleComplete(ritual.id, ritual.pointsValue)}
+                          onClick={() => handleComplete(ritual.id, ritual.points_value)}
                           className="flex-1 rounded-[1.5rem] h-12 font-black uppercase tracking-widest text-[10px] bg-accent shadow-xl shadow-accent/20 hover:scale-[1.02] active:scale-95 transition-all"
                         >
                           <CheckCircle2 className="h-4 w-4 mr-2" /> Complete
