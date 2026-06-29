@@ -48,7 +48,7 @@ export default function StoryStudioPage() {
     setIsGenerating(true)
     try {
       const result = await generateFamilyStory({
-        characters: [profile.displayName, "George", "Junior", "Sarah"],
+        characters: [profile.displayName || "George", "Gina", "Natalie", "Tinashe"],
         genre,
         theme
       })

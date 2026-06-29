@@ -145,7 +145,7 @@ export default function VaultPage() {
             <div>
               <h3 className="text-xl font-bold text-amber-800">Limited Access</h3>
               <p className="text-amber-700 font-medium">
-                The Emergency Vault is managed by parents. Contact George or Sarah if you need a specific document.
+                The Emergency Vault is managed by parents. Contact George if you need a specific document.
               </p>
             </div>
           </Card>

@@ -72,6 +72,17 @@ export default function HouseholdPage() {
   }, [supabase, profile?.family_id])
   const { data: todos } = useCollection(todosQuery)
 
+  // Fetch Family Members for Leaderboard
+  const profilesQuery = React.useMemo(() => {
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("profiles")
+      .select("*")
+      .eq("family_id", profile.family_id)
+      .order("youth_xp", { ascending: false })
+  }, [supabase, profile?.family_id])
+  const { data: familyMembers } = useCollection(profilesQuery)
+  
+
   const handleCompleteChore = async (choreId: string, currentPoints: number) => {
     if (!supabase || !profile) return
     
@@ -82,13 +93,12 @@ export default function HouseholdPage() {
     }).eq("id", choreId)
 
     if (!choreError) {
-      // Award points (in a real app, this should be an RPC to ensure atomicity)
-      const newPoints = (profile.points || 0) + currentPoints
-      await supabase.from("profiles").update({ points: newPoints }).eq("id", profile.id)
+      const newXp = (profile.youth_xp || 0) + currentPoints
+      await supabase.from("profiles").update({ youth_xp: newXp }).eq("id", profile.id)
       
       toast({
         title: "Chore Completed!",
-        description: `You earned ${currentPoints} points for the Kapendeka rewards!`,
+        description: `You earned ${currentPoints} XP for the Kapendeka rewards!`,
       })
     }
   }
@@ -302,22 +312,18 @@ export default function HouseholdPage() {
               <CardDescription className="text-indigo-100 font-medium">Family rankings this week</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                { name: "George", points: 850, level: 12, avatar: "G" },
-                { name: "Junior", points: 420, level: 5, avatar: "J" },
-                { name: "Sarah", points: 310, level: 3, avatar: "S" }
-              ].map((member, i) => (
-                <div key={member.name} className="flex items-center gap-4 bg-white/10 p-3 rounded-2xl">
-                  <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center font-bold">
-                    {member.avatar}
+              {(familyMembers || []).map((member: any) => (
+                <div key={member.id} className="flex items-center gap-4 bg-white/10 p-3 rounded-2xl">
+                  <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center font-bold uppercase">
+                    {(member.first_name || 'U').charAt(0)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold">{member.name}</span>
-                      <span className="text-sm font-bold">{member.points} pts</span>
+                      <span className="font-bold">{member.first_name || 'Member'}</span>
+                      <span className="text-sm font-bold">{member.youth_xp || 0} XP</span>
                     </div>
                     <div className="mt-2 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-yellow-400" style={{ width: `${(member.points / 1000) * 100}%` }} />
+                      <div className="h-full bg-yellow-400" style={{ width: `${Math.min(((member.youth_xp || 0) / 1000) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -345,7 +351,7 @@ export default function HouseholdPage() {
                   </div>
                   <div>
                     <div className="font-bold text-sm">Laundry Day</div>
-                    <div className="text-[10px] font-medium text-muted-foreground">Rotates to Junior next</div>
+                    <div className="text-[10px] font-medium text-muted-foreground">Rotates to {familyMembers?.[1]?.first_name || 'the next member'} next</div>
                   </div>
                 </div>
               </div>

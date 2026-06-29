@@ -32,7 +32,7 @@ export default function TriviaPage() {
            // Fallback questions if empty
            setQuestions([
               { question: "What is the family's favorite vacation destination?", options: ["Cape Town", "Durban", "Kruger Park", "Sun City"], correct_index: 0 },
-              { question: "Who in the family has the highest chore streak?", options: ["George", "Sarah", "Junior", "None of us!"], correct_index: 2 },
+              { question: "Who in the family has the highest chore streak?", options: ["George", "Gina", "Natalie", "Tinashe"], correct_index: 2 },
               { question: "What is our official family motto?", options: ["Unity is Strength", "One Family, One Universe", "Always Moving", "Love First"], correct_index: 1 },
            ])
         }
