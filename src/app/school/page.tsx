@@ -102,6 +102,7 @@ export default function SchoolPage() {
   const [comment, setComment] = React.useState("")
   const [activeTab, setActiveTab] = React.useState("active")
   const [dueDate, setDueDate] = React.useState("")
+  const [newFile, setNewFile] = React.useState<File | null>(null)
 
   const [refreshCount, setRefreshCount] = React.useState(0)
   const refresh = () => setRefreshCount(c => c + 1)
@@ -117,23 +118,40 @@ export default function SchoolPage() {
     if (!supabase || !profile?.family_id || !title) return
 
     setIsSubmitting(true)
-    const data = {
-      family_id: profile.family_id,
-      title,
-      subject,
-      child_name: childName,
-      category,
-      time_spent_seconds: 0,
-      status: "pending",
-      due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    }
+    let attachmentUrl = null;
 
     try {
+      if (newFile) {
+        const fileExt = newFile.name.split('.').pop()
+        const fileName = `${Math.random()}.${fileExt}`
+        const filePath = `${profile.family_id}/new/${fileName}`
+        
+        const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, newFile)
+        if (uploadError) throw uploadError
+        
+        const { data: urlData } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+        attachmentUrl = urlData.publicUrl
+      }
+
+      const data = {
+        family_id: profile.family_id,
+        title,
+        subject,
+        child_name: childName,
+        category,
+        time_spent_seconds: 0,
+        status: "pending",
+        due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        attachment_url: attachmentUrl
+      }
+
       const { error } = await supabase.from("homework").insert([data])
       if (error) throw error
+
       setIsDialogOpen(false)
       setTitle("")
+      setNewFile(null)
       refresh()
       toast({ title: "Assignment Added", description: `Added ${title} for ${childName}.` })
     } catch (err: any) {
@@ -263,6 +281,17 @@ export default function SchoolPage() {
                      <Label>Due Date</Label>
                      <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                    </div>
+                 </div>
+                 <div className="grid gap-2">
+                   <Label>Attachment (Optional worksheet/instructions)</Label>
+                   <Input 
+                     type="file" 
+                     onChange={(e) => {
+                       if (e.target.files && e.target.files.length > 0) {
+                         setNewFile(e.target.files[0])
+                       }
+                     }} 
+                   />
                  </div>
                </div>
                <DialogFooter>
