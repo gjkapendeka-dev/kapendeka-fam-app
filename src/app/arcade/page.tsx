@@ -771,24 +771,29 @@ function WhackATask() {
 // --- 9. TETRIS ---
 
 // --- 10. SIMON SAYS ---
-function SimonSays() {
+function TinashePattern() {
   const supabase = useSupabase();
   const { profile } = useUser();
 
+  const [difficulty, setDifficulty] = React.useState<"easy" | "medium" | "hard">("easy")
   const [sequence, setSequence] = React.useState<number[]>([])
   const [userSequence, setUserSequence] = React.useState<number[]>([])
   const [activeColor, setActiveColor] = React.useState<number | null>(null)
   const [playing, setPlaying] = React.useState(false)
-  const colors = ["bg-rose-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"]
+  
+  const allColors = ["bg-rose-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500", "bg-cyan-500", "bg-fuchsia-500", "bg-lime-500"]
+  const numBlocks = difficulty === "easy" ? 4 : difficulty === "medium" ? 6 : 8
+  const currentColors = allColors.slice(0, numBlocks)
 
   const nextRound = (currentSeq: number[]) => {
-    const next = [...currentSeq, Math.floor(Math.random() * 4)]
+    const next = [...currentSeq, Math.floor(Math.random() * numBlocks)]
     setSequence(next)
     playSequence(next)
   }
 
   const playSequence = async (seq: number[]) => {
     for (let i = 0; i < seq.length; i++) {
+      audio.playBlip(300 + (seq[i] * 100), 'triangle')
       await new Promise(resolve => setTimeout(() => { setActiveColor(seq[i]); resolve(null) }, 600))
       await new Promise(resolve => setTimeout(() => { setActiveColor(null); resolve(null) }, 200))
     }
@@ -796,32 +801,55 @@ function SimonSays() {
 
   const handlePress = (i: number) => {
     if (!playing) return
+    audio.playBlip(300 + (i * 100), 'triangle')
     setActiveColor(i)
     setTimeout(() => setActiveColor(null), 200)
     const nextUserSeq = [...userSequence, i]
     if (nextUserSeq[nextUserSeq.length - 1] !== sequence[nextUserSeq.length - 1]) {
-      saveGameScore(supabase, profile, "Simon Says", sequence.length - 1);
+      audio.playBoom(); // Dramatic loud noise!
+      saveGameScore(supabase, profile, "Tinashe Pattern", sequence.length - 1);
       alert("Oops! Game Over")
       setPlaying(false); setSequence([]); setUserSequence([])
       return
     }
     if (nextUserSeq.length === sequence.length) {
       setUserSequence([])
-      setTimeout(() => nextRound(sequence), 1000)
+      setTimeout(() => { audio.playWin(); nextRound(sequence) }, 1000)
     } else {
       setUserSequence(nextUserSeq)
     }
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4 py-4 px-4">
-      <h3 className="text-2xl font-bold text-primary">Simon Pattern</h3>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {colors.map((c, i) => (
-          <button key={i} onClick={() => handlePress(i)} className={cn("w-28 h-28 sm:w-32 sm:h-32 rounded-[2.5rem] shadow-lg transition-all active:scale-90", c, activeColor === i ? "scale-110 brightness-150" : "opacity-80")} />
+    <div className="flex flex-col items-center space-y-4 py-4 px-4 w-full">
+      <h3 className="text-2xl font-bold text-primary text-center">Tinashe Pattern</h3>
+      
+      {!playing && (
+        <div className="flex gap-2">
+          <Button variant={difficulty === "easy" ? "default" : "outline"} onClick={() => setDifficulty("easy")} className="rounded-xl">Easy (4)</Button>
+          <Button variant={difficulty === "medium" ? "default" : "outline"} onClick={() => setDifficulty("medium")} className="rounded-xl">Medium (6)</Button>
+          <Button variant={difficulty === "hard" ? "default" : "outline"} onClick={() => setDifficulty("hard")} className="rounded-xl">Hard (8)</Button>
+        </div>
+      )}
+
+      <div className={cn(
+        "grid gap-3 sm:gap-4 w-full max-w-sm justify-center", 
+        difficulty === "easy" ? "grid-cols-2" : difficulty === "medium" ? "grid-cols-3" : "grid-cols-4"
+      )}>
+        {currentColors.map((c, i) => (
+          <button 
+            key={i} 
+            onClick={() => handlePress(i)} 
+            className={cn(
+              "rounded-[2rem] shadow-lg transition-all active:scale-90", 
+              difficulty === "easy" ? "w-28 h-28 sm:w-32 sm:h-32" : difficulty === "medium" ? "w-20 h-20 sm:w-24 sm:h-24" : "w-16 h-16 sm:w-20 sm:h-20",
+              c, 
+              activeColor === i ? "scale-110 brightness-150 shadow-2xl" : "opacity-80"
+            )} 
+          />
         ))}
       </div>
-      <Button className="h-12 px-4 rounded-xl font-bold" onClick={() => { setSequence([]); setUserSequence([]); setPlaying(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
+      <Button className="h-12 px-8 rounded-xl font-bold mt-4" onClick={() => { setSequence([]); setUserSequence([]); setPlaying(true); nextRound([]) }}>{playing ? "Restart" : "Start Game"}</Button>
     </div>
   )
 }
@@ -2160,7 +2188,7 @@ export default function ArcadePage() {
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full flex flex-nowrap overflow-x-auto h-auto mb-4 justify-start no-scrollbar touch-pan-x">
           <TabsTrigger value="leaderboard" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Trophy className="h-4 w-4" /> Leaderboard</TabsTrigger>
           <TabsTrigger value="piano" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Music className="h-4 w-4" /> Piano</TabsTrigger>
-          <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Activity className="h-4 w-4" /> Simon</TabsTrigger>
+          <TabsTrigger value="simon" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Activity className="h-4 w-4" /> Tinashe</TabsTrigger>
           <TabsTrigger value="pop" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Circle className="h-4 w-4" /> Pop</TabsTrigger>
           <TabsTrigger value="rps" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Hand className="h-4 w-4" /> RPS</TabsTrigger>
           <TabsTrigger value="react" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Zap className="h-4 w-4" /> Reaction</TabsTrigger>
@@ -2190,7 +2218,7 @@ export default function ArcadePage() {
         <div className="mt-4 flex flex-col items-center justify-center">
           <TabsContent value="leaderboard"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl min-h-[60vh]"><Leaderboard /></Card></TabsContent>
           <TabsContent value="piano"><Card className="rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-white shadow-xl"><PianoGame /></Card></TabsContent>
-          <TabsContent value="simon"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SimonSays /></Card></TabsContent>
+          <TabsContent value="simon"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TinashePattern /></Card></TabsContent>
           <TabsContent value="pop"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><BalloonPop /></Card></TabsContent>
           <TabsContent value="rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><RockPaperScissors /></Card></TabsContent>
           <TabsContent value="react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><ReactionTest /></Card></TabsContent>
