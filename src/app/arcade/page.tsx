@@ -1603,6 +1603,7 @@ function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
     const newGrid = [...grid.map(row => [...row])];
     
     if (newGrid[r][c].isMine) {
+      audio.playExplosion();
       newGrid.forEach(row => row.forEach(cell => { if (cell.isMine) cell.isRevealed = true; }));
       setGrid(newGrid);
       setGameOver(true);
@@ -1621,12 +1622,14 @@ function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
       }
     };
     
+    audio.playBlip(600);
     floodFill(r, c);
     setGrid(newGrid);
     
     let unrevealedSafe = 0;
     newGrid.forEach(row => row.forEach(cell => { if (!cell.isMine && !cell.isRevealed) unrevealedSafe++; }));
     if (unrevealedSafe === 0) {
+      audio.playWin();
       setWon(true);
       saveGameScore(supabase, profile, 'Minesweeper', 1, 'win');
     }
@@ -1636,6 +1639,7 @@ function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
     e.preventDefault();
     if (gameOver || won || grid[r][c].isRevealed) return;
     const newGrid = [...grid.map(row => [...row])];
+    audio.playBlip(800, 'triangle');
     newGrid[r][c].isFlagged = !newGrid[r][c].isFlagged;
     setGrid(newGrid);
   };
