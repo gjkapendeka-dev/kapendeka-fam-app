@@ -427,7 +427,7 @@ function SnakeGame() {
       newHead.y < 0 || newHead.y >= gridSize ||
       snake.some(s => s.x === newHead.x && s.y === newHead.y)
     ) {
-      setGameOver(true); saveGameScore(supabase, profile, "Simon Says", sequence.length - 1);; saveGameScore(supabase, profile, "Snake", score);
+      setGameOver(true); saveGameScore(supabase, profile, "Snake", score);
       return
     }
 
@@ -442,7 +442,7 @@ function SnakeGame() {
       newSnake.pop()
     }
     setSnake(newSnake)
-  }, [snake, dir, food, gameOver])
+  }, [snake, dir, food, gameOver, supabase, profile, score])
 
   React.useEffect(() => {
     const interval = setInterval(moveSnake, 180)
@@ -508,7 +508,7 @@ function MathMaster() {
 
   const check = () => {
     if (parseInt(guess) === q.ans) {
-      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Piano", ns); return ns; })
+      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Math Master", ns); return ns; })
       setFeedback("Correct! ✨")
       setTimeout(generate, 1000)
     } else {
@@ -617,7 +617,7 @@ function WhackATask() {
 
   const whack = (i: number) => {
     if (moles[i]) {
-      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Math Master", ns); return ns; })
+      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Whack-a-Task", ns); return ns; })
       const next = [...moles]; next[i] = false; setMoles(next)
     }
   }
@@ -698,6 +698,7 @@ function SimonSays() {
     setTimeout(() => setActiveColor(null), 200)
     const nextUserSeq = [...userSequence, i]
     if (nextUserSeq[nextUserSeq.length - 1] !== sequence[nextUserSeq.length - 1]) {
+      saveGameScore(supabase, profile, "Simon Says", sequence.length - 1);
       alert("Oops! Game Over")
       setPlaying(false); setSequence([]); setUserSequence([])
       return
@@ -749,7 +750,7 @@ function BalloonPop() {
     <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
       <div className="absolute top-6 left-6 z-10 font-black text-primary text-xl md:text-2xl tracking-tighter">Pop Score: {score}</div>
       {balloons.map(b => (
-        <button key={b.id} onClick={() => { setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Color Finder", ns); return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
+        <button key={b.id} onClick={() => { setScore(s => { const ns = s + 1; return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
       ))}
     </div>
   )
@@ -810,7 +811,8 @@ function ReactionTest() {
     if (state === "waiting") {
       clearTimeout(timeoutRef.current); alert("Too early!"); setState("idle")
     } else if (state === "ready") {
-      setTime(Date.now() - startTime); setState("result"); saveGameScore(supabase, profile, "Reaction", Date.now() - startTime);
+      const reactionTime = Date.now() - startTime;
+      setTime(reactionTime); setState("result"); saveGameScore(supabase, profile, "Reaction", reactionTime);
     }
   }
 
@@ -839,10 +841,11 @@ function SpeedClicker() {
     if (active && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
       return () => clearTimeout(timer)
-    } else if (timeLeft === 0) {
-      setActive(false)
+    } else if (timeLeft === 0 && active) {
+      setActive(false);
+      saveGameScore(supabase, profile, "Clicker", clicks);
     }
-  }, [active, timeLeft])
+  }, [active, timeLeft, clicks, supabase, profile])
 
   return (
     <div className="flex flex-col items-center space-y-10 py-5 px-4">
@@ -886,7 +889,7 @@ function ColorFinder() {
       <h3 className="text-2xl font-bold text-primary">Find the Odd Color</h3>
       <div className="grid grid-cols-2 gap-4">
         {colors.map((c, i) => (
-          <button key={i} onClick={() => { if (i === target) { setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Typing", ns); return ns; }); generate() } else { setScore(0); generate() } }} className="w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] shadow-lg active:scale-95 transition-transform" style={{ backgroundColor: c }} />
+          <button key={i} onClick={() => { if (i === target) { setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Colors", ns); return ns; }); generate() } else { setScore(0); generate() } }} className="w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] shadow-lg active:scale-95 transition-transform" style={{ backgroundColor: c }} />
         ))}
       </div>
       <div className="text-lg font-black uppercase text-primary tracking-widest">Score: {score}</div>
@@ -896,9 +899,6 @@ function ColorFinder() {
 
 // --- 16. DICE ROLLER ---
 function DiceRoller() {
-  const supabase = useSupabase();
-  const { profile } = useUser();
-
   const [val, setVal] = React.useState(1)
   const [rolling, setRolling] = React.useState(false)
 
@@ -924,9 +924,6 @@ function DiceRoller() {
 
 // --- 17. NUMBER GUESS ---
 function NumberGuess() {
-  const supabase = useSupabase();
-  const { profile } = useUser();
-
   const [num, setTarget] = React.useState(Math.floor(Math.random() * 100) + 1)
   const [guess, setGuess] = React.useState("")
   const [msg, setMsg] = React.useState("Guess between 1-100")
@@ -955,14 +952,14 @@ function TypingGame() {
   const supabase = useSupabase();
   const { profile } = useUser();
 
-  const words = ["HUB", "FAMILY", "JOY", "STAR", "BRAVE", "KIND", "HAPPY", " Kapendeka"]
+  const words = ["HUB", "FAMILY", "JOY", "STAR", "BRAVE", "KIND", "HAPPY"]
   const [word, setWord] = React.useState(words[0])
   const [input, setInput] = React.useState("")
   const [score, setScore] = React.useState(0)
 
   const handleChange = (val: string) => {
     if (val.toUpperCase().trim() === word.toUpperCase().trim()) {
-      setScore(s => s + 1); setInput(""); setWord(words[Math.floor(Math.random() * words.length)])
+      setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Typing", ns); return ns; }); setInput(""); setWord(words[Math.floor(Math.random() * words.length)])
     } else setInput(val)
   }
 
@@ -1011,6 +1008,707 @@ function SlotMachine() {
   )
 }
 
+// --- 20. FLAPPY BLOCK ---
+function FlappyBlock() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const [playing, setPlaying] = React.useState(false);
+  const [gameOver, setGameOver] = React.useState(false);
+  const [score, setScore] = React.useState(0);
+  
+  const birdY = React.useRef(50);
+  const velocity = React.useRef(0);
+  const pipes = React.useRef<{x: number, topHeight: number, passed: boolean}[]>([]);
+  const frameRef = React.useRef<number | null>(null);
+  const scoreRef = React.useRef(0);
+  
+  const [renderObj, setRenderObj] = React.useState({ y: 50, pipes: [] as any[] });
+
+  const GRAVITY = 0.6;
+  const JUMP = -8;
+  const PIPE_SPEED = 3;
+  const PIPE_SPAWN_RATE = 100;
+  const GAP_SIZE = 35;
+  
+  const reset = () => {
+    birdY.current = 50;
+    velocity.current = 0;
+    pipes.current = [];
+    scoreRef.current = 0;
+    setScore(0);
+    setGameOver(false);
+    setPlaying(true);
+    setRenderObj({ y: 50, pipes: [] });
+  };
+
+  const jump = () => {
+    if (!playing && !gameOver) reset();
+    if (gameOver) reset();
+    velocity.current = JUMP;
+  };
+
+  React.useEffect(() => {
+    let frameCount = 0;
+    const loop = () => {
+      if (!playing || gameOver) return;
+      
+      velocity.current += GRAVITY;
+      birdY.current += velocity.current;
+      
+      if (frameCount % PIPE_SPAWN_RATE === 0) {
+        const topHeight = Math.random() * 40 + 10;
+        pipes.current.push({ x: 100, topHeight, passed: false });
+      }
+      
+      let collided = false;
+      pipes.current.forEach(p => {
+        p.x -= PIPE_SPEED * 0.2; 
+        
+        if (p.x < 15 && p.x > 5) {
+          if (birdY.current < p.topHeight || birdY.current > p.topHeight + GAP_SIZE) {
+            collided = true;
+          }
+        }
+        
+        if (p.x < 10 && !p.passed) {
+          p.passed = true;
+          scoreRef.current += 1;
+          setScore(scoreRef.current);
+        }
+      });
+      
+      pipes.current = pipes.current.filter(p => p.x > -20);
+      
+      if (birdY.current > 100 || birdY.current < 0) collided = true;
+      
+      if (collided) {
+        setGameOver(true);
+        setPlaying(false);
+        saveGameScore(supabase, profile, 'Flappy Block', scoreRef.current, 'score');
+      } else {
+        setRenderObj({ y: birdY.current, pipes: [...pipes.current] });
+        frameRef.current = requestAnimationFrame(loop);
+      }
+      frameCount++;
+    };
+    
+    if (playing) frameRef.current = requestAnimationFrame(loop);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [playing, gameOver, profile, supabase]);
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none" onClick={jump}>
+      <h3 className="text-2xl font-bold text-primary">Flappy Block</h3>
+      <p className="text-muted-foreground text-sm">Tap or Click to fly!</p>
+      
+      <div className="relative w-full max-w-sm h-96 bg-sky-200 overflow-hidden rounded-2xl border-4 border-primary/20 shadow-inner cursor-pointer">
+        {!playing && !gameOver && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+            <Button className="rounded-xl font-bold text-lg px-8 py-6">PLAY</Button>
+          </div>
+        )}
+        {gameOver && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-10 space-y-4">
+            <div className="text-4xl font-black text-white drop-shadow-md">CRASH!</div>
+            <div className="text-xl font-bold text-white bg-black/50 px-4 py-2 rounded-xl">Score: {score}</div>
+            <Button className="rounded-xl font-bold">Play Again</Button>
+          </div>
+        )}
+        
+        <div className="absolute font-black text-4xl text-white/50 top-4 right-4 z-0">{score}</div>
+        
+        <div 
+          className="absolute w-8 h-8 bg-yellow-400 border-2 border-black rounded-lg shadow-sm z-20 transition-transform duration-75"
+          style={{ top: `${renderObj.y}%`, left: '10%', transform: `translateY(-50%) rotate(${Math.min(Math.max(velocity.current * 3, -45), 90)}deg)` }}
+        >
+           <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full"><div className="w-1 h-1 bg-black rounded-full" /></div>
+        </div>
+        
+        {renderObj.pipes.map((p, i) => (
+          <React.Fragment key={i}>
+            <div className="absolute bg-emerald-500 border-2 border-green-800" style={{ left: `${p.x}%`, top: 0, width: '15%', height: `${p.topHeight}%` }} />
+            <div className="absolute bg-emerald-500 border-2 border-green-800" style={{ left: `${p.x}%`, top: `${p.topHeight + GAP_SIZE}%`, width: '15%', bottom: 0 }} />
+          </React.Fragment>
+        ))}
+        
+        <div className="absolute bottom-0 w-full h-4 bg-green-600 border-t-4 border-green-800" />
+      </div>
+    </div>
+  );
+}
+
+// --- 21. 2048 CLONE ---
+function Game2048() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  
+  const [grid, setGrid] = React.useState<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)));
+  const [score, setScore] = React.useState(0);
+  const [gameOver, setGameOver] = React.useState(false);
+
+  const addRandomTile = React.useCallback((currentGrid: number[][]) => {
+    const emptyCells = [];
+    for(let r=0; r<4; r++) {
+      for(let c=0; c<4; c++) {
+        if (currentGrid[r][c] === 0) emptyCells.push({r, c});
+      }
+    }
+    if (emptyCells.length > 0) {
+      const {r, c} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      currentGrid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    }
+  }, []);
+
+  const initGame = React.useCallback(() => {
+    const newGrid = Array(4).fill(0).map(() => Array(4).fill(0));
+    addRandomTile(newGrid);
+    addRandomTile(newGrid);
+    setGrid(newGrid);
+    setScore(0);
+    setGameOver(false);
+  }, [addRandomTile]);
+
+  React.useEffect(() => {
+    initGame();
+  }, [initGame]);
+
+  const handleKeyDown = React.useCallback((e: KeyboardEvent | { key: string }) => {
+    if (gameOver) return;
+    let newGrid = JSON.parse(JSON.stringify(grid));
+    let newScore = score;
+
+    const slide = (row: number[]) => {
+      let arr = row.filter(val => val);
+      for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] !== 0 && arr[i] === arr[i+1]) {
+          arr[i] *= 2;
+          newScore += arr[i];
+          arr[i+1] = 0;
+        }
+      }
+      arr = arr.filter(val => val);
+      while(arr.length < 4) arr.push(0);
+      return arr;
+    };
+
+    if (e.key === 'ArrowLeft') {
+      newGrid = newGrid.map((row: number[]) => slide(row));
+    } else if (e.key === 'ArrowRight') {
+      newGrid = newGrid.map((row: number[]) => slide(row.reverse()).reverse());
+    } else if (e.key === 'ArrowUp') {
+      for(let c=0; c<4; c++) {
+        let col = [newGrid[0][c], newGrid[1][c], newGrid[2][c], newGrid[3][c]];
+        col = slide(col);
+        for(let r=0; r<4; r++) newGrid[r][c] = col[r];
+      }
+    } else if (e.key === 'ArrowDown') {
+      for(let c=0; c<4; c++) {
+        let col = [newGrid[0][c], newGrid[1][c], newGrid[2][c], newGrid[3][c]].reverse();
+        col = slide(col).reverse();
+        for(let r=0; r<4; r++) newGrid[r][c] = col[r];
+      }
+    } else {
+      return;
+    }
+
+    if (JSON.stringify(grid) !== JSON.stringify(newGrid)) {
+      addRandomTile(newGrid);
+      setGrid(newGrid);
+      setScore(newScore);
+      
+      let canMove = false;
+      for(let r=0; r<4; r++) {
+        for(let c=0; c<4; c++) {
+          if (newGrid[r][c] === 0) canMove = true;
+          if (r < 3 && newGrid[r][c] === newGrid[r+1][c]) canMove = true;
+          if (c < 3 && newGrid[r][c] === newGrid[r][c+1]) canMove = true;
+        }
+      }
+      if (!canMove) {
+        setGameOver(true);
+        saveGameScore(supabase, profile, '2048', newScore, 'score');
+      }
+    }
+  }, [grid, score, gameOver, addRandomTile, profile, supabase]);
+
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+         e.preventDefault();
+       }
+       handleKeyDown(e);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleKeyDown]);
+
+  const [touchStart, setTouchStart] = React.useState<{x: number, y: number} | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 30) handleKeyDown({ key: 'ArrowRight' });
+      else if (dx < -30) handleKeyDown({ key: 'ArrowLeft' });
+    } else {
+      if (dy > 30) handleKeyDown({ key: 'ArrowDown' });
+      else if (dy < -30) handleKeyDown({ key: 'ArrowUp' });
+    }
+    setTouchStart(null);
+  };
+
+  const colors: Record<number, string> = {
+    0: 'bg-muted/30', 2: 'bg-amber-100 text-amber-900', 4: 'bg-amber-200 text-amber-900',  
+    8: 'bg-orange-300 text-white', 16: 'bg-orange-400 text-white', 32: 'bg-orange-500 text-white',
+    64: 'bg-red-500 text-white', 128: 'bg-yellow-400 text-white shadow-lg', 
+    256: 'bg-yellow-500 text-white shadow-lg', 512: 'bg-yellow-600 text-white shadow-xl',
+    1024: 'bg-emerald-500 text-white shadow-xl', 2048: 'bg-purple-500 text-white shadow-2xl'
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none outline-none" tabIndex={0}>
+      <h3 className="text-2xl font-bold text-primary">2048</h3>
+      <div className="flex justify-between w-full max-w-xs items-end">
+        <p className="text-muted-foreground text-sm">Join the numbers!</p>
+        <div className="bg-primary/10 px-4 py-2 rounded-xl font-bold text-primary">Score: {score}</div>
+      </div>
+      
+      <div 
+        className="w-full max-w-xs bg-muted p-2 rounded-2xl relative touch-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {gameOver && (
+          <div className="absolute inset-0 bg-white/80 z-10 rounded-2xl flex flex-col items-center justify-center space-y-4 backdrop-blur-sm">
+            <div className="text-3xl font-black text-primary">Game Over!</div>
+            <Button onClick={initGame} className="rounded-xl font-bold">Try Again</Button>
+          </div>
+        )}
+        <div className="grid grid-cols-4 gap-2">
+          {grid.map((row, r) => row.map((val, c) => (
+            <div key={`${r}-${c}`} className={`aspect-square flex items-center justify-center rounded-xl font-black text-2xl transition-all duration-100 ${colors[val > 2048 ? 2048 : val] || 'bg-black text-white'}`}>
+              {val > 0 ? val : ''}
+            </div>
+          )))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- 22. MINESWEEPER ---
+function Minesweeper() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const [grid, setGrid] = React.useState<any[]>([]);
+  const [gameOver, setGameOver] = React.useState(false);
+  const [won, setWon] = React.useState(false);
+  const [minesCount] = React.useState(10);
+  const ROWS = 9;
+  const COLS = 9;
+
+  const initGame = () => {
+    let newGrid = Array(ROWS).fill(0).map(() => Array(COLS).fill(0).map(() => ({ isMine: false, isRevealed: false, isFlagged: false, neighbors: 0 })));
+    let minesPlaced = 0;
+    while(minesPlaced < minesCount) {
+      const r = Math.floor(Math.random() * ROWS);
+      const c = Math.floor(Math.random() * COLS);
+      if(!newGrid[r][c].isMine) {
+        newGrid[r][c].isMine = true;
+        minesPlaced++;
+      }
+    }
+    for(let r=0; r<ROWS; r++){
+      for(let c=0; c<COLS; c++){
+        if(!newGrid[r][c].isMine) {
+          let count = 0;
+          for(let i=-1; i<=1; i++) {
+            for(let j=-1; j<=1; j++) {
+              if(r+i>=0 && r+i<ROWS && c+j>=0 && c+j<COLS && newGrid[r+i][c+j].isMine) count++;
+            }
+          }
+          newGrid[r][c].neighbors = count;
+        }
+      }
+    }
+    setGrid(newGrid);
+    setGameOver(false);
+    setWon(false);
+  };
+
+  React.useEffect(() => { initGame(); }, []);
+
+  const reveal = (r: number, c: number) => {
+    if (gameOver || won || grid[r][c].isRevealed || grid[r][c].isFlagged) return;
+    const newGrid = [...grid.map(row => [...row])];
+    
+    if (newGrid[r][c].isMine) {
+      newGrid.forEach(row => row.forEach(cell => { if (cell.isMine) cell.isRevealed = true; }));
+      setGrid(newGrid);
+      setGameOver(true);
+      return;
+    }
+
+    const floodFill = (row: number, col: number) => {
+      if (row<0 || row>=ROWS || col<0 || col>=COLS || newGrid[row][col].isRevealed || newGrid[row][col].isFlagged) return;
+      newGrid[row][col].isRevealed = true;
+      if (newGrid[row][col].neighbors === 0) {
+        for(let i=-1; i<=1; i++) {
+          for(let j=-1; j<=1; j++) {
+            floodFill(row+i, col+j);
+          }
+        }
+      }
+    };
+    
+    floodFill(r, c);
+    setGrid(newGrid);
+    
+    let unrevealedSafe = 0;
+    newGrid.forEach(row => row.forEach(cell => { if (!cell.isMine && !cell.isRevealed) unrevealedSafe++; }));
+    if (unrevealedSafe === 0) {
+      setWon(true);
+      saveGameScore(supabase, profile, 'Minesweeper', 1, 'win');
+    }
+  };
+
+  const toggleFlag = (e: React.MouseEvent, r: number, c: number) => {
+    e.preventDefault();
+    if (gameOver || won || grid[r][c].isRevealed) return;
+    const newGrid = [...grid.map(row => [...row])];
+    newGrid[r][c].isFlagged = !newGrid[r][c].isFlagged;
+    setGrid(newGrid);
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none">
+      <h3 className="text-2xl font-bold text-primary">Minesweeper</h3>
+      <div className="flex gap-4 items-center">
+        <p className="text-muted-foreground text-sm">Long press or Right click to flag</p>
+        <Button size="sm" variant="outline" onClick={initGame}><RefreshCw className="h-4 w-4" /></Button>
+      </div>
+      
+      <div className="bg-muted p-2 rounded-xl border-4 border-muted/50 shadow-inner max-w-full overflow-x-auto">
+        {(gameOver || won) && (
+          <div className="text-center font-black text-xl p-2 animate-bounce">
+            {won ? '🏆 YOU WON!' : '💥 BOOM!'}
+          </div>
+        )}
+        <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
+          {grid.map((row, r) => row.map((cell: any, c: number) => (
+            <button
+              key={`${r}-${c}`}
+              onClick={() => reveal(r, c)}
+              onContextMenu={(e) => toggleFlag(e, r, c)}
+              className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-bold rounded shadow-sm ${
+                cell.isRevealed 
+                  ? (cell.isMine ? 'bg-red-500' : 'bg-white text-primary') 
+                  : 'bg-primary/20 hover:bg-primary/30 active:scale-95 border-b-2 border-primary/20'
+              }`}
+            >
+              {cell.isRevealed ? (cell.isMine ? '💣' : (cell.neighbors > 0 ? cell.neighbors : '')) : (cell.isFlagged ? '🚩' : '')}
+            </button>
+          )))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- 23. CONNECT FOUR ---
+function ConnectFour() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const ROWS = 6;
+  const COLS = 7;
+  const [grid, setGrid] = React.useState<string[][]>(Array(ROWS).fill(0).map(() => Array(COLS).fill("")));
+  const [currentPlayer, setCurrentPlayer] = React.useState('Red');
+  const [winner, setWinner] = React.useState<string | null>(null);
+
+  const dropChip = (col: number) => {
+    if (winner) return;
+    const newGrid = [...grid.map(r => [...r])];
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (!newGrid[r][col]) {
+        newGrid[r][col] = currentPlayer;
+        setGrid(newGrid);
+        checkWin(newGrid, r, col, currentPlayer);
+        if (!winner) setCurrentPlayer(currentPlayer === 'Red' ? 'Yellow' : 'Red');
+        return;
+      }
+    }
+  };
+
+  const checkWin = (g: string[][], r: number, c: number, player: string) => {
+    const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+    for (let [dr, dc] of dirs) {
+      let count = 1;
+      for (let i = 1; i <= 3; i++) {
+        if (r+dr*i>=0 && r+dr*i<ROWS && c+dc*i>=0 && c+dc*i<COLS && g[r+dr*i][c+dc*i] === player) count++; else break;
+      }
+      for (let i = 1; i <= 3; i++) {
+        if (r-dr*i>=0 && r-dr*i<ROWS && c-dc*i>=0 && c-dc*i<COLS && g[r-dr*i][c-dc*i] === player) count++; else break;
+      }
+      if (count >= 4) {
+        setWinner(player);
+        saveGameScore(supabase, profile, 'Connect 4', 1, 'win');
+        return;
+      }
+    }
+  };
+
+  const reset = () => {
+    setGrid(Array(ROWS).fill(0).map(() => Array(COLS).fill("")));
+    setWinner(null);
+    setCurrentPlayer('Red');
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none">
+      <h3 className="text-2xl font-bold text-primary">Connect Four</h3>
+      <div className="flex justify-between w-full max-w-sm items-center">
+        {winner ? (
+          <div className="text-xl font-black animate-pulse text-emerald-600">{winner} Wins!</div>
+        ) : (
+          <div className="flex items-center gap-2 font-bold text-muted-foreground">
+            Turn: <div className={`w-4 h-4 rounded-full ${currentPlayer === 'Red' ? 'bg-red-500' : 'bg-yellow-400'}`} /> {currentPlayer}
+          </div>
+        )}
+        <Button size="sm" variant="outline" onClick={reset}>Reset</Button>
+      </div>
+      
+      <div className="bg-blue-600 p-3 rounded-2xl shadow-xl border-b-8 border-blue-800">
+        <div className="grid grid-cols-7 gap-2">
+          {grid[0].map((_, c) => (
+            <button key={`top-${c}`} onClick={() => dropChip(c)} className="w-8 h-8 md:w-10 md:h-10 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center -mt-2 pb-2">
+               <ArrowDown className="h-4 w-4 text-white opacity-50" />
+            </button>
+          ))}
+          {grid.map((row, r) => row.map((cell, c) => (
+            <div key={`${r}-${c}`} className="w-8 h-8 md:w-10 md:h-10 bg-blue-700 rounded-full shadow-inner overflow-hidden relative">
+               <div className={`absolute inset-0 rounded-full transition-transform duration-500 ${cell === 'Red' ? 'bg-red-500 shadow-inner scale-100' : cell === 'Yellow' ? 'bg-yellow-400 shadow-inner scale-100' : 'bg-transparent scale-0'}`} />
+            </div>
+          )))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- 24. WORD GUESS ---
+const WORDS = ["APPLE", "TRAIN", "HOUSE", "SMILE", "BRAVE", "SMART", "FUNNY", "HAPPY", "GHOST", "PUPPY", "DREAM", "WATER", "LIGHT", "MAGIC", "WORLD"];
+function WordGuess() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const [target, setTarget] = React.useState("");
+  const [guesses, setGuesses] = React.useState<string[]>([]);
+  const [current, setCurrent] = React.useState("");
+  const [gameOver, setGameOver] = React.useState(false);
+
+  React.useEffect(() => { init(); }, []);
+
+  const init = () => {
+    setTarget(WORDS[Math.floor(Math.random() * WORDS.length)]);
+    setGuesses([]);
+    setCurrent("");
+    setGameOver(false);
+  };
+
+  const onKey = React.useCallback((key: string) => {
+    if (gameOver) return;
+    if (key === 'Enter') {
+      if (current.length !== 5) return;
+      const newGuesses = [...guesses, current];
+      setGuesses(newGuesses);
+      setCurrent("");
+      if (current === target) {
+        setGameOver(true);
+        saveGameScore(supabase, profile, 'Word Guess', 6 - guesses.length, 'score');
+      } else if (newGuesses.length >= 6) {
+        setGameOver(true);
+      }
+    } else if (key === 'Backspace') {
+      setCurrent(current.slice(0, -1));
+    } else if (current.length < 5 && /^[A-Z]$/.test(key)) {
+      setCurrent(current + key);
+    }
+  }, [current, gameOver, guesses, target, profile, supabase]);
+
+  React.useEffect(() => {
+    const handleDown = (e: KeyboardEvent) => {
+       if (e.key === 'Backspace' || e.key === 'Enter' || /^[a-zA-Z]$/.test(e.key)) {
+         onKey(e.key.toUpperCase());
+       }
+    };
+    window.addEventListener('keydown', handleDown);
+    return () => window.removeEventListener('keydown', handleDown);
+  }, [onKey]);
+
+  const rows = [...guesses, current, ...Array(Math.max(0, 5 - guesses.length)).fill("")];
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none outline-none" tabIndex={0}>
+      <h3 className="text-2xl font-bold text-primary">Word Guess</h3>
+      <p className="text-muted-foreground text-sm">Guess the 5-letter word!</p>
+      
+      {gameOver && (
+        <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-xl">
+          <div className="font-bold">{guesses[guesses.length-1] === target ? '🎉 You got it!' : `❌ Word was ${target}`}</div>
+          <Button size="sm" onClick={init}>Play Again</Button>
+        </div>
+      )}
+
+      <div className="grid gap-2">
+        {rows.slice(0,6).map((word, r) => (
+          <div key={r} className="flex gap-2">
+            {Array(5).fill("").map((_, c) => {
+              const letter = word[c] || "";
+              let bg = "bg-muted";
+              let text = "text-foreground";
+              if (r < guesses.length) {
+                text = "text-white";
+                if (target[c] === letter) bg = "bg-emerald-500";
+                else if (target.includes(letter)) bg = "bg-yellow-500";
+                else bg = "bg-gray-400";
+              } else if (r === guesses.length && letter) {
+                bg = "bg-background border-2 border-primary/50";
+              }
+              return (
+                <div key={c} className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-2xl font-black rounded-xl ${bg} ${text} transition-colors uppercase`}>
+                  {letter}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      
+      <div className="grid gap-1 mt-4 max-w-sm w-full px-2">
+         {['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'].map((row, i) => (
+           <div key={i} className="flex justify-center gap-1">
+             {i === 2 && <Button variant="secondary" className="px-1 md:px-2" onClick={() => onKey('Enter')}>ENT</Button>}
+             {row.split('').map(k => (
+               <Button key={k} variant="outline" className="px-2 md:px-3 h-10 font-bold" onClick={() => onKey(k)}>{k}</Button>
+             ))}
+             {i === 2 && <Button variant="secondary" className="px-1 md:px-2" onClick={() => onKey('Backspace')}>DEL</Button>}
+           </div>
+         ))}
+      </div>
+    </div>
+  );
+}
+
+// --- 25. TOWER STACKER ---
+function TowerStacker() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+  const [playing, setPlaying] = React.useState(false);
+  const [gameOver, setGameOver] = React.useState(false);
+  
+  const widthRef = React.useRef(100);
+  const posRef = React.useRef(0);
+  const dirRef = React.useRef(1);
+  const stackRef = React.useRef<{w: number, x: number, color: string}[]>([]);
+  const frameRef = React.useRef<number | null>(null);
+  
+  const [renderStack, setRenderStack] = React.useState<{w: number, x: number, color: string}[]>([]);
+  const [currentBlock, setCurrentBlock] = React.useState({ w: 100, x: 0 });
+
+  const SPEED = 4;
+
+  const reset = () => {
+    widthRef.current = 100;
+    posRef.current = -120;
+    dirRef.current = 1;
+    stackRef.current = [{ w: 100, x: 0, color: '#10b981' }];
+    setRenderStack([{ w: 100, x: 0, color: '#10b981' }]);
+    setCurrentBlock({ w: 100, x: -120 });
+    setGameOver(false);
+    setPlaying(true);
+  };
+
+  React.useEffect(() => {
+    const loop = () => {
+      if (!playing || gameOver) return;
+      posRef.current += dirRef.current * SPEED;
+      if (posRef.current > 120) dirRef.current = -1;
+      if (posRef.current < -120) dirRef.current = 1;
+      
+      setCurrentBlock({ w: widthRef.current, x: posRef.current });
+      frameRef.current = requestAnimationFrame(loop);
+    };
+    if (playing) frameRef.current = requestAnimationFrame(loop);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    }
+  }, [playing, gameOver]);
+
+  const place = () => {
+    if (!playing && !gameOver) { reset(); return; }
+    if (gameOver) { reset(); return; }
+
+    const top = stackRef.current[stackRef.current.length - 1];
+    const diff = posRef.current - top.x;
+    
+    if (Math.abs(diff) > widthRef.current) {
+      setGameOver(true);
+      setPlaying(false);
+      saveGameScore(supabase, profile, 'Tower Stacker', stackRef.current.length - 1, 'score');
+      return;
+    }
+    
+    const newWidth = widthRef.current - Math.abs(diff);
+    widthRef.current = newWidth;
+    
+    const newX = top.x + (diff / 2);
+    
+    const hue = (stackRef.current.length * 20) % 360;
+    stackRef.current.push({ w: newWidth, x: newX, color: `hsl(${hue}, 70%, 50%)` });
+    setRenderStack([...stackRef.current]);
+    
+    posRef.current = dirRef.current === 1 ? -120 : 120;
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 select-none" onClick={place}>
+      <h3 className="text-2xl font-bold text-primary">Tower Stacker</h3>
+      <p className="text-muted-foreground text-sm">Click to stack perfectly!</p>
+      
+      <div className="relative w-full max-w-sm h-96 bg-slate-900 rounded-3xl overflow-hidden border-4 border-primary/20 shadow-inner flex flex-col justify-end pb-4 cursor-pointer">
+        {!playing && !gameOver && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20">
+            <Button className="px-8 py-6 rounded-xl font-bold text-lg">START</Button>
+          </div>
+        )}
+        {gameOver && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20 space-y-4">
+            <div className="text-3xl font-black text-white">GAME OVER</div>
+            <div className="text-xl font-bold text-emerald-400">Score: {renderStack.length - 1}</div>
+            <Button className="rounded-xl font-bold">Try Again</Button>
+          </div>
+        )}
+        
+        <div className="absolute font-black text-4xl text-white/20 top-4 right-4">{renderStack.length > 0 ? renderStack.length - 1 : 0}</div>
+
+        <div className="relative w-full h-8 flex justify-center">
+          {playing && !gameOver && (
+             <div className="absolute h-8 transition-none bg-yellow-400 rounded border border-yellow-200" style={{ width: `${currentBlock.w}%`, transform: `translateX(${currentBlock.x}px)` }} />
+          )}
+        </div>
+        
+        <div className="flex flex-col-reverse items-center w-full">
+          {renderStack.map((b, i) => (
+             <div key={i} className="h-8 rounded border border-white/20 transition-all duration-300" style={{ width: `${b.w}%`, transform: `translateX(${b.x}px)`, backgroundColor: b.color }} />
+          )).reverse()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- MAIN PAGE ---
 
 function Leaderboard() {
@@ -1049,7 +1747,6 @@ function Leaderboard() {
     fetchScores();
   }, [supabase, profile]);
 
-  // Group by game
   const grouped = scores.reduce((acc, curr) => {
     if (!acc[curr.game]) acc[curr.game] = [];
     acc[curr.game].push(curr);
@@ -1081,7 +1778,7 @@ function Leaderboard() {
                         <span className="font-bold text-sm">{s.profiles?.display_name}</span>
                         {i === 0 && activeTournament?.game_name === game && (
                           <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ml-1 shadow-sm border border-yellow-300">
-                            <Crown className="h-3 w-3" /> Champ
+                            <Trophy className="h-3 w-3" /> Champ
                           </div>
                         )}
 
@@ -1138,7 +1835,7 @@ export default function ArcadePage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div className="flex flex-col">
           <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Universe Arcade</h1>
-          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">19 Games Live for the Hub</p>
+          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">25 Games Live for the Hub</p>
         </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -1191,6 +1888,12 @@ export default function ArcadePage() {
           <TabsTrigger value="doodle" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><PenTool className="h-4 w-4" /> Doodle</TabsTrigger>
           <TabsTrigger value="whack" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Hammer className="h-4 w-4" /> Whack</TabsTrigger>
           <TabsTrigger value="tetris" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Grid3x3 className="h-4 w-4" /> Tetris</TabsTrigger>
+          <TabsTrigger value="flappy" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Cloud className="h-4 w-4" /> Flappy</TabsTrigger>
+          <TabsTrigger value="2048" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Grid2x2 className="h-4 w-4" /> 2048</TabsTrigger>
+          <TabsTrigger value="minesweeper" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Bomb className="h-4 w-4" /> Minesweeper</TabsTrigger>
+          <TabsTrigger value="connect4" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Layout className="h-4 w-4" /> Connect 4</TabsTrigger>
+          <TabsTrigger value="wordguess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Type className="h-4 w-4" /> Word Guess</TabsTrigger>
+          <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
         </TabsList>
 
         <div className="mt-4 landscape:fixed landscape:inset-0 landscape:z-[100] landscape:m-0 landscape:p-4 landscape:bg-[#fafafa] dark:landscape:bg-background landscape:flex landscape:items-center landscape:justify-center landscape:overflow-y-auto">
@@ -1213,7 +1916,13 @@ export default function ArcadePage() {
           <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
           <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
           <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>
-          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TetrisGame /></Card></TabsContent>
+          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TetrisGame /></Card></TabsContent>
+          <TabsContent value="flappy"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><FlappyBlock /></Card></TabsContent>
+          <TabsContent value="2048"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Game2048 /></Card></TabsContent>
+          <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Minesweeper /></Card></TabsContent>
+          <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ConnectFour /></Card></TabsContent>
+          <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
+          <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker /></Card></TabsContent>
         </div>
       </Tabs>
     </div>
