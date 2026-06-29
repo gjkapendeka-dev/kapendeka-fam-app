@@ -50,6 +50,8 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { audio } from "@/lib/audio"
+import { DPad } from "@/components/ui/dpad"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -406,7 +408,7 @@ function MemoryMatch() {
 }
 
 // --- 5. SNAKE GAME ---
-function SnakeGame() {
+function SnakeGame({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -427,7 +429,7 @@ function SnakeGame() {
       newHead.y < 0 || newHead.y >= gridSize ||
       snake.some(s => s.x === newHead.x && s.y === newHead.y)
     ) {
-      setGameOver(true); saveGameScore(supabase, profile, "Snake", score);
+      audio.playCrash(); audio.playCrash(); setGameOver(true); saveGameScore(supabase, profile, "Snake", score);
       return
     }
 
@@ -445,14 +447,19 @@ function SnakeGame() {
   }, [snake, dir, food, gameOver, supabase, profile, score])
 
   React.useEffect(() => {
-    const interval = setInterval(moveSnake, 180)
+    const interval = setInterval(moveSnake, Math.max(50, 180 - score * 0.5))
     return () => clearInterval(interval)
   }, [moveSnake])
 
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4">
-      <div className="text-center">
-        <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Snake Score: {score}</p>
+      <div className="flex gap-4 items-center">
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">PB: {personalBest}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Score: {score}</p>
+        </div>
       </div>
       <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-20 grid-rows-20 overflow-hidden">
         {snake.map((s, i) => (
@@ -467,14 +474,13 @@ function SnakeGame() {
           </div>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div />
-        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.y !== 1 && setDir({ x: 0, y: -1 })}><ArrowUp className="h-5 w-5" /></Button>
-        <div />
-        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.x !== 1 && setDir({ x: -1, y: 0 })}><ArrowLeft className="h-5 w-5" /></Button>
-        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.y !== -1 && setDir({ x: 0, y: 1 })}><ArrowDown className="h-5 w-5" /></Button>
-        <Button variant="secondary" className="h-12 w-12 rounded-xl" onClick={() => dir.x !== -1 && setDir({ x: 1, y: 0 })}><ArrowRight className="h-5 w-5" /></Button>
-      </div>
+      <DPad 
+        onUp={() => dir.y !== 1 && setDir({ x: 0, y: -1 })}
+        onDown={() => dir.y !== -1 && setDir({ x: 0, y: 1 })}
+        onLeft={() => dir.x !== 1 && setDir({ x: -1, y: 0 })}
+        onRight={() => dir.x !== -1 && setDir({ x: 1, y: 0 })}
+        className="mt-4 md:hidden"
+      />
     </div>
   )
 }
@@ -653,7 +659,7 @@ function WhackATask() {
 }
 
 // --- 9. TETRIS ---
-function TetrisGame() {
+function TetrisGame({ personalBest = 0 }: { personalBest?: number }) {
   const [grid] = React.useState(Array(20).fill(null).map(() => Array(10).fill(0)))
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4">
@@ -1009,7 +1015,7 @@ function SlotMachine() {
 }
 
 // --- 20. FLAPPY BLOCK ---
-function FlappyBlock() {
+function FlappyBlock({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
   const [playing, setPlaying] = React.useState(false);
@@ -1042,6 +1048,7 @@ function FlappyBlock() {
   };
 
   const jump = () => {
+    audio.playBlip(600, "square");
     if (!playing && !gameOver) reset();
     if (gameOver) reset();
     velocity.current = JUMP;
@@ -1062,11 +1069,13 @@ function FlappyBlock() {
       
       let collided = false;
       pipes.current.forEach(p => {
-        p.x -= PIPE_SPEED * 0.2; 
+        
+        // Difficulty increase: pipes move slightly faster as score goes up
+        p.x -= (PIPE_SPEED + Math.min(2, scoreRef.current * 0.1)) * 0.2; 
         
         if (p.x < 15 && p.x > 5) {
           if (birdY.current < p.topHeight || birdY.current > p.topHeight + GAP_SIZE) {
-            collided = true;
+            audio.playCrash(); collided = true;
           }
         }
         
@@ -1140,7 +1149,7 @@ function FlappyBlock() {
 }
 
 // --- 21. 2048 CLONE ---
-function Game2048() {
+function Game2048({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
   
@@ -1300,7 +1309,7 @@ function Game2048() {
 }
 
 // --- 22. MINESWEEPER ---
-function Minesweeper() {
+function Minesweeper({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
   const [grid, setGrid] = React.useState<any[]>([]);
@@ -1419,7 +1428,7 @@ function Minesweeper() {
 }
 
 // --- 23. CONNECT FOUR ---
-function ConnectFour() {
+function ConnectFour({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
   const ROWS = 6;
@@ -1602,7 +1611,7 @@ function WordGuess() {
 }
 
 // --- 25. TOWER STACKER ---
-function TowerStacker() {
+function TowerStacker({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase();
   const { profile } = useUser();
   const [playing, setPlaying] = React.useState(false);
@@ -1633,7 +1642,8 @@ function TowerStacker() {
   React.useEffect(() => {
     const loop = () => {
       if (!playing || gameOver) return;
-      posRef.current += dirRef.current * SPEED;
+      const speed = 2 + (stackRef.current.length * 0.2); // dynamic difficulty
+      posRef.current += dirRef.current * speed;
       if (posRef.current > 120) dirRef.current = -1;
       if (posRef.current < -120) dirRef.current = 1;
       
@@ -1654,12 +1664,14 @@ function TowerStacker() {
     const diff = posRef.current - top.x;
     
     if (Math.abs(diff) > widthRef.current) {
+      audio.playCrash();
       setGameOver(true);
       setPlaying(false);
       saveGameScore(supabase, profile, 'Tower Stacker', stackRef.current.length - 1, 'score');
       return;
     }
     
+    audio.playBlip(700, "square");
     const newWidth = widthRef.current - Math.abs(diff);
     widthRef.current = newWidth;
     
@@ -1801,6 +1813,28 @@ function Leaderboard() {
 export default function ArcadePage() {
   const supabase = useSupabase();
   const { profile } = useUser();
+  const [isMuted, setIsMuted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsMuted(audio.getMuted());
+  }, []);
+
+  const pbQuery = React.useMemo(() => {
+    if (!supabase || !profile?.id) return null
+    return supabase.from("arcade_scores").select("*").eq("member_id", profile.id)
+  }, [supabase, profile?.id])
+  const { data: pbs } = useCollection(pbQuery)
+  const personalBests = React.useMemo(() => {
+    const map: Record<string, number> = {}
+    if (pbs) pbs.forEach((s: any) => map[s.game] = s.best_score || s.score || 0)
+    return map
+  }, [pbs])
+  
+  const toggleMute = () => {
+    const newMute = !isMuted;
+    setIsMuted(newMute);
+    audio.setMuted(newMute);
+  };
 
   const tournamentQuery = React.useMemo(() => {
     if (!supabase || !profile?.familyId) return null
@@ -1911,18 +1945,18 @@ export default function ArcadePage() {
           <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl"><WordSearchGame /></Card></TabsContent>
           <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TicTacToe /></Card></TabsContent>
           <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
-          <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame /></Card></TabsContent>
+          <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
           <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
           <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
           <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
           <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>
-          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TetrisGame /></Card></TabsContent>
-          <TabsContent value="flappy"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><FlappyBlock /></Card></TabsContent>
-          <TabsContent value="2048"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Game2048 /></Card></TabsContent>
-          <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Minesweeper /></Card></TabsContent>
-          <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ConnectFour /></Card></TabsContent>
+          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TetrisGame personalBest={personalBests["Tetris"] || 0} /></Card></TabsContent>
+          <TabsContent value="flappy"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><FlappyBlock personalBest={personalBests["Flappy"] || 0} /></Card></TabsContent>
+          <TabsContent value="2048"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Game2048 personalBest={personalBests["2048"] || 0} /></Card></TabsContent>
+          <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Minesweeper personalBest={personalBests["Minesweeper"] || 0} /></Card></TabsContent>
+          <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ConnectFour personalBest={personalBests["Connect 4"] || 0} /></Card></TabsContent>
           <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
-          <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker /></Card></TabsContent>
+          <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
         </div>
       </Tabs>
     </div>
