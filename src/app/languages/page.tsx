@@ -47,10 +47,10 @@ export default function LanguageLearningPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const progressQuery = React.useMemo(() => {
-    if (!supabase || !profile?.family_id) return null
-    return supabase.from("language_progress").select("*").eq("family_id", profile.family_id).order("last_lesson_date", { ascending: false })
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("language_progress").select("*, profiles!language_progress_member_id_fkey(display_name)").eq("family_id", profile.familyId).order("xp", { ascending: false })
     
-  }, [supabase, profile?.family_id])
+  }, [supabase, profile?.familyId])
 
   const { data: progressList, loading } = useCollection(progressQuery)
 
@@ -59,15 +59,10 @@ export default function LanguageLearningPage() {
 
     setIsSubmitting(true)
     const data = {
-      family_id: profile.family_id,
-      user_id: profile.id,
-      user_name: profile.display_name || profile.displayName,
+      family_id: profile.familyId,
+      member_id: profile.id,
       language: selectedLang,
-      current_level: "Beginner",
-      streak_days: 1,
-      vocabulary_count: 0,
-      last_lesson_date: new Date().toISOString(),
-      created_at: new Date().toISOString()
+      xp: 0
     }
 
     try {
@@ -151,20 +146,20 @@ export default function LanguageLearningPage() {
                           </div>
                           <div>
                             <h4 className="font-bold text-lg">{p.language}</h4>
-                            <p className="text-xs text-muted-foreground font-medium">{p.user_name} • {p.current_level}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{p.profiles?.display_name} • Level {Math.floor((p.xp || 0)/100) + 1}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold">
                           <Zap className="h-3 w-3 fill-amber-600" />
-                          {p.streak_days} Day Streak
+                          {p.xp || 0} XP
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                           <span>Vocabulary Progress</span>
-                          <span>{p.vocabulary_count || 0} words learned</span>
+                          <span>{p.xp || 0} / 1000 XP</span>
                         </div>
-                        <Progress value={Math.min((p.vocabulary_count / 500) * 100, 100)} className="h-2" />
+                        <Progress value={Math.min(((p.xp || 0) / 1000) * 100, 100)} className="h-2" />
                       </div>
                       <div className="mt-3 flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1 rounded-xl font-bold border-primary/20 text-primary">
@@ -192,19 +187,16 @@ export default function LanguageLearningPage() {
               <CardDescription className="text-indigo-100">Top learners in the Kapendeka World</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                { name: "Junior", lang: "isiZulu", xp: 1250 },
-                { name: "George", lang: "Afrikaans", xp: 840 },
-              ].map((m, i) => (
+              {(progressList || []).slice(0, 5).map((m: any, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-white/10 p-3 rounded-2xl">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-lg opacity-50">#{i+1}</span>
                     <div>
-                      <div className="font-bold text-sm">{m.name}</div>
-                      <div className="text-[10px] opacity-70 uppercase font-bold tracking-tighter">{m.lang}</div>
+                      <div className="font-bold text-sm">{m.profiles?.display_name || "Member"}</div>
+                      <div className="text-[10px] opacity-70 uppercase font-bold tracking-tighter">{m.language}</div>
                     </div>
                   </div>
-                  <Badge className="bg-white/20 text-white border-none font-bold">{m.xp} XP</Badge>
+                  <Badge className="bg-white/20 text-white border-none font-bold">{m.xp || 0} XP</Badge>
                 </div>
               ))}
             </CardContent>
