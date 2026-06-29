@@ -13,8 +13,14 @@ import {
   Loader2,
   Calendar as CalendarIcon,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Timer as TimerIcon,
+  Play,
+  Pause,
+  MessageSquare
 } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,6 +46,45 @@ import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
+
+function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refresh: () => void }) {
+  const [running, setRunning] = React.useState(false)
+  const [seconds, setSeconds] = React.useState(a.time_spent_seconds || 0)
+
+  React.useEffect(() => {
+    let int: any;
+    if (running) {
+      int = setInterval(() => {
+        setSeconds((s: number) => s + 1)
+      }, 1000)
+    }
+    return () => clearInterval(int)
+  }, [running])
+
+  const toggle = async () => {
+    if (running) {
+      // stopping, save time
+      await supabase.from("homework").update({ time_spent_seconds: seconds }).eq("id", a.id)
+    }
+    setRunning(!running)
+  }
+
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60)
+    const s = totalSeconds % 60
+    return `${m}m ${s}s`
+  }
+
+  return (
+    <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1 pr-3 w-fit">
+      <Button size="icon" variant={running ? "destructive" : "default"} className="h-8 w-8 rounded-lg" onClick={toggle}>
+        {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </Button>
+      <span className="font-bold text-sm text-slate-700 font-mono w-16 text-center">{formatTime(seconds)}</span>
+    </div>
+  )
+}
+
 export default function SchoolPage() {
   const { profile } = useUser()
   const supabase = useSupabase()
@@ -52,7 +97,10 @@ export default function SchoolPage() {
   // Form State
   const [title, setTitle] = React.useState("")
   const [subject, setSubject] = React.useState("Math")
-  const [childName, setChildName] = React.useState("Junior")
+  const [childName, setChildName] = React.useState("Gina")
+  const [category, setCategory] = React.useState("Daily Homework")
+  const [comment, setComment] = React.useState("")
+  const [activeTab, setActiveTab] = React.useState("active")
   const [dueDate, setDueDate] = React.useState("")
 
   const [refreshCount, setRefreshCount] = React.useState(0)
@@ -74,6 +122,8 @@ export default function SchoolPage() {
       title,
       subject,
       child_name: childName,
+      category,
+      time_spent_seconds: 0,
       status: "pending",
       due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
       created_at: new Date().toISOString(),
@@ -89,7 +139,7 @@ export default function SchoolPage() {
       .then(() => setIsSubmitting(false))
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string, commentTxt: string) => {
     if (!e.target.files || e.target.files.length === 0 || !supabase) return
     const file = e.target.files[0]
     
@@ -106,7 +156,8 @@ export default function SchoolPage() {
        
        await supabase.from("homework").update({ 
          status: "done", 
-         attachment_url: data.publicUrl 
+         attachment_url: data.publicUrl,
+         comments: commentTxt 
        }).eq("id", id)
        
        toast({ title: "Turned In!", description: "File uploaded successfully.", className: "bg-emerald-500 text-white" })
@@ -169,6 +220,30 @@ export default function SchoolPage() {
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <div className="grid gap-2">
+                     <Label>Child Name</Label>
+                     <Select value={childName} onValueChange={setChildName}>
+                       <SelectTrigger><SelectValue /></SelectTrigger>
+                       <SelectContent>
+                         {["Gina", "Natalie", "Tinashe"].map(c => (
+                           <SelectItem key={c} value={c}>{c}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   <div className="grid gap-2">
+                     <Label>Category</Label>
+                     <Select value={category} onValueChange={setCategory}>
+                       <SelectTrigger><SelectValue /></SelectTrigger>
+                       <SelectContent>
+                         {["Daily Homework", "Project", "Reading", "Exam Prep", "Other"].map(c => (
+                           <SelectItem key={c} value={c}>{c}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="grid gap-2">
                      <Label>Subject</Label>
                      <Select value={subject} onValueChange={setSubject}>
                        <SelectTrigger><SelectValue /></SelectTrigger>
@@ -196,7 +271,14 @@ export default function SchoolPage() {
         )}
       </header>
 
-      <div className="space-y-4">
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full max-w-sm mb-6 flex h-auto">
+          <TabsTrigger value="active" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">Active</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">History</TabsTrigger>
+        </TabsList>
+        <div className="space-y-4">
+
         {loading ? (
           [1,2,3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-3xl" />)
         ) : (!assignments || assignments.length === 0) ? (
@@ -207,14 +289,22 @@ export default function SchoolPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assignments?.map((a: any) => (
+            
+            {assignments?.filter((a: any) => (activeTab === "active" ? a.status === "pending" : a.status === "done")).map((a: any) => (
               <Card key={a.id} className={`rounded-3xl border-none shadow-xl overflow-hidden ${a.status === 'done' ? 'bg-emerald-50/50' : 'bg-white'}`}>
                 <div className={`h-3 w-full ${a.status === 'done' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <Badge className={`border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 ${getSubjectColor(a.subject)}`}>
-                      {a.subject}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge className={`border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 ${getSubjectColor(a.subject)}`}>
+                        {a.subject}
+                      </Badge>
+                      {a.category && (
+                        <Badge variant="outline" className="border-primary/20 font-black text-[10px] uppercase tracking-wider px-3 py-1 text-primary">
+                          {a.category}
+                        </Badge>
+                      )}
+                    </div>
                     <Badge variant={a.status === "done" ? "default" : "secondary"} className={a.status === "done" ? "bg-emerald-500" : ""}>
                       {a.status === "done" ? "Turned In" : "Pending"}
                     </Badge>
@@ -227,25 +317,50 @@ export default function SchoolPage() {
                   </div>
 
                   {a.status === "pending" ? (
-                     <div className="flex items-center gap-2">
-                        <Button 
-                          onClick={() => toggleStatus(a.id, a.status)}
-                          variant="outline" 
-                          className="flex-1 rounded-xl font-bold h-12"
-                        >
-                           Mark Done
-                        </Button>
-                        <div className="relative">
-                           <Button className="rounded-xl h-12 px-4 bg-primary text-white font-bold" disabled={uploadingId === a.id}>
-                              {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                              {uploadingId !== a.id && "Turn In"}
-                           </Button>
-                           <input 
-                             type="file" 
-                             className="absolute inset-0 opacity-0 cursor-pointer" 
-                             onChange={(e) => handleFileUpload(e, a.id)}
-                             disabled={uploadingId === a.id}
-                           />
+                     <div className="flex flex-col gap-3 mt-2">
+                        <AssignmentTimer a={a} supabase={supabase} refresh={refresh} />
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button 
+                            onClick={() => toggleStatus(a.id, a.status)}
+                            variant="outline" 
+                            className="flex-1 rounded-xl font-bold h-12"
+                          >
+                             Mark Done
+                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button className="rounded-xl h-12 px-4 bg-primary text-white font-bold" disabled={uploadingId === a.id}>
+                                {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                {uploadingId !== a.id && "Turn In"}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Turn In Homework</DialogTitle>
+                                <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                  <Label>Comments (Optional)</Label>
+                                  <Textarea 
+                                    placeholder="e.g. Struggled with question 4" 
+                                    className="rounded-xl"
+                                    onChange={(e) => setComment(e.target.value)}
+                                  />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label>Upload Photo / Document</Label>
+                                  <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    capture="environment"
+                                    className="rounded-xl"
+                                    onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                  />
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                      </div>
                   ) : (
@@ -255,6 +370,12 @@ export default function SchoolPage() {
                               <LinkIcon className="h-4 w-4 mr-2" /> View Attachment
                            </a>
                         )}
+                        {a.comments && (
+                           <div className="bg-muted p-3 rounded-xl text-sm italic text-muted-foreground mt-2 border-l-4 border-primary">
+                             "${a.comments}"
+                           </div>
+                        )}
+                        <div className="text-xs font-bold text-slate-500 mt-1">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
                         <Button 
                           onClick={() => toggleStatus(a.id, a.status)}
                           variant="ghost" 
@@ -270,6 +391,7 @@ export default function SchoolPage() {
           </div>
         )}
       </div>
+      </Tabs>
     </div>
   )
 }
