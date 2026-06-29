@@ -23,7 +23,7 @@ export default function ManageTriviaPage() {
 
   // Redirect kids
   React.useEffect(() => {
-    if (profile && profile.role !== "adult") {
+    if (profile && profile.role !== "adult" && profile.role !== "parent") {
       router.push("/trivia")
     }
   }, [profile, router])

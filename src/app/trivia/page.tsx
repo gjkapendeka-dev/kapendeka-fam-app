@@ -89,7 +89,7 @@ export default function TriviaPage() {
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">How well do you know the Universe?</p>
            </div>
         </div>
-        {profile?.role === "adult" && (
+        {(profile?.role === "adult" || profile?.role === "parent") && (
            <Link href="/trivia/manage">
               <Button variant="outline" className="rounded-xl font-bold"><Settings className="w-4 h-4 mr-2" /> Manage Questions</Button>
            </Link>
