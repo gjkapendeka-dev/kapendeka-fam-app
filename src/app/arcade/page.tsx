@@ -2166,7 +2166,7 @@ export default function ArcadePage() {
           <TabsTrigger value="guess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><HelpCircle className="h-4 w-4" /> Guess</TabsTrigger>
           <TabsTrigger value="slots" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Sparkles className="h-4 w-4" /> Slots</TabsTrigger>
           <TabsTrigger value="words" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Search className="h-4 w-4" /> Words</TabsTrigger>
-          <TabsTrigger value="tic" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><X className="h-4 w-4" /> Tic-Tac-Toe</TabsTrigger>
+          <TabsTrigger value="tic" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><X className="h-4 w-4" /> Tic-Tac-Toe <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="memory" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Brain className="h-4 w-4" /> Memory</TabsTrigger>
           <TabsTrigger value="snake" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Gamepad2 className="h-4 w-4" /> Snake</TabsTrigger>
           <TabsTrigger value="math" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Calculator className="h-4 w-4" /> Math</TabsTrigger>
@@ -2178,7 +2178,7 @@ export default function ArcadePage() {
           <TabsTrigger value="flappy" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Cloud className="h-4 w-4" /> Flappy</TabsTrigger>
           <TabsTrigger value="2048" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Grid2x2 className="h-4 w-4" /> 2048</TabsTrigger>
           <TabsTrigger value="minesweeper" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Bomb className="h-4 w-4" /> Minesweeper</TabsTrigger>
-          <TabsTrigger value="connect4" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Layout className="h-4 w-4" /> Connect 4</TabsTrigger>
+          <TabsTrigger value="connect4" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Layout className="h-4 w-4" /> Connect 4 <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="wordguess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Type className="h-4 w-4" /> Word Guess</TabsTrigger>
           <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
         </TabsList>
