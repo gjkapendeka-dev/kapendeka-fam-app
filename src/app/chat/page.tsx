@@ -54,11 +54,11 @@ export default function ChatPage() {
   }
 
   const messagesQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
+    if (!supabase || !profile?.family_id) return null
     return supabase.from("messages")
       .select("*")
-      .eq("familyId", profile.familyId).eq("channel", activeChannel).order("timestamp", { ascending: true }).limit(50)
-  }, [supabase, profile?.familyId, activeChannel])
+      .eq("family_id", profile.family_id).eq("channel", activeChannel).order("timestamp", { ascending: true }).limit(50)
+  }, [supabase, profile?.family_id, activeChannel])
 
   const { data: messages, loading } = useCollection(messagesQuery)
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -71,13 +71,13 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!supabase || !profile?.familyId || !newMessage.trim()) return
+    if (!supabase || !profile?.family_id || !newMessage.trim()) return
 
     setIsSending(true)
     const messageData = {
-      familyId: profile.familyId,
-      fromUser: profile.id,
-      fromUserName: profile.displayName,
+      family_id: profile.family_id,
+      from_user: profile.id,
+      from_user_name: profile.display_name || profile.displayName,
       text: newMessage,
       channel: activeChannel,
       timestamp: new Date().toISOString(),
@@ -168,23 +168,23 @@ export default function ChatPage() {
               </div>
             ) : (
               messages?.map((msg) => {
-                const isMe = msg.fromUser === profile?.id
+                const isMe = msg.from_user === profile?.id
                 return (
                   <div 
                     key={msg.id} 
                     className={`flex items-start gap-2 md:gap-4 ${isMe ? "flex-row-reverse" : ""}`}
                   >
                     <Avatar className="h-9 w-9 md:h-12 md:w-12 border-2 border-white shadow-md shrink-0">
-                      <AvatarImage src={`https://picsum.photos/seed/${msg.fromUser}/100/100`} />
-                      <AvatarFallback className="bg-primary text-white font-black text-xs">{msg.fromUserName?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={`https://picsum.photos/seed/${msg.from_user}/100/100`} />
+                      <AvatarFallback className="bg-primary text-white font-black text-xs">{msg.from_user_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className={`flex flex-col space-y-1.5 max-w-[82%] md:max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
                       <div className="flex items-center gap-2 px-1">
                         <span className="text-[10px] md:text-xs font-black text-foreground uppercase tracking-tight">
-                          {isMe ? "You" : msg.fromUserName}
+                          {isMe ? "You" : msg.from_user_name}
                         </span>
                         <span className="text-[8px] md:text-[9px] text-muted-foreground font-bold uppercase">
-                          {msg.timestamp ? format(new Date(msg.timestamp.seconds * 1000), "HH:mm") : ", ..."}
+                          {msg.timestamp ? format(new Date(msg.timestamp), "HH:mm") : ", ..."}
                         </span>
                       </div>
                       <div className={`p-4 rounded-[1.5rem] shadow-sm text-sm md:text-base font-medium leading-relaxed ${

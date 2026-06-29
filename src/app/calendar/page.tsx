@@ -65,11 +65,11 @@ export default function CalendarPage() {
   const [newStartTime, setNewStartTime] = React.useState("09:00")
 
   const eventsQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
+    if (!supabase || !profile?.family_id) return null
     return supabase.from("calendar_events")
       .select("*")
-      .eq("familyId", profile.familyId).order("startTime", { ascending: true })
-  }, [supabase, profile?.familyId])
+      .eq("family_id", profile.family_id).order("start_time", { ascending: true })
+  }, [supabase, profile?.family_id])
 
   const { data: events, loading } = useCollection(eventsQuery)
 
@@ -77,8 +77,8 @@ export default function CalendarPage() {
     if (!events || !date) return []
     const start = startOfDay(date)
     return events.filter(event => {
-      if (!event.startTime) return false
-      const eventDate = startOfDay(new Date(event.startTime))
+      if (!event.start_time) return false
+      const eventDate = startOfDay(new Date(event.start_time))
       return isSameDay(eventDate, start)
     })
   }, [events, date])
@@ -94,16 +94,16 @@ export default function CalendarPage() {
     endTimeDate.setHours(startTimeDate.getHours() + 1)
 
     const eventData = {
-      familyId: profile.familyId,
+      family_id: profile.family_id,
       title: newTitle,
       type: newType,
       location: newLocation,
       description: newDesc,
-      startTime: startTimeDate.toISOString(),
-      endTime: endTimeDate.toISOString(),
-      assignedTo: [profile.id],
-      isRecurring: false,
-      createdAt: new Date().toISOString(),
+      start_time: startTimeDate.toISOString(),
+      end_time: endTimeDate.toISOString(),
+      assigned_to: [profile.id],
+      is_recurring: false,
+      created_at: new Date().toISOString(),
     }
 
     const { error } = await supabase.from("calendar_events").insert([eventData])
@@ -272,7 +272,7 @@ export default function CalendarPage() {
                             <Badge className={`${typeInfo.color} border-none font-bold text-[10px] uppercase`}>
                               {typeInfo.label}
                             </Badge>
-                            {event.isRecurring && (
+                            {event.is_recurring && (
                               <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
                                 Recurring
                               </Badge>
@@ -282,10 +282,10 @@ export default function CalendarPage() {
                             {event.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground font-medium pt-1">
-                            {event.startTime && (
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="h-4 w-4 text-primary/60" />
-                                {format(new Date(event.startTime), "HH:mm")}
+                            {event.start_time && (
+                              <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground font-medium">
+                                <Clock className="h-4 w-4" />
+                                <span>{event.start_time ? format(new Date(event.start_time), "h:mm a") : ""} - {event.end_time ? format(new Date(event.end_time), "h:mm a") : ""}</span>
                               </div>
                             )}
                             {event.location && (

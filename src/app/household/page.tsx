@@ -56,20 +56,20 @@ export default function HouseholdPage() {
 
   // Fetch Chores
   const choresQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
+    if (!supabase || !profile?.family_id) return null
     return supabase.from("chores")
       .select("*")
-      .eq("familyId", profile.familyId).order("dueDate", { ascending: true })
-  }, [supabase, profile?.familyId])
+      .eq("family_id", profile.family_id).order("due_date", { ascending: true })
+  }, [supabase, profile?.family_id])
   const { data: chores, loading: choresLoading } = useCollection(choresQuery)
 
   // Fetch Todos
   const todosQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
+    if (!supabase || !profile?.family_id) return null
     return supabase.from("todos")
       .select("*")
-      .eq("familyId", profile.familyId).eq("isShared", true)
-  }, [supabase, profile?.familyId])
+      .eq("family_id", profile.family_id).eq("is_shared", true)
+  }, [supabase, profile?.family_id])
   const { data: todos } = useCollection(todosQuery)
 
   const handleCompleteChore = async (choreId: string, currentPoints: number) => {
@@ -77,14 +77,14 @@ export default function HouseholdPage() {
     
     const { error: choreError } = await supabase.from("chores").update({
       status: "done",
-      completedAt: new Date().toISOString(),
-      completedBy: profile.id
+      completed_at: new Date().toISOString(),
+      completed_by: profile.id
     }).eq("id", choreId)
 
     if (!choreError) {
       // Award points (in a real app, this should be an RPC to ensure atomicity)
       const newPoints = (profile.points || 0) + currentPoints
-      await supabase.from("users").update({ points: newPoints }).eq("id", profile.id)
+      await supabase.from("profiles").update({ points: newPoints }).eq("id", profile.id)
       
       toast({
         title: "Chore Completed!",
@@ -94,26 +94,25 @@ export default function HouseholdPage() {
   }
 
   const handleAddTask = async () => {
-    if (!supabase || !profile?.familyId || !newTitle) return
+    if (!supabase || !profile?.family_id || !newTitle) return
 
     const collectionName = newType === "chore" ? "chores" : "todos"
     const data = newType === "chore" ? {
-      familyId: profile.familyId,
+      family_id: profile.family_id,
       title: newTitle,
-      assignedTo: newAssignedTo || profile.id,
-      status: "pending",
-      pointsReward: parseInt(newPoints),
-      dueDate: new Date().toISOString(),
-      rotationEnabled: true,
-      createdAt: new Date().toISOString()
-    } : {
-      familyId: profile.familyId,
-      title: newTitle,
-      isShared: true,
-      assignedTo: newAssignedTo || profile.id,
-      status: "pending",
+      assigned_to: newAssignedTo || profile.id,
+      points: parseInt(newPoints) || 50,
       priority: newPriority,
-      createdAt: new Date().toISOString()
+      status: "pending",
+      due_date: new Date(Date.now() + 86400000).toISOString()
+    } : {
+      family_id: profile.family_id,
+      title: newTitle,
+      is_shared: true,
+      status: "pending",
+      assigned_to: newAssignedTo || profile.id,
+      priority: newPriority,
+      created_at: new Date().toISOString()
     }
 
     const { error } = await supabase.from(collectionName).insert([data])
@@ -236,9 +235,9 @@ export default function HouseholdPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-wider">
-                            {chore.pointsReward} Points
+                            {chore.points} Points
                           </Badge>
-                          {chore.rotationEnabled && (
+                          {chore.rotation_enabled && (
                             <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-muted/50">
                               <RotateCw className="h-3 w-3 mr-1" /> Rotation
                             </Badge>
@@ -249,17 +248,17 @@ export default function HouseholdPage() {
                         </h4>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-1">
                           <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {chore.assignedTo === profile?.id ? "You" : "George"}
+                            <CalendarIcon className="h-3 w-3" />
+                            {chore.due_date ? format(new Date(chore.due_date), "MMM d") : "Today"}
                           </div>
                           <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Today
+                            <User className="h-3 w-3" />
+                            {chore.assigned_to === profile?.id ? "Me" : "Family"}
                           </div>
                         </div>
                       </div>
                       <Button 
-                        onClick={() => handleCompleteChore(chore.id, chore.pointsReward || 50)}
+                        onClick={() => handleCompleteChore(chore.id, chore.points)}
                         className="rounded-xl h-12 w-12 bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20"
                       >
                         <CheckSquare className="h-6 w-6" />
