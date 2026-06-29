@@ -46,7 +46,8 @@ import {
   Sparkles,
   Timer,
   Palette,
-  Maximize
+  Maximize,
+  Languages
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -552,7 +553,98 @@ function MathMaster() {
   )
 }
 
-// --- 7. DOODLE BOARD ---
+// --- 7. FRENCH MASTER ---
+function FrenchMaster() {
+  const supabase = useSupabase();
+  const { profile } = useUser();
+
+  const words = [
+    { en: 'Apple', fr: 'Pomme' }, { en: 'Dog', fr: 'Chien' },
+    { en: 'Cat', fr: 'Chat' }, { en: 'House', fr: 'Maison' },
+    { en: 'Car', fr: 'Voiture' }, { en: 'Book', fr: 'Livre' },
+    { en: 'Water', fr: 'Eau' }, { en: 'Sun', fr: 'Soleil' },
+    { en: 'Tree', fr: 'Arbre' }, { en: 'Friend', fr: 'Ami' },
+    { en: 'Hello', fr: 'Bonjour' }, { en: 'Goodbye', fr: 'Au revoir' },
+    { en: 'Please', fr: 'S\\'il vous plaît' }, { en: 'Thank you', fr: 'Merci' }
+  ]
+
+  const [q, setQ] = React.useState<any>(null)
+  const [options, setOptions] = React.useState<string[]>([])
+  const [score, setScore] = React.useState(0)
+  const [feedback, setFeedback] = React.useState<string | null>(null)
+  const [playing, setPlaying] = React.useState(false)
+
+  const generate = React.useCallback(() => {
+    const target = words[Math.floor(Math.random() * words.length)]
+    let opts = [target.fr]
+    while (opts.length < 3) {
+      const wrong = words[Math.floor(Math.random() * words.length)].fr
+      if (!opts.includes(wrong)) opts.push(wrong)
+    }
+    opts = opts.sort(() => Math.random() - 0.5)
+    
+    setQ(target)
+    setOptions(opts)
+    setFeedback(null)
+  }, [])
+
+  React.useEffect(() => {
+    if (playing) generate()
+  }, [playing, generate])
+
+  const check = (guess: string) => {
+    if (!playing) return
+    if (guess === q.fr) {
+      setScore(s => s + 1)
+      setFeedback("Très bien! ✨")
+      setTimeout(generate, 1000)
+    } else {
+      setFeedback(`Non, it's "${q.fr}" ❌`)
+      setTimeout(generate, 2000)
+    }
+  }
+
+  const startGame = () => {
+    setScore(0)
+    setPlaying(true)
+  }
+
+  const endGame = () => {
+    setPlaying(false)
+    saveGameScore(supabase, profile, "French Master", score, "score")
+  }
+
+  return (
+    <div className="flex flex-col items-center space-y-4 py-4 px-4">
+      <div className="flex items-center justify-between w-full max-w-sm">
+        <h3 className="text-2xl font-bold text-primary">French Master 🇫🇷</h3>
+        {playing && <Button onClick={endGame} variant="destructive" className="rounded-xl font-bold px-4">End Game</Button>}
+      </div>
+      <div className="bg-primary/5 p-4 md:p-5 rounded-[2.5rem] md:rounded-[3rem] text-center space-y-4 w-full max-w-sm border-2 border-primary/10 shadow-inner relative overflow-hidden">
+        {!playing ? (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center z-10 space-y-2">
+            {score > 0 && <div className="text-xl font-bold text-primary">Score: {score}</div>}
+            <Button onClick={startGame} className="px-8 py-6 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 bg-blue-500 hover:bg-blue-600 text-white">START GAME</Button>
+          </div>
+        ) : null}
+        <div className="text-4xl md:text-5xl font-black text-primary flex items-center justify-center gap-4 py-6">
+          <span>{q?.en}</span>
+        </div>
+        <div className="flex flex-col gap-2">
+          {options.map((opt, i) => (
+            <Button key={i} className="h-14 bg-white hover:bg-blue-50 text-primary border-2 border-primary/20 rounded-2xl font-black text-xl" onClick={() => check(opt)}>
+              {opt}
+            </Button>
+          ))}
+        </div>
+        {feedback && <div className="font-bold text-lg animate-bounce">{feedback}</div>}
+        <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Score: {score}</div>
+      </div>
+    </div>
+  )
+}
+
+// --- 8. DOODLE BOARD ---
 function DoodleBoard() {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = React.useState(false)
@@ -2078,6 +2170,7 @@ export default function ArcadePage() {
           <TabsTrigger value="memory" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Brain className="h-4 w-4" /> Memory</TabsTrigger>
           <TabsTrigger value="snake" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Gamepad2 className="h-4 w-4" /> Snake</TabsTrigger>
           <TabsTrigger value="math" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Calculator className="h-4 w-4" /> Math</TabsTrigger>
+          <TabsTrigger value="french" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Languages className="h-4 w-4" /> French</TabsTrigger>
           <TabsTrigger value="typer" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Keyboard className="h-4 w-4" /> Typer</TabsTrigger>
           <TabsTrigger value="doodle" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><PenTool className="h-4 w-4" /> Doodle</TabsTrigger>
           <TabsTrigger value="whack" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Hammer className="h-4 w-4" /> Whack</TabsTrigger>
@@ -2107,6 +2200,7 @@ export default function ArcadePage() {
           <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
           <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
           <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
+          <TabsContent value="french"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><FrenchMaster /></Card></TabsContent>
           <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
           <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
           <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>

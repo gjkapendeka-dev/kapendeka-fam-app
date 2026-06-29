@@ -199,7 +199,7 @@ export default function SchoolPage() {
       <div className="space-y-4">
         {loading ? (
           [1,2,3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-3xl" />)
-        ) : assignments?.length === 0 ? (
+        ) : (!assignments || assignments.length === 0) ? (
           <div className="text-center py-20 bg-white rounded-[3rem] shadow-xl">
             <BookOpen className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
             <h3 className="font-black text-2xl uppercase tracking-tighter text-primary">No Homework!</h3>
