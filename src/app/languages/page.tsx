@@ -48,7 +48,7 @@ export default function LanguageLearningPage() {
 
   const progressQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
-    return supabase.from("languageProgress").select("*").eq("familyId", profile.family_id).order("lastLessonDate", { ascending: false })
+    return supabase.from("language_progress").select("*").eq("family_id", profile.family_id).order("last_lesson_date", { ascending: false })
     
   }, [supabase, profile?.family_id])
 
@@ -59,18 +59,18 @@ export default function LanguageLearningPage() {
 
     setIsSubmitting(true)
     const data = {
-      familyId: profile.family_id,
-      userId: profile.id,
-      userName: profile.display_name || profile.displayName,
+      family_id: profile.family_id,
+      user_id: profile.id,
+      user_name: profile.display_name || profile.displayName,
       language: selectedLang,
-      currentLevel: "Beginner",
-      streakDays: 1,
-      vocabularyCount: 0,
-      lastLessonDate: new Date().toISOString(),
-      createdAt: new Date().toISOString()
+      current_level: "Beginner",
+      streak_days: 1,
+      vocabulary_count: 0,
+      last_lesson_date: new Date().toISOString(),
+      created_at: new Date().toISOString()
     }
 
-    supabase.from("languageProgress").insert([data])
+    supabase.from("language_progress").insert([data])
       .then((res) => {
         if (res.error) throw res.error;
         setIsDialogOpen(false)
@@ -151,20 +151,20 @@ export default function LanguageLearningPage() {
                           </div>
                           <div>
                             <h4 className="font-bold text-lg">{p.language}</h4>
-                            <p className="text-xs text-muted-foreground font-medium">{p.userName} • {p.currentLevel}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{p.user_name} • {p.current_level}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold">
                           <Zap className="h-3 w-3 fill-amber-600" />
-                          {p.streakDays} Day Streak
+                          {p.streak_days} Day Streak
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                           <span>Vocabulary Progress</span>
-                          <span>{p.vocabularyCount || 0} words learned</span>
+                          <span>{p.vocabulary_count || 0} words learned</span>
                         </div>
-                        <Progress value={Math.min((p.vocabularyCount / 500) * 100, 100)} className="h-2" />
+                        <Progress value={Math.min((p.vocabulary_count / 500) * 100, 100)} className="h-2" />
                       </div>
                       <div className="mt-3 flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1 rounded-xl font-bold border-primary/20 text-primary">
