@@ -54,6 +54,7 @@ import { audio } from "@/lib/audio"
 import { DPad } from "@/components/ui/dpad"
 import { TicTacToe } from "@/components/arcade/tic-tac-toe"
 import { ConnectFour } from "@/components/arcade/connect-four"
+import { TetrisGame } from "@/components/arcade/tetris"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -92,11 +93,19 @@ const PIANO_KEYS = [
   { note: "C2", freq: 523.25, color: "bg-white", text: "DO", key: "K" },
 ]
 
+const KIDS_SONGS = [
+  { name: "Twinkle Twinkle", notes: ["C", "C", "G", "G", "A", "A", "G", "F", "F", "E", "E", "D", "D", "C"] },
+  { name: "Mary's Lamb", notes: ["E", "D", "C", "D", "E", "E", "E", "D", "D", "D", "E", "G", "G"] }
+]
+
 function PianoGame() {
   const supabase = useSupabase();
   const { profile } = useUser();
 
   const [activeNote, setActiveNote] = React.useState<string | null>(null)
+  const [currentSong, setCurrentSong] = React.useState<{name: string, notes: string[]} | null>(null)
+  const [songProgress, setSongProgress] = React.useState(0)
+  
   const audioContext = React.useRef<AudioContext | null>(null)
 
   const playNote = (freq: number, note: string) => {
@@ -115,28 +124,70 @@ function PianoGame() {
     osc.stop(audioContext.current.currentTime + 1)
     setActiveNote(note)
     setTimeout(() => setActiveNote(null), 200)
+
+    if (currentSong) {
+      if (note === currentSong.notes[songProgress]) {
+        if (songProgress + 1 >= currentSong.notes.length) {
+          // Finished
+          setTimeout(() => {
+             setCurrentSong(null)
+             setSongProgress(0)
+          }, 500)
+        } else {
+          setSongProgress(prev => prev + 1)
+        }
+      }
+    }
+  }
+
+  const startSong = (song: {name: string, notes: string[]}) => {
+    setCurrentSong(song)
+    setSongProgress(0)
   }
 
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-2 overflow-x-hidden">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-primary">Kids' Magic Piano</h3>
-        <p className="text-muted-foreground font-medium text-sm">Tap the keys to make music!</p>
+        <p className="text-muted-foreground font-medium text-sm">
+          {currentSong ? <span className="text-amber-500 font-bold">Learn: {currentSong.name} - Tap the glowing key!</span> : "Tap the keys to make music!"}
+        </p>
       </div>
-      <div className="flex gap-1 p-2 md:p-4 bg-muted/30 rounded-3xl shadow-inner overflow-x-auto w-full max-w-2xl justify-start md:justify-center no-scrollbar">
-        {PIANO_KEYS.map((k) => (
+      
+      <div className="flex gap-2 mb-2">
+         {KIDS_SONGS.map(song => (
+            <Button 
+               key={song.name} 
+               variant={currentSong?.name === song.name ? "default" : "outline"}
+               onClick={() => startSong(song)}
+               className="rounded-full text-xs font-bold"
+               size="sm"
+            >
+               🎵 {song.name}
+            </Button>
+         ))}
+         {currentSong && (
+            <Button variant="ghost" onClick={() => setCurrentSong(null)} className="rounded-full text-xs text-muted-foreground" size="sm">Stop</Button>
+         )}
+      </div>
+
+      <div className="flex gap-1 p-2 md:p-4 bg-muted/30 rounded-3xl shadow-inner overflow-x-auto w-full max-w-2xl justify-start md:justify-center no-scrollbar relative">
+        {PIANO_KEYS.map((k) => {
+          const isTarget = currentSong && currentSong.notes[songProgress] === k.note;
+          return (
           <button
             key={k.note}
             onClick={() => playNote(k.freq, k.note)}
             className={`
-              relative w-12 md:w-16 h-40 md:h-64 rounded-xl transition-all active:scale-95 active:bg-primary/10 border-b-8 border-muted shadow-lg shrink-0
+              relative w-12 md:w-16 h-40 md:h-64 rounded-xl transition-all active:scale-95 active:bg-primary/10 border-b-8 shadow-lg shrink-0
               ${activeNote === k.note ? "bg-primary/20 -translate-y-2 border-b-0" : "bg-white"}
+              ${isTarget ? "border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse" : "border-muted"}
             `}
           >
             <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-black text-[10px] md:text-sm text-muted-foreground/50">{k.text}</span>
-            <div className={`absolute top-4 left-1/2 -translate-x-1/2 w-2 h-2 md:w-3 md:h-3 rounded-full ${activeNote === k.note ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`absolute top-4 left-1/2 -translate-x-1/2 w-2 h-2 md:w-3 md:h-3 rounded-full ${activeNote === k.note ? 'bg-primary' : (isTarget ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,1)]' : 'bg-muted')}`} />
           </button>
-        ))}
+        )})}
       </div>
     </div>
   )
@@ -595,20 +646,6 @@ function WhackATask() {
 }
 
 // --- 9. TETRIS ---
-function TetrisGame({ personalBest = 0 }: { personalBest?: number }) {
-  const [grid] = React.useState(Array(20).fill(null).map(() => Array(10).fill(0)))
-  return (
-    <div className="flex flex-col items-center space-y-4 py-4 px-4">
-      <h3 className="text-2xl font-bold text-primary">Tetris (Coming Soon)</h3>
-      <div className="relative w-[180px] md:w-[200px] aspect-[1/2] bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-10 grid-rows-20 gap-px p-px shadow-2xl">
-        {grid.map((row, ri) => row.map((_, ci) => <div key={`${ri}-${ci}`} className="bg-slate-800/30 rounded-sm" />))}
-        <div className="absolute inset-0 flex items-center justify-center">
-            <Badge className="bg-white/10 text-white border-none font-black text-[9px] uppercase tracking-widest">Level 1 Incoming</Badge>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // --- 10. SIMON SAYS ---
 function SimonSays() {
