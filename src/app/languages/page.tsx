@@ -34,7 +34,7 @@ import { format } from "date-fns"
 import Link from "next/link"
 
 const LANGUAGES = [
-  "isiZulu", "isiXhosa", "Afrikaans", "French", "Spanish", "German", "Swahili"
+  "isiZulu", "isiXhosa", "Afrikaans", "French", "Spanish", "German", "Swahili", "Shona"
 ]
 
 export default function LanguageLearningPage() {
@@ -47,21 +47,21 @@ export default function LanguageLearningPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const progressQuery = React.useMemo(() => {
-    if (!supabase || !profile?.familyId) return null
-    return supabase.from("languageProgress").select("*").eq("familyId", profile.familyId).order("lastLessonDate", { ascending: false })
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("languageProgress").select("*").eq("familyId", profile.family_id).order("lastLessonDate", { ascending: false })
     
-  }, [supabase, profile?.familyId])
+  }, [supabase, profile?.family_id])
 
   const { data: progressList, loading } = useCollection(progressQuery)
 
   const handleAddLanguage = () => {
-    if (!supabase || !profile?.familyId) return
+    if (!supabase || !profile?.family_id) return
 
     setIsSubmitting(true)
     const data = {
-      familyId: profile.familyId,
+      familyId: profile.family_id,
       userId: profile.id,
-      userName: profile.displayName,
+      userName: profile.display_name || profile.displayName,
       language: selectedLang,
       currentLevel: "Beginner",
       streakDays: 1,
@@ -71,11 +71,16 @@ export default function LanguageLearningPage() {
     }
 
     supabase.from("languageProgress").insert([data])
-      .then(() => {
+      .then((res) => {
+        if (res.error) throw res.error;
         setIsDialogOpen(false)
         toast({ title: "Portal Opened!", description: `Starting your ${selectedLang} journey.` })
       })
-      .then(() => setIsSubmitting(false))
+      .catch((err) => {
+        console.error(err);
+        toast({ title: "Error", description: err.message || "Failed to start language.", variant: "destructive" })
+      })
+      .finally(() => setIsSubmitting(false))
   }
 
   return (
