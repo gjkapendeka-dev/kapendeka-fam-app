@@ -23,8 +23,8 @@ export default function TriviaPage() {
   const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    if (supabase && profile?.familyId) {
-      supabase.from("trivia_questions").select("*").eq("family_id", profile.familyId).then(({ data }) => {
+    if (supabase && profile?.family_id) {
+      supabase.from("trivia_questions").select("*").eq("family_id", profile.family_id).then(({ data }) => {
         if (data && data.length > 0) {
            // Shuffle questions
            setQuestions(data.sort(() => Math.random() - 0.5))
@@ -39,7 +39,7 @@ export default function TriviaPage() {
         setLoading(false)
       })
     }
-  }, [supabase, profile?.familyId])
+  }, [supabase, profile?.family_id])
 
   const handleStart = () => {
     setGameState("playing")
@@ -65,7 +65,7 @@ export default function TriviaPage() {
         setGameState("result")
         // Award points for completion
         if (supabase && profile) {
-          supabase.from("users").update({
+          supabase.from("profiles").update({
             points: (profile.points || 0) + score * 50
           }).eq("id", profile.id)
         }

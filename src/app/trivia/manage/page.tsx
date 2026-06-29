@@ -29,13 +29,13 @@ export default function ManageTriviaPage() {
   }, [profile, router])
 
   React.useEffect(() => {
-    if (supabase && profile?.familyId) {
-      supabase.from("trivia_questions").select("*").eq("family_id", profile.familyId).then(({ data }) => {
+    if (supabase && profile?.family_id) {
+      supabase.from("trivia_questions").select("*").eq("family_id", profile.family_id).then(({ data }) => {
         if (data) setQuestions(data)
         setLoading(false)
       })
     }
-  }, [supabase, profile?.familyId])
+  }, [supabase, profile?.family_id])
 
   const handleAdd = () => {
     setQuestions([
@@ -53,11 +53,11 @@ export default function ManageTriviaPage() {
   }
 
   const handleSave = async () => {
-    if (!supabase || !profile?.familyId) return
+    if (!supabase || !profile?.family_id) return
     setSaving(true)
 
     const toInsert = questions.filter(q => q.isNew).map(q => ({
-      family_id: profile.familyId,
+      family_id: profile.family_id,
       question: q.question,
       options: q.options,
       correct_index: q.correct_index
@@ -79,7 +79,7 @@ export default function ManageTriviaPage() {
       toast({ title: "Saved successfully!", className: "bg-emerald-500 text-white" })
       
       // Reload
-      const { data } = await supabase.from("trivia_questions").select("*").eq("family_id", profile.familyId)
+      const { data } = await supabase.from("trivia_questions").select("*").eq("family_id", profile.family_id)
       if (data) setQuestions(data)
     } catch (e) {
       toast({ title: "Error saving", variant: "destructive" })
