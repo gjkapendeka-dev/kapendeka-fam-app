@@ -729,7 +729,7 @@ function BalloonPop() {
     <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
       <div className="absolute top-6 left-6 z-10 font-black text-primary text-xl md:text-2xl tracking-tighter">Pop Score: {score}</div>
       {balloons.map(b => (
-        <button key={b.id} onClick={() => { setScore(s => { const ns = s + 1; return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
+        <button key={b.id} onPointerDown={(e) => { e.preventDefault(); setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
       ))}
     </div>
   )
@@ -743,28 +743,82 @@ function RockPaperScissors() {
   const [user, setUser] = React.useState<string | null>(null)
   const [ai, setAi] = React.useState<string | null>(null)
   const [result, setResult] = React.useState("")
-  const moves = ["Rock", "Paper", "Scissors"]
+  const [score, setScore] = React.useState({ wins: 0, losses: 0, ties: 0 })
+  const [animating, setAnimating] = React.useState(false)
+  
+  const moves = [
+    { name: "Rock", icon: "🪨" },
+    { name: "Paper", icon: "📄" },
+    { name: "Scissors", icon: "✂️" }
+  ]
 
   const play = (move: string) => {
-    const aiMove = moves[Math.floor(Math.random() * 3)]
-    setUser(move); setAi(aiMove)
-    if (move === aiMove) setResult("It's a Tie!")
-    else if ((move === "Rock" && aiMove === "Scissors") || (move === "Paper" && aiMove === "Rock") || (move === "Scissors" && aiMove === "Paper")) setResult("You Win! 🎉")
-    else setResult("AI Wins! 🤖")
+    if (animating) return;
+    
+    setAnimating(true)
+    setUser("✊") // Show fist while animating
+    setAi("✊")
+    setResult("...")
+    
+    setTimeout(() => {
+      const aiMoveData = moves[Math.floor(Math.random() * 3)]
+      const aiMove = aiMoveData.name
+      const userMoveData = moves.find(m => m.name === move)!
+      
+      setUser(userMoveData.icon); 
+      setAi(aiMoveData.icon)
+      
+      if (move === aiMove) {
+         setResult("It's a Tie!")
+         setScore(s => ({ ...s, ties: s.ties + 1 }))
+      }
+      else if ((move === "Rock" && aiMove === "Scissors") || (move === "Paper" && aiMove === "Rock") || (move === "Scissors" && aiMove === "Paper")) {
+         setResult("You Win! 🎉")
+         setScore(s => ({ ...s, wins: s.wins + 1 }))
+      }
+      else {
+         setResult("AI Wins! 🤖")
+         setScore(s => ({ ...s, losses: s.losses + 1 }))
+      }
+      setAnimating(false)
+    }, 1000)
   }
 
   return (
-    <div className="flex flex-col items-center space-y-10 py-5 px-4">
-      <h3 className="text-2xl font-bold text-primary">Rock Paper Scissors</h3>
-      <div className="flex gap-2 sm:gap-4 flex-wrap justify-center">
-        {moves.map(m => <Button key={m} onClick={() => play(m)} className="rounded-2xl h-16 w-24 sm:w-28 font-black text-base shadow-lg shadow-primary/5">{m}</Button>)}
+    <div className="flex flex-col items-center space-y-6 py-5 px-4 w-full">
+      <div className="flex justify-between w-full max-w-sm px-4 bg-muted/30 rounded-2xl py-3 font-bold text-sm">
+         <div className="text-emerald-500 flex flex-col items-center"><span>WINS</span><span className="text-2xl font-black">{score.wins}</span></div>
+         <div className="text-amber-500 flex flex-col items-center"><span>TIES</span><span className="text-2xl font-black">{score.ties}</span></div>
+         <div className="text-rose-500 flex flex-col items-center"><span>LOSSES</span><span className="text-2xl font-black">{score.losses}</span></div>
       </div>
-      {user && (
-        <div className="text-center space-y-4 animate-in zoom-in slide-in-from-bottom-2 duration-300">
-          <div className="text-sm md:text-lg font-bold text-muted-foreground uppercase tracking-widest">You <span className="text-primary">{user}</span> vs AI <span className="text-accent">{ai}</span></div>
-          <div className="text-4xl md:text-5xl font-black text-primary uppercase italic tracking-tighter">{result}</div>
+      
+      <div className="flex gap-2 sm:gap-4 flex-wrap justify-center mt-4">
+        {moves.map(m => (
+          <Button key={m.name} onClick={() => play(m.name)} disabled={animating} className="rounded-2xl h-16 w-24 sm:w-28 font-black text-lg shadow-lg flex-col gap-1 active:scale-95 transition-all">
+             <span className="text-2xl">{m.icon}</span>
+          </Button>
+        ))}
+      </div>
+      
+      <div className="w-full flex items-center justify-center space-x-8 mt-8 h-40">
+        <div className="flex flex-col items-center">
+           <div className="text-sm font-bold text-muted-foreground mb-2">YOU</div>
+           <div className={`text-6xl ${animating ? 'animate-bounce' : 'animate-in zoom-in duration-300'}`}>{user || "❓"}</div>
         </div>
-      )}
+        <div className="text-3xl font-black text-primary italic">VS</div>
+        <div className="flex flex-col items-center">
+           <div className="text-sm font-bold text-muted-foreground mb-2">AI</div>
+           <div className={`text-6xl ${animating ? 'animate-bounce' : 'animate-in zoom-in duration-300'}`}>{ai || "❓"}</div>
+        </div>
+      </div>
+      
+      <div className="h-12 flex items-center justify-center">
+        {!animating && result && (
+           <div className="text-3xl md:text-4xl font-black text-primary uppercase italic tracking-tighter animate-in slide-in-from-bottom-4 duration-300">
+             {result}
+           </div>
+        )}
+      </div>
     </div>
   )
 }

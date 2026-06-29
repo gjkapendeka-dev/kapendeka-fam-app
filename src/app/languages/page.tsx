@@ -31,6 +31,7 @@ import {
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import Link from "next/link"
 
 const LANGUAGES = [
   "isiZulu", "isiXhosa", "Afrikaans", "French", "Spanish", "German", "Swahili"
@@ -134,43 +135,44 @@ export default function LanguageLearningPage() {
                 <p className="text-muted-foreground">Pick a language and start your family streak!</p>
               </div>
             ) : (
-              progressList?.map((p) => (
-                <Card key={p.id} className="rounded-2xl border-none shadow-sm group hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-                          {p.language.substring(0, 2).toUpperCase()}
+                            progressList?.map((p) => (
+                <Link href={`/languages/${p.language.toLowerCase()}`} key={p.id}>
+                  <Card className="rounded-2xl border-none shadow-sm group hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
+                            {p.language.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-lg">{p.language}</h4>
+                            <p className="text-xs text-muted-foreground font-medium">{p.userName} • {p.currentLevel}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-lg">{p.language}</h4>
-                          <p className="text-xs text-muted-foreground font-medium">{p.userName} • {p.currentLevel}</p>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold">
+                          <Zap className="h-3 w-3 fill-amber-600" />
+                          {p.streakDays} Day Streak
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold">
-                        <Zap className="h-3 w-3 fill-amber-600" />
-                        {p.streakDays} Day Streak
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          <span>Vocabulary Progress</span>
+                          <span>{p.vocabularyCount || 0} words learned</span>
+                        </div>
+                        <Progress value={Math.min((p.vocabularyCount / 500) * 100, 100)} className="h-2" />
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                        <span>Vocabulary Progress</span>
-                        <span>{p.vocabularyCount || 0} words learned</span>
+                      <div className="mt-3 flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl font-bold border-primary/20 text-primary">
+                          <PlayCircle className="h-4 w-4 mr-2" /> Daily Lesson
+                        </Button>
+                        <Button variant="ghost" size="icon" className="rounded-xl" onClick={(e) => e.preventDefault()}>
+                          <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                        </Button>
                       </div>
-                      <Progress value={Math.min((p.vocabularyCount / 500) * 100, 100)} className="h-2" />
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl font-bold border-primary/20 text-primary">
-                        <PlayCircle className="h-4 w-4 mr-2" /> Daily Lesson
-                      </Button>
-                      <Button variant="ghost" size="icon" className="rounded-xl">
-                        <MessageCircle className="h-5 w-5 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            ))}
+                    </CardContent>
+                  </Card>
+                </Link>
+              )))}
           </div>
         </div>
 

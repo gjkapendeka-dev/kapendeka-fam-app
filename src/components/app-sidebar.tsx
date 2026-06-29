@@ -3,43 +3,7 @@
 
 import * as React from "react"
 import {
-  Home,
-  LayoutDashboard,
-  Calendar,
-  CheckSquare,
-  Utensils,
-  ShoppingCart,
-  HeartPulse,
-  Church,
-  PartyPopper,
-  MessageSquare,
-  Wallet,
-  Dog,
-  Plane,
-  ShieldAlert,
-  Gamepad2,
-  BookOpen,
-  Settings,
-  StickyNote,
-  Moon,
-  MapPin,
-  Trophy,
-  History,
-  Gift,
-  Languages,
-  Newspaper,
-  Gamepad,
-  LogOut,
-  User,
-  Target,
-  Sparkles,
-  BarChart4,
-  Library,
-  Lightbulb,
-  Compass,
-  Leaf,
-  Wind,
-  HelpCircle
+  Home, LayoutDashboard, Calendar, CheckSquare, Utensils, ShoppingCart, HeartPulse, Church, PartyPopper, MessageSquare, Wallet, Dog, Plane, ShieldAlert, Gamepad2, BookOpen, Settings, StickyNote, Moon, MapPin, Trophy, History, Gift, Languages, Newspaper, Gamepad, LogOut, User, Target, Sparkles, BarChart4, Library, Lightbulb, Compass, Leaf, Wind, HelpCircle, Fingerprint, Archive, Zap, Book, GraduationCap, Heart, Edit3, Activity, Coffee
 } from "lucide-react"
 
 import {
@@ -54,6 +18,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -62,32 +27,24 @@ import { supabase } from "@/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Universe Arcade", href: "/arcade", icon: Gamepad },
-  { name: "AI Story Studio", href: "/stories", icon: Library },
-  { name: "Trivia Quest", href: "/trivia", icon: HelpCircle },
-  { name: "Rewards & Levels", href: "/games", icon: Trophy },
-  { name: "Universe Quests", href: "/quest", icon: Compass },
-  { name: "Pets", href: "/pets", icon: Dog },
+  { name: "Family Info", href: "/profile", icon: Fingerprint },
+  { name: "My Stuff", href: "/vault", icon: Archive },
+  { name: "Games", href: "/arcade", icon: Zap },
+  { name: "Stories", href: "/stories", icon: Book },
+  { name: "Trivia", href: "/trivia", icon: HelpCircle },
+  { name: "Rewards", href: "/games", icon: Trophy },
+  { name: "Quests", href: "/quest", icon: Compass },
   { name: "Hobbies", href: "/hobbies", icon: Gamepad2 },
-  { name: "Learn Language", href: "/languages", icon: Languages },
-  { name: "Chores & Tasks", href: "/household", icon: CheckSquare },
-  { name: "School & Homework", href: "/school", icon: BookOpen },
-  { name: "Family Chat", href: "/chat", icon: MessageSquare },
-  { name: "Social & Journal", href: "/social", icon: History },
-  { name: "Family Polls", href: "/polls", icon: BarChart4 },
-  { name: "Celebrations", href: "/celebrations", icon: PartyPopper },
-  { name: "Eco-Universe", href: "/eco", icon: Leaf },
-  { name: "Vision Board", href: "/vision", icon: Lightbulb },
+  { name: "Languages", href: "/languages", icon: Languages },
+  { name: "Chores", href: "/household", icon: CheckSquare },
+  { name: "Homework", href: "/school", icon: GraduationCap },
+  { name: "Faith", href: "/faith", icon: Heart },
+  { name: "Notes", href: "/notes", icon: Edit3 },
+  { name: "Health", href: "/health", icon: Activity },
+  { name: "Meals", href: "/meals", icon: Coffee },
   { name: "Wishlist", href: "/wishlist", icon: Gift },
-  { name: "Family Rituals", href: "/rituals", icon: Target },
-  { name: "Meals & Recipes", href: "/meals", icon: Utensils },
-  { name: "Shopping Lists", href: "/shopping", icon: ShoppingCart },
+  { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Zen Space", href: "/zen", icon: Wind },
-  { name: "Rest & Sleep", href: "/sleep", icon: Moon },
-  { name: "Health & Wellness", href: "/health", icon: HeartPulse },
-  { name: "Church & Faith", href: "/faith", icon: Church },
   { name: "Finances", href: "/finances", icon: Wallet },
   { name: "Notes & Memos", href: "/notes", icon: StickyNote },
   { name: "News Feed", href: "/news", icon: Newspaper },
@@ -100,6 +57,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { profile, switchProfile } = useUser()
+  const { setOpenMobile } = useSidebar()
 
   const handleLogout = async () => {
     switchProfile()
@@ -133,7 +91,7 @@ export function AppSidebar() {
                       tooltip={item.name}
                       className="h-9 rounded-xl hover:bg-white hover:shadow-md hover:shadow-primary/5 transition-all duration-200"
                     >
-                      <Link href={item.href} className="flex items-center gap-3">
+                      <Link href={item.href} onClick={() => setOpenMobile(false)} className="flex items-center gap-3">
                         <Icon className={`h-4 w-4 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`} />
                         <span className={`font-bold uppercase tracking-tight text-[10px] group-data-[collapsible=icon]:hidden ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
                           {item.name}
@@ -152,7 +110,7 @@ export function AppSidebar() {
         <SidebarMenu className="px-2 pb-3 space-y-1">
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="My Profile" isActive={pathname === "/profile"} className="h-11 rounded-xl bg-white shadow-md shadow-primary/5 border border-primary/5">
-              <Link href="/profile" className="flex items-center gap-3">
+              <Link href="/profile" onClick={() => setOpenMobile(false)} className="flex items-center gap-3">
                 <Avatar className="h-7 w-7 rounded-lg border-2 border-primary/10 bg-white">
                   <AvatarImage src={profile?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${profile?.id}`} className="object-cover" />
                   <AvatarFallback className="text-[9px] font-black bg-primary text-white uppercase italic">{profile?.display_name?.substring(0, 2) || "KP"}</AvatarFallback>
