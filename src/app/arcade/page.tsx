@@ -27,6 +27,7 @@ import {
   PenTool,
   Shapes,
   Gamepad2,
+  Mic2,
   Smile,
   Zap,
   Flame,
@@ -55,6 +56,7 @@ import { audio } from "@/lib/audio"
 import { DPad } from "@/components/ui/dpad"
 import { TicTacToe } from "@/components/arcade/tic-tac-toe"
 import { ConnectFour } from "@/components/arcade/connect-four"
+import { JudgingPanel } from "@/components/arcade/judging-panel"
 import { TetrisGame } from "@/components/arcade/tetris"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -2218,7 +2220,8 @@ export default function ArcadePage() {
           <TabsTrigger value="minesweeper" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Bomb className="h-4 w-4" /> Minesweeper</TabsTrigger>
           <TabsTrigger value="connect4" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Layout className="h-4 w-4" /> Connect 4 <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="wordguess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Type className="h-4 w-4" /> Word Guess</TabsTrigger>
-          <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
+                    <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
+          <TabsTrigger value="judge" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg"><Mic2 className="h-4 w-4 text-yellow-500" /> Judge</TabsTrigger>
         </TabsList>
 
         <div className="mt-4 flex flex-col items-center justify-center">
@@ -2248,7 +2251,8 @@ export default function ArcadePage() {
           <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Minesweeper personalBest={personalBests["Minesweeper"] || 0} /></Card></TabsContent>
           <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ConnectFour personalBest={personalBests["Connect 4"] || 0} /></Card></TabsContent>
           <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
-          <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
+                    <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
+          <TabsContent value="judge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 shadow-xl overflow-hidden border-0"><JudgingPanel /></Card></TabsContent>
         </div>
       </Tabs>
     </div>
