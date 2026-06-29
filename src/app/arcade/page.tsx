@@ -726,11 +726,18 @@ function BalloonPop() {
   }, [])
 
   return (
-    <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
-      <div className="absolute top-6 left-6 z-10 font-black text-primary text-xl md:text-2xl tracking-tighter">Pop Score: {score}</div>
-      {balloons.map(b => (
-        <button key={b.id} onPointerDown={(e) => { e.preventDefault(); setScore(s => s + 1); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-full shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }} />
-      ))}
+    <div className="flex flex-col items-center space-y-4 py-4 px-4 w-full sm:min-w-[400px] md:min-w-[600px] overflow-hidden">
+      <div className="flex items-center justify-between w-full mb-2">
+        <h3 className="text-2xl font-bold text-primary">Balloon Pop</h3>
+        <div className="font-black text-primary text-xl md:text-2xl tracking-tighter bg-primary/10 px-4 py-2 rounded-2xl">Score: {score}</div>
+      </div>
+      <div className="relative w-full h-[380px] sm:h-[450px] bg-sky-100 rounded-[2.5rem] overflow-hidden border-4 border-sky-200">
+        {balloons.map(b => (
+          <button key={b.id} onPointerDown={(e) => { e.preventDefault(); setScore(s => { const ns = s + 1; saveGameScore(supabase, profile, "Pop", ns); return ns; }); setBalloons(prev => prev.filter(p => p.id !== b.id)) }} className={cn("absolute w-12 h-16 sm:w-14 sm:h-18 rounded-[2rem] shadow-lg transition-transform active:scale-150 active:opacity-0", b.color)} style={{ left: `${b.x}%`, top: `${b.y}%` }}>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-4 bg-sky-300" />
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
