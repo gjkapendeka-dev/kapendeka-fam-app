@@ -23,8 +23,8 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
   // vLines: boolean array of vertical lines [GRID_SIZE][GRID_SIZE + 1]
   // boxes: string array of box owners (null, 'X', 'O') [GRID_SIZE][GRID_SIZE]
   
-  const [hLines, setHLines] = React.useState<boolean[][]>(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(false)));
-  const [vLines, setVLines] = React.useState<boolean[][]>(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(false)));
+  const [hLines, setHLines] = React.useState<(string | null)[][]>(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(null)));
+  const [vLines, setVLines] = React.useState<(string | null)[][]>(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(null)));
   const [boxes, setBoxes] = React.useState<(string | null)[][]>(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null)));
   
   const [xIsNext, setXIsNext] = React.useState(true);
@@ -45,8 +45,8 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
         setXIsNext(payload.payload.xIsNext);
       })
       .on('broadcast', { event: 'reset' }, () => {
-        setHLines(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(false)));
-        setVLines(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(false)));
+        setHLines(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(null)));
+        setVLines(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(null)));
         setBoxes(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null)));
         setXIsNext(true);
       })
@@ -90,10 +90,10 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
     let validMove = false;
 
     if (type === 'h' && !newHLines[r][c]) {
-      newHLines[r][c] = true;
+      newHLines[r][c] = xIsNext ? 'X' : 'O';
       validMove = true;
     } else if (type === 'v' && !newVLines[r][c]) {
-      newVLines[r][c] = true;
+      newVLines[r][c] = xIsNext ? 'X' : 'O';
       validMove = true;
     }
 
@@ -128,8 +128,10 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
   };
 
   const resetLocal = () => {
-    setHLines(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(false)));
-    setVLines(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(false)));
+    if (!matchId) {
+      setHLines(Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(null)));
+      setVLines(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(null)));
+    }
     setBoxes(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null)));
     setXIsNext(true);
     
@@ -183,7 +185,7 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
               onClick={() => handleLineClick('h', r, c)}
               className={cn(
                 "absolute cursor-pointer rounded-full transition-colors",
-                val ? "bg-slate-800" : "bg-slate-200 hover:bg-slate-300"
+                val === 'X' ? "bg-blue-500" : val === 'O' ? "bg-red-500" : "bg-slate-200 hover:bg-slate-300"
               )}
               style={{ top: r * 70, left: c * 70 + 10, width: 60, height: 10, zIndex: 10 }}
             />
@@ -197,7 +199,7 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
               onClick={() => handleLineClick('v', r, c)}
               className={cn(
                 "absolute cursor-pointer rounded-full transition-colors",
-                val ? "bg-slate-800" : "bg-slate-200 hover:bg-slate-300"
+                val === 'X' ? "bg-blue-500" : val === 'O' ? "bg-red-500" : "bg-slate-200 hover:bg-slate-300"
               )}
               style={{ top: r * 70 + 10, left: c * 70, width: 10, height: 60, zIndex: 10 }}
             />
