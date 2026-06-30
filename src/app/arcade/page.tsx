@@ -66,6 +66,7 @@ import { NumberGuessMultiplayer } from "@/components/arcade/multi-number-guess"
 import { FruitMerge } from "@/components/arcade/fruit-merge"
 import { ColourBlocks } from "@/components/arcade/colour-blocks"
 import { NutAndBolts } from "@/components/arcade/nut-and-bolts"
+import { SeaBattleMultiplayer } from "@/components/arcade/multi-sea-battle"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -2316,6 +2317,7 @@ export default function ArcadePage() {
                   <option value="multi_dots">Dots & Boxes</option>
                   <option value="multi_guess">Number Race</option>
                   <option value="multi_word">Word Race</option>
+                  <option value="multi_seabattle">Sea Battle</option>
                 </select>
               </div>
             ))}
@@ -2335,6 +2337,7 @@ export default function ArcadePage() {
               <CardTitle className="text-sm font-bold uppercase tracking-widest">
                 {incomingChallenge.challengerName} challenged you to {
                   incomingChallenge.game === 'multi_rps' ? 'RPS' :
+                  incomingChallenge.game === 'multi_seabattle' ? 'Sea Battle' :
                   incomingChallenge.game === 'multi_math' ? 'Math Race' :
                   incomingChallenge.game === 'multi_react' ? 'Reaction' :
                   incomingChallenge.game === 'multi_dots' ? 'Dots & Boxes' :
@@ -2400,6 +2403,7 @@ export default function ArcadePage() {
           <TabsTrigger value="judge" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Mic2 className="h-4 w-4 text-yellow-500" /> Judge</TabsTrigger>
           <TabsTrigger value="multi_rps" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Hand className="h-4 w-4" /> Multi RPS <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="multi_math" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Calculator className="h-4 w-4" /> Math Race <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_seabattle" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Ship className="h-4 w-4 text-blue-500" /> Sea Battle <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="multi_react" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Zap className="h-4 w-4" /> Reaction <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="multi_dots" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Grid3x3 className="h-4 w-4" /> Dots <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="multi_guess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><HelpCircle className="h-4 w-4" /> Number Race <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
@@ -2439,6 +2443,7 @@ export default function ArcadePage() {
           <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
           <TabsContent value="judge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 shadow-xl overflow-hidden border-0"><JudgingPanel /></Card></TabsContent>
           <TabsContent value="multi_rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><RockPaperScissorsMultiplayer matchId={activeMatch?.game === "multi_rps" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_seabattle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SeaBattleMultiplayer matchId={activeMatch?.game === "multi_seabattle" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="multi_math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><MathRaceMultiplayer matchId={activeMatch?.game === "multi_math" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="multi_react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><ReactionRaceMultiplayer matchId={activeMatch?.game === "multi_react" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="multi_dots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><DotsAndBoxesMultiplayer matchId={activeMatch?.game === "multi_dots" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
