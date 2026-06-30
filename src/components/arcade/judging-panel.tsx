@@ -43,8 +43,7 @@ export function JudgingPanel() {
     if (status === "yes") {
       audio.playWin()
     } else if (status === "no") {
-      audio.playSad() // Or we can use playBoom for a loud X
-      audio.playBoom()
+      audio.playAGTBuzzer()
     } else if (status === "golden") {
       audio.playGoldenBuzzer()
       // Multi-burst confetti over 5 seconds to match the fanfare

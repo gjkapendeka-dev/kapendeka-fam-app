@@ -104,6 +104,112 @@ class AudioEngine {
     }
   }
 
+  public playAGTBuzzer() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const duration = 3.2;
+
+    // ── LAYER 1: Main AGT Buzz (harsh square wave, descending) ───────────
+    // The classic "BZZZZT" - square wave at ~180Hz dropping to ~60Hz
+    const buzz = ctx.createOscillator();
+    const buzzGain = ctx.createGain();
+    const buzzDistort = ctx.createWaveShaper();
+
+    // Waveshaper for distortion/harsh clipping
+    const curve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) {
+      const x = (i * 2) / 256 - 1;
+      curve[i] = (Math.PI + 400) * x / (Math.PI + 400 * Math.abs(x));
+    }
+    buzzDistort.curve = curve;
+
+    buzz.type = 'square';
+    buzz.frequency.setValueAtTime(185, now);
+    buzz.frequency.setValueAtTime(180, now + 0.05); // tiny stutter on hit
+    buzz.frequency.linearRampToValueAtTime(130, now + 1.5);
+    buzz.frequency.linearRampToValueAtTime(75, now + duration);
+
+    buzzGain.gain.setValueAtTime(0, now);
+    buzzGain.gain.linearRampToValueAtTime(0.55, now + 0.02); // sharp attack
+    buzzGain.gain.setValueAtTime(0.55, now + 0.8);
+    buzzGain.gain.linearRampToValueAtTime(0.4, now + 1.8);
+    buzzGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+    buzz.connect(buzzDistort);
+    buzzDistort.connect(buzzGain);
+    buzzGain.connect(ctx.destination);
+    buzz.start(now);
+    buzz.stop(now + duration);
+
+    // ── LAYER 2: Second buzz stab (the classic "double-hit" feel) ────────
+    const buzz2 = ctx.createOscillator();
+    const buzz2Gain = ctx.createGain();
+    buzz2.type = 'sawtooth';
+    buzz2.frequency.setValueAtTime(200, now + 0.12);
+    buzz2.frequency.linearRampToValueAtTime(160, now + 0.6);
+    buzz2.frequency.linearRampToValueAtTime(90, now + duration);
+    buzz2Gain.gain.setValueAtTime(0, now + 0.12);
+    buzz2Gain.gain.linearRampToValueAtTime(0.3, now + 0.15);
+    buzz2Gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    buzz2.connect(buzz2Gain);
+    buzz2Gain.connect(ctx.destination);
+    buzz2.start(now + 0.12);
+    buzz2.stop(now + duration);
+
+    // ── LAYER 3: Sub Bass Thud on impact ─────────────────────────────────
+    const sub = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(90, now);
+    sub.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+    subGain.gain.setValueAtTime(0.8, now);
+    subGain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+    sub.connect(subGain);
+    subGain.connect(ctx.destination);
+    sub.start(now);
+    sub.stop(now + 0.8);
+
+    // ── LAYER 4: Noise crunch for extra aggression ────────────────────────
+    const bufferSize = ctx.sampleRate * 0.3;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(800, now);
+    noiseFilter.Q.value = 0.5;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.25, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(now);
+
+    // ── LAYER 5: Descending tonal whomp (the dramatic tail) ──────────────
+    const whomp = ctx.createOscillator();
+    const whompGain = ctx.createGain();
+    whomp.type = 'sawtooth';
+    whomp.frequency.setValueAtTime(160, now + 0.5);
+    whomp.frequency.exponentialRampToValueAtTime(50, now + duration);
+    whompGain.gain.setValueAtTime(0, now + 0.5);
+    whompGain.gain.linearRampToValueAtTime(0.2, now + 0.7);
+    whompGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    whomp.connect(whompGain);
+    whompGain.connect(ctx.destination);
+    whomp.start(now + 0.5);
+    whomp.stop(now + duration);
+
+    // ── HAPTIC ────────────────────────────────────────────────────────────
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([500, 50, 300, 50, 200]);
+    }
+  }
+
   
   public playBoom() {
     const ctx = this.getContext();
