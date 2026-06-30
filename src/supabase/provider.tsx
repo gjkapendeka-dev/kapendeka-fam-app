@@ -96,13 +96,14 @@ export function SupabaseProvider({
     const fetchProfile = async () => {
       const { data } = await supabase.from('profiles').select('*').eq('id', selectedProfileId).single();
       if (data) {
+        const d = data as any;
         // Normalize properties for backwards compatibility
-        if (data.family_id && !data.familyId) data.familyId = data.family_id;
-        if (data.familyId && !data.family_id) data.family_id = data.familyId;
-        if (data.display_name && !data.displayName) data.displayName = data.display_name;
-        if (data.displayName && !data.display_name) data.display_name = data.displayName;
+        if (d.family_id && !d.familyId) d.familyId = d.family_id;
+        if (d.familyId && !d.family_id) d.family_id = d.familyId;
+        if (d.display_name && !d.displayName) d.displayName = d.display_name;
+        if (d.displayName && !d.display_name) d.display_name = d.displayName;
         
-        setProfile(data);
+        setProfile(d);
       } else {
         // Invalid profile ID, clear it
         switchProfile();
@@ -117,7 +118,7 @@ export function SupabaseProvider({
         { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${selectedProfileId}` },
         (payload) => {
           if (payload.new) {
-            const data = payload.new;
+            const data = payload.new as any;
             if (data.family_id && !data.familyId) data.familyId = data.family_id;
             if (data.familyId && !data.family_id) data.family_id = data.familyId;
             if (data.display_name && !data.displayName) data.displayName = data.display_name;
