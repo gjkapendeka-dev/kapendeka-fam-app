@@ -2243,8 +2243,8 @@ export default function ArcadePage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div className="flex flex-col">
-          <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Universe Arcade</h1>
-          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">25 Games Live for the Hub</p>
+          <h1 className="text-2xl md:text-3xl font-headline font-black tracking-tight text-primary uppercase">Universe Arcade</h1>
+          <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">39 Games Live for the Hub</p>
         </div>
         <div className="flex items-center gap-2">
           <Button 
