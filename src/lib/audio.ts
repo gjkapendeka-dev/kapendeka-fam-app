@@ -227,6 +227,54 @@ class AudioEngine {
     }
   }
 
+  public playDramatic3D(pan: number = 0, intensity: number = 1) {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    
+    // Low frequency hum
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(60, now);
+    osc1.frequency.exponentialRampToValueAtTime(30, now + 1.0);
+    
+    // High frequency dissonance
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(300, now);
+    osc2.frequency.exponentialRampToValueAtTime(150, now + 1.0);
+    
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.3 * intensity, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+    
+    let panner: StereoPannerNode | null = null;
+    if (ctx.createStereoPanner) {
+      panner = ctx.createStereoPanner();
+      panner.pan.value = Math.max(-1, Math.min(1, pan));
+    }
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    
+    if (panner) {
+      gainNode.connect(panner);
+      panner.connect(ctx.destination);
+    } else {
+      gainNode.connect(ctx.destination);
+    }
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 1.0);
+    osc2.stop(now + 1.0);
+    
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([100 * intensity, 50, 100 * intensity]);
+    }
+  }
+
   public playWin() {
     const ctx = this.getContext();
     if (!ctx) return;
