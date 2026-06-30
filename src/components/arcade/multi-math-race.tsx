@@ -132,17 +132,19 @@ export function MathRaceMultiplayer({ matchId, role, onLeave }: MathRaceProps) {
   };
 
   const startNewGame = () => {
-    if (role !== 'X' || !channel) return;
+    if (matchId && role !== 'X') return;
     const q = generateQuestion();
     setQuestion(q);
     setMyScore(0);
     setOpponentScore(0);
     setWinner(null);
-    channel.send({
-      type: 'broadcast',
-      event: 'start',
-      payload: { question: q }
-    });
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'start',
+        payload: { question: q }
+      });
+    }
   };
 
   return (
@@ -204,8 +206,12 @@ export function MathRaceMultiplayer({ matchId, role, onLeave }: MathRaceProps) {
           </form>
         </div>
       ) : (
-        <div className="mt-12 text-muted-foreground font-bold animate-pulse">
-          Waiting for match to start...
+        <div className="mt-12 flex flex-col items-center">
+          {!matchId ? (
+            <Button onClick={startNewGame} className="h-14 px-8 rounded-full font-bold text-lg bg-primary">Start Solo Practice</Button>
+          ) : (
+            <p className="text-muted-foreground font-bold animate-pulse">Waiting for match to start...</p>
+          )}
         </div>
       )}
     </div>

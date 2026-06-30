@@ -68,7 +68,7 @@ export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessPr
   }, [matchId, supabase, role]);
 
   const startNewGame = (activeChannel = channel) => {
-    if (role !== 'X' || !activeChannel) return;
+    if (matchId && role !== 'X') return;
     const target = Math.floor(Math.random() * 100) + 1;
     setTargetNumber(target);
     setMin(1);
@@ -77,11 +77,13 @@ export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessPr
     setLastGuess(null);
     setWinner(null);
     
-    activeChannel.send({
-      type: 'broadcast',
-      event: 'start',
-      payload: { target }
-    });
+    if (activeChannel) {
+      activeChannel.send({
+        type: 'broadcast',
+        event: 'start',
+        payload: { target }
+      });
+    }
   };
 
   React.useEffect(() => {
@@ -164,7 +166,15 @@ export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessPr
 
       <div className="flex flex-col items-center justify-center flex-1 w-full gap-8 mt-4">
         {targetNumber === null ? (
-          <p className="font-bold text-muted-foreground animate-pulse">Waiting for host to start...</p>
+          <div className="flex flex-col items-center gap-4">
+            {!matchId || role === 'X' ? (
+              <Button onClick={() => startNewGame(channel)} className="h-16 px-12 rounded-full text-lg font-black bg-primary">
+                {matchId ? 'Start Game' : 'Start Solo Practice'}
+              </Button>
+            ) : (
+              <p className="font-bold text-muted-foreground animate-pulse">Waiting for host to start...</p>
+            )}
+          </div>
         ) : (
           <>
             <div className="text-center">

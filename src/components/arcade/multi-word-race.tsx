@@ -129,17 +129,19 @@ export function WordRaceMultiplayer({ matchId, role, onLeave }: WordRaceProps) {
   };
 
   const startNewGame = () => {
-    if (role !== 'X' || !channel) return;
+    if (matchId && role !== 'X') return;
     const w = generateWord();
     setWord(w);
     setMyScore(0);
     setOpponentScore(0);
     setWinner(null);
-    channel.send({
-      type: 'broadcast',
-      event: 'start',
-      payload: { word: w }
-    });
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'start',
+        payload: { word: w }
+      });
+    }
   };
 
   return (
@@ -201,8 +203,14 @@ export function WordRaceMultiplayer({ matchId, role, onLeave }: WordRaceProps) {
           </form>
         </div>
       ) : (
-        <div className="mt-12 text-muted-foreground font-bold animate-pulse">
-          Waiting for match to start...
+        <div className="mt-12 flex flex-col items-center">
+          {!matchId || role === 'X' ? (
+            <Button onClick={startNewGame} className="h-16 px-12 rounded-full text-lg font-black bg-primary">
+              {matchId ? 'Start Game' : 'Start Solo Practice'}
+            </Button>
+          ) : (
+            <p className="text-muted-foreground font-bold animate-pulse">Waiting for host to start...</p>
+          )}
         </div>
       )}
     </div>

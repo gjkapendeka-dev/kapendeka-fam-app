@@ -80,7 +80,7 @@ export function RockPaperScissorsMultiplayer({ matchId, role, onLeave }: RPSProp
   };
 
   const handleChoice = (choice: string) => {
-    if (myChoice || !matchId) return; // Wait for opponent or reset
+    if (myChoice) return; // Wait for opponent or reset
     setMyChoice(choice);
     
     if (channel) {
@@ -89,6 +89,13 @@ export function RockPaperScissorsMultiplayer({ matchId, role, onLeave }: RPSProp
         event: 'choose',
         payload: { choice }
       });
+    } else if (!matchId) {
+      // Solo Practice Mode Bot
+      setTimeout(() => {
+        const choices = ['rock', 'paper', 'scissors'];
+        const botChoice = choices[Math.floor(Math.random() * choices.length)];
+        setOpponentChoice(botChoice);
+      }, 800);
     }
   };
   
@@ -144,7 +151,7 @@ export function RockPaperScissorsMultiplayer({ matchId, role, onLeave }: RPSProp
 
         {myChoice && !opponentChoice && (
           <div className="text-center animate-pulse text-muted-foreground font-bold">
-            Waiting for opponent...
+            {matchId ? 'Waiting for opponent...' : 'Bot is thinking...'}
           </div>
         )}
 

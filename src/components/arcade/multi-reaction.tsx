@@ -69,17 +69,21 @@ export function ReactionRaceMultiplayer({ matchId, role, onLeave }: ReactionRace
   };
 
   const startSequence = () => {
-    if (role !== 'X' || !channel) return;
+    if (matchId && role !== 'X') return;
     
     setGameState('ready');
     setWinner(null);
-    channel.send({ type: 'broadcast', event: 'state_change', payload: { state: 'ready' } });
+    if (channel) {
+      channel.send({ type: 'broadcast', event: 'state_change', payload: { state: 'ready' } });
+    }
 
     const delay = Math.floor(Math.random() * 3000) + 2000; // 2-5 seconds
     setTimeout(() => {
       setGameState(currentState => {
         if (currentState === 'ready') {
-          channel.send({ type: 'broadcast', event: 'state_change', payload: { state: 'go' } });
+          if (channel) {
+            channel.send({ type: 'broadcast', event: 'state_change', payload: { state: 'go' } });
+          }
           return 'go';
         }
         return currentState;
@@ -129,9 +133,9 @@ export function ReactionRaceMultiplayer({ matchId, role, onLeave }: ReactionRace
       <div className="flex flex-col items-center justify-center flex-1 w-full gap-8 mt-4">
         {gameState === 'waiting' ? (
           <div className="flex flex-col items-center gap-4">
-            {role === 'X' ? (
+            {!matchId || role === 'X' ? (
               <Button onClick={startSequence} className="h-16 px-12 rounded-full text-lg font-black bg-primary">
-                Start Game
+                {matchId ? 'Start Game' : 'Start Solo Practice'}
               </Button>
             ) : (
               <p className="font-bold text-muted-foreground animate-pulse">Waiting for host to start...</p>
