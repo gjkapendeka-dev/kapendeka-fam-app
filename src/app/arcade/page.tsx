@@ -58,6 +58,12 @@ import { TicTacToe } from "@/components/arcade/tic-tac-toe"
 import { ConnectFour } from "@/components/arcade/connect-four"
 import { JudgingPanel } from "@/components/arcade/judging-panel"
 import { TetrisGame } from "@/components/arcade/tetris"
+import { RockPaperScissorsMultiplayer } from "@/components/arcade/multi-rps"
+import { MathRaceMultiplayer } from "@/components/arcade/multi-math-race"
+import { ReactionRaceMultiplayer } from "@/components/arcade/multi-reaction"
+import { DotsAndBoxesMultiplayer } from "@/components/arcade/multi-dots-boxes"
+import { NumberGuessMultiplayer } from "@/components/arcade/multi-number-guess"
+import { WordRaceMultiplayer } from "@/components/arcade/multi-word-race"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -1951,20 +1957,67 @@ function Leaderboard() {
     if (!supabase || !profile?.family_id) return;
     
     const now = new Date();
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).toISOString();
+    // Get start of week (Sunday midnight)
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0, 0).toISOString();
 
     const fetchScores = async () => {
-      const { data } = await supabase
+      const { data: scoresData, error: scoresError } = await supabase
         .from('arcade_scores')
-        .select('*, profiles!arcade_scores_member_id_fkey(display_name)')
+        .select('*')
         .eq('family_id', profile.family_id)
-        .gte('updated_at', startOfWeek) // Fix created_at -> updated_at
-        .order('best_score', { ascending: false }); // Fix score -> best_score
+        .gte('updated_at', startOfWeek);
 
-      if (data) setScores(data);
+      if (scoresError) {
+        console.error("Supabase Error:", scoresError);
+      }
+
+      if (scoresData && scoresData.length > 0) {
+        // Sort in memory to avoid column name issues
+        const sortedScores = scoresData.sort((a, b) => {
+           const valA = a.best_score ?? a.score ?? a.wins ?? 0;
+           const valB = b.best_score ?? b.score ?? b.wins ?? 0;
+           return valB - valA;
+        });
+
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .eq('family_id', profile.family_id);
+
+        const profileMap: Record<string, any> = {};
+        if (profilesData) {
+          profilesData.forEach(p => {
+             profileMap[p.id] = p;
+          });
+        }
+
+        const enrichedScores = sortedScores.map(s => ({
+          ...s,
+          profiles: profileMap[s.member_id] || { display_name: "Family Member" }
+        }));
+        
+        setScores(enrichedScores);
+      } else {
+        setScores([]);
+      }
     };
 
     fetchScores();
+
+    // Real-time sync for leaderboard
+    const channel = supabase.channel('arcade_scores_sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'arcade_scores', filter: `family_id=eq.${profile.family_id}` },
+        () => {
+          fetchScores();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [supabase, profile]);
 
   const grouped = scores.reduce((acc: any, curr: any) => {
@@ -1993,7 +2046,7 @@ function Leaderboard() {
                     <div className="flex items-center gap-3">
                       <div className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{i + 1}</div>
                       <div className="flex items-center gap-2">
-                        <img src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.user_id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
+                        <img src={s.profiles?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${s.member_id}`} className="w-8 h-8 rounded-full bg-white shadow-sm" alt="avatar" />
                         
                         <span className="font-bold text-sm">{s.profiles?.display_name || "Family Member"}</span>
                         {i === 0 && activeTournament?.game_name === game && (
@@ -2178,7 +2231,61 @@ export default function ArcadePage() {
         </div>
       </header>
 
-      
+      {/* Lobby Challenge UI */}
+      {onlineUsers.length > 0 && (
+        <Card className="rounded-[2rem] border-none shadow-md bg-white/50 mb-4">
+          <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
+            <Activity className="h-5 w-5 text-green-500 animate-pulse" />
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Online Family Members</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 pt-0 flex gap-2 overflow-x-auto">
+            {onlineUsers.map(u => (
+              <div key={u.id} className="flex flex-col items-center gap-1">
+                <img src={u.avatar || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${u.id}`} className="w-10 h-10 rounded-full border-2 border-green-500" />
+                <span className="text-[10px] font-bold truncate w-12 text-center">{u.name}</span>
+                <select 
+                  className="text-[10px] p-1 rounded border bg-white mt-1"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      sendChallenge(u, e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Challenge</option>
+                  <option value="Tic-Tac-Toe">Tic-Tac-Toe</option>
+                  <option value="Connect 4">Connect 4</option>
+                  <option value="multi_rps">RPS</option>
+                  <option value="multi_math">Math Race</option>
+                  <option value="multi_react">Reaction</option>
+                  <option value="multi_dots">Dots & Boxes</option>
+                  <option value="multi_guess">Number Race</option>
+                  <option value="multi_word">Word Race</option>
+                </select>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {incomingChallenge && (
+        <Card className="rounded-[2rem] border-none shadow-md bg-primary text-white mb-4 animate-in slide-in-from-top">
+          <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-yellow-300 animate-pulse" />
+              <CardTitle className="text-sm font-bold uppercase tracking-widest">
+                {incomingChallenge.challengerName} challenged you to {incomingChallenge.game}!
+              </CardTitle>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={acceptChallenge} className="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold">Accept</Button>
+              <Button size="sm" variant="outline" onClick={() => setIncomingChallenge(null)} className="text-white border-white/20">Decline</Button>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+
       {activeTournament && (
         <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-r from-yellow-400 to-amber-600 text-white overflow-hidden mb-2">
           <CardHeader className="py-4 px-6 flex flex-row items-center justify-between">
@@ -2222,6 +2329,12 @@ export default function ArcadePage() {
           <TabsTrigger value="wordguess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Type className="h-4 w-4" /> Word Guess</TabsTrigger>
                     <TabsTrigger value="stacker" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><ArrowUp className="h-4 w-4" /> Stacker</TabsTrigger>
           <TabsTrigger value="judge" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Mic2 className="h-4 w-4 text-yellow-500" /> Judge</TabsTrigger>
+          <TabsTrigger value="multi_rps" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Hand className="h-4 w-4" /> Multi RPS <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_math" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Calculator className="h-4 w-4" /> Math Race <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_react" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Zap className="h-4 w-4" /> Reaction <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_dots" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Grid3x3 className="h-4 w-4" /> Dots <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_guess" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><HelpCircle className="h-4 w-4" /> Number Race <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
+          <TabsTrigger value="multi_word" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Search className="h-4 w-4" /> Word Race <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
         </TabsList>
 
         <div className="mt-4 flex flex-col items-center justify-center">
@@ -2253,6 +2366,12 @@ export default function ArcadePage() {
           <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
                     <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
           <TabsContent value="judge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 shadow-xl overflow-hidden border-0"><JudgingPanel /></Card></TabsContent>
+          <TabsContent value="multi_rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><RockPaperScissorsMultiplayer matchId={activeMatch?.game === "multi_rps" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><MathRaceMultiplayer matchId={activeMatch?.game === "multi_math" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ReactionRaceMultiplayer matchId={activeMatch?.game === "multi_react" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_dots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><DotsAndBoxesMultiplayer matchId={activeMatch?.game === "multi_dots" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><NumberGuessMultiplayer matchId={activeMatch?.game === "multi_guess" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_word"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordRaceMultiplayer matchId={activeMatch?.game === "multi_word" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
         </div>
       </Tabs>
     </div>
