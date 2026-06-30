@@ -443,7 +443,7 @@ function SnakeGame({ personalBest = 0 }: { personalBest?: number }) {
   }, [snake, dir, food, gameOver, supabase, profile, score])
 
   React.useEffect(() => {
-    const interval = setInterval(moveSnake, Math.max(50, 180 - score * 0.5))
+    const interval = setInterval(moveSnake, Math.max(50, 400 - score * 1.5))
     return () => clearInterval(interval)
   }, [moveSnake])
 
@@ -459,7 +459,18 @@ function SnakeGame({ personalBest = 0 }: { personalBest?: number }) {
       </div>
       <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid overflow-hidden" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))', gridTemplateRows: 'repeat(20, minmax(0, 1fr))' }}>
         {snake.map((s, i) => (
-          <div key={i} className="bg-emerald-400 rounded-sm" style={{ gridColumnStart: s.x + 1, gridRowStart: s.y + 1 }} />
+          <div 
+            key={i} 
+            className={`${i === 0 ? 'bg-emerald-300 rounded-[4px] shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 flex items-center justify-center gap-[2px]' : 'bg-emerald-500 rounded-sm'}`} 
+            style={{ gridColumnStart: s.x + 1, gridRowStart: s.y + 1 }} 
+          >
+            {i === 0 && (
+              <>
+                <div className="w-[3px] h-[3px] bg-black rounded-full" />
+                <div className="w-[3px] h-[3px] bg-black rounded-full" />
+              </>
+            )}
+          </div>
         ))}
         <div className="bg-rose-500 rounded-full animate-pulse" style={{ gridColumnStart: food.x + 1, gridRowStart: food.y + 1 }} />
         {gameOver && (
