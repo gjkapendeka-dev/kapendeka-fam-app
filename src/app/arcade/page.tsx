@@ -457,7 +457,7 @@ function SnakeGame({ personalBest = 0 }: { personalBest?: number }) {
           <p className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Score: {score}</p>
         </div>
       </div>
-      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid grid-cols-20 grid-rows-20 overflow-hidden">
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-slate-900 rounded-[2rem] border-4 border-slate-800 grid overflow-hidden" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))', gridTemplateRows: 'repeat(20, minmax(0, 1fr))' }}>
         {snake.map((s, i) => (
           <div key={i} className="bg-emerald-400 rounded-sm" style={{ gridColumnStart: s.x + 1, gridRowStart: s.y + 1 }} />
         ))}
@@ -2397,27 +2397,27 @@ export default function ArcadePage() {
           <TabsContent value="pop"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><BalloonPop /></Card></TabsContent>
           <TabsContent value="rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><RockPaperScissors /></Card></TabsContent>
           <TabsContent value="react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><ReactionTest /></Card></TabsContent>
-          <TabsContent value="click"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SpeedClicker /></Card></TabsContent>
-          <TabsContent value="colors"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><ColorFinder /></Card></TabsContent>
-          <TabsContent value="dice"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DiceRoller /></Card></TabsContent>
-          <TabsContent value="guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><NumberGuess /></Card></TabsContent>
-          <TabsContent value="slots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SlotMachine /></Card></TabsContent>
-          <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl"><WordSearchGame /></Card></TabsContent>
-          <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TicTacToe matchId={activeMatch?.game === "Tic-Tac-Toe" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MemoryMatch /></Card></TabsContent>
-          <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
-          <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><MathMaster /></Card></TabsContent>
-          <TabsContent value="french"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><FrenchMaster /></Card></TabsContent>
-          <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><TypingGame /></Card></TabsContent>
-          <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><DoodleBoard /></Card></TabsContent>
-          <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl"><WhackATask /></Card></TabsContent>
-          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TetrisGame personalBest={personalBests["Tetris"] || 0} /></Card></TabsContent>
-          <TabsContent value="flappy"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><FlappyBlock personalBest={personalBests["Flappy"] || 0} /></Card></TabsContent>
-          <TabsContent value="2048"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Game2048 personalBest={personalBests["2048"] || 0} /></Card></TabsContent>
-          <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><Minesweeper personalBest={personalBests["Minesweeper"] || 0} /></Card></TabsContent>
-          <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ConnectFour personalBest={personalBests["Connect 4"] || 0} /></Card></TabsContent>
-          <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
-                    <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
+          <TabsContent value="click"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SpeedClicker /></Card></TabsContent>
+          <TabsContent value="colors"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><ColorFinder /></Card></TabsContent>
+          <TabsContent value="dice"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><DiceRoller /></Card></TabsContent>
+          <TabsContent value="guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><NumberGuess /></Card></TabsContent>
+          <TabsContent value="slots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SlotMachine /></Card></TabsContent>
+          <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><WordSearchGame /></Card></TabsContent>
+          <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TicTacToe matchId={activeMatch?.game === "Tic-Tac-Toe" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><MemoryMatch /></Card></TabsContent>
+          <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
+          <TabsContent value="math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><MathMaster /></Card></TabsContent>
+          <TabsContent value="french"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><FrenchMaster /></Card></TabsContent>
+          <TabsContent value="typer"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TypingGame /></Card></TabsContent>
+          <TabsContent value="doodle"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><DoodleBoard /></Card></TabsContent>
+          <TabsContent value="whack"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><WhackATask /></Card></TabsContent>
+          <TabsContent value="tetris"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TetrisGame personalBest={personalBests["Tetris"] || 0} /></Card></TabsContent>
+          <TabsContent value="flappy"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><FlappyBlock personalBest={personalBests["Flappy"] || 0} /></Card></TabsContent>
+          <TabsContent value="2048"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><Game2048 personalBest={personalBests["2048"] || 0} /></Card></TabsContent>
+          <TabsContent value="minesweeper"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><Minesweeper personalBest={personalBests["Minesweeper"] || 0} /></Card></TabsContent>
+          <TabsContent value="connect4"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><ConnectFour personalBest={personalBests["Connect 4"] || 0} /></Card></TabsContent>
+          <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><WordGuess /></Card></TabsContent>
+          <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
           <TabsContent value="judge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 shadow-xl overflow-hidden border-0"><JudgingPanel /></Card></TabsContent>
           <TabsContent value="multi_rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><RockPaperScissorsMultiplayer matchId={activeMatch?.game === "multi_rps" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="multi_math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><MathRaceMultiplayer matchId={activeMatch?.game === "multi_math" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
