@@ -63,8 +63,9 @@ import { MathRaceMultiplayer } from "@/components/arcade/multi-math-race"
 import { ReactionRaceMultiplayer } from "@/components/arcade/multi-reaction"
 import { DotsAndBoxesMultiplayer } from "@/components/arcade/multi-dots-boxes"
 import { NumberGuessMultiplayer } from "@/components/arcade/multi-number-guess"
-import { WordRaceMultiplayer } from "@/components/arcade/multi-word-race"
 import { FruitMerge } from "@/components/arcade/fruit-merge"
+import { ColourBlocks } from "@/components/arcade/colour-blocks"
+import { NutAndBolts } from "@/components/arcade/nut-and-bolts"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -2379,6 +2380,8 @@ export default function ArcadePage() {
           <TabsTrigger value="slots" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Sparkles className="h-4 w-4" /> Slots</TabsTrigger>
           <TabsTrigger value="words" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Search className="h-4 w-4" /> Words</TabsTrigger>
           <TabsTrigger value="fruit_merge" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Shapes className="h-4 w-4 text-emerald-500" /> Fruit Merge</TabsTrigger>
+          <TabsTrigger value="colour_blocks" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Grid3x3 className="h-4 w-4 text-purple-500" /> Colour Blocks</TabsTrigger>
+          <TabsTrigger value="nuts_bolts" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Hammer className="h-4 w-4 text-slate-500" /> Nuts & Bolts</TabsTrigger>
           <TabsTrigger value="tic" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><X className="h-4 w-4" /> Tic-Tac-Toe <Badge className="bg-primary text-white ml-1 text-[9px] h-4 px-1 hidden md:flex">PVP</Badge></TabsTrigger>
           <TabsTrigger value="memory" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Brain className="h-4 w-4" /> Memory</TabsTrigger>
           <TabsTrigger value="snake" className="rounded-xl font-bold py-2 px-4 gap-2 shrink-0 data-[state=active]:shadow-lg bg-white/50 data-[state=active]:bg-white"><Gamepad2 className="h-4 w-4" /> Snake</TabsTrigger>
@@ -2417,6 +2420,8 @@ export default function ArcadePage() {
           <TabsContent value="slots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SlotMachine /></Card></TabsContent>
           <TabsContent value="words"><Card className="rounded-[2.5rem] md:rounded-[3rem] p-4 bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><WordSearchGame /></Card></TabsContent>
           <TabsContent value="fruit_merge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><FruitMerge personalBest={personalBests["Fruit Merge"] || 0} /></Card></TabsContent>
+          <TabsContent value="colour_blocks"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><ColourBlocks personalBest={personalBests["Colour Blocks"] || 0} /></Card></TabsContent>
+          <TabsContent value="nuts_bolts"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><NutAndBolts personalBest={personalBests["Nuts and Bolts"] || 0} /></Card></TabsContent>
           <TabsContent value="tic"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><TicTacToe matchId={activeMatch?.game === "Tic-Tac-Toe" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
           <TabsContent value="memory"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><MemoryMatch /></Card></TabsContent>
           <TabsContent value="snake"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0 w-[95vw] max-w-md sm:min-w-[400px] mx-auto"><SnakeGame personalBest={personalBests["Snake"] || 0} /></Card></TabsContent>
