@@ -48,7 +48,8 @@ import {
   Timer,
   Palette,
   Maximize,
-  Languages
+  Languages,
+  Ship
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,7 @@ import { MathRaceMultiplayer } from "@/components/arcade/multi-math-race"
 import { ReactionRaceMultiplayer } from "@/components/arcade/multi-reaction"
 import { DotsAndBoxesMultiplayer } from "@/components/arcade/multi-dots-boxes"
 import { NumberGuessMultiplayer } from "@/components/arcade/multi-number-guess"
+import { WordRaceMultiplayer } from "@/components/arcade/multi-word-race"
 import { FruitMerge } from "@/components/arcade/fruit-merge"
 import { ColourBlocks } from "@/components/arcade/colour-blocks"
 import { NutAndBolts } from "@/components/arcade/nut-and-bolts"
@@ -77,24 +79,8 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useSupabase, useUser, useCollection } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { saveGameScore } from "@/lib/arcade-utils"
 
-const saveGameScore = async (supabase: any, profile: any, game: string, score: number, type: 'score' | 'win' | 'loss' | 'draw' = 'score') => {
-  if (!supabase || !profile) return
-  
-  const payload: any = {
-    family_id: profile.family_id,
-    member_id: profile.id,
-    game: game,
-    updated_at: new Date().toISOString()
-  }
-
-  if (type === 'score') payload.best_score = score
-  if (type === 'win') payload.wins = 1
-  if (type === 'loss') payload.losses = 1
-  if (type === 'draw') payload.draws = 1
-
-  await supabase.from('arcade_scores').insert([payload])
-}
 
 // --- 1. PIANO GAME ---
 const PIANO_KEYS = [

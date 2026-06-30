@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Play, RotateCcw, ArrowLeft, ArrowRight, ArrowDown, RotateCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSupabase, useUser } from "@/supabase"
+import { saveGameScore } from "@/lib/arcade-utils"
 
 // --- TETRIS CONSTANTS ---
 const ROWS = 20
@@ -35,31 +36,6 @@ const randomTetromino = () => {
 }
 
 const createEmptyGrid = () => Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY_CELL))
-
-const saveGameScore = async (supabase: any, profile: any, game: string, score: number, type: 'score' | 'win' | 'loss' | 'draw' = 'score') => {
-  if (!supabase || !profile?.id) return;
-  const { data: existing } = await supabase.from('arcade_scores').select('*').eq('member_id', profile.id).eq('game', game).single();
-
-  if (existing) {
-    const updatePayload: any = {};
-    if (type === 'score' && score > (existing.best_score || 0)) {
-      updatePayload.best_score = score;
-    } else if (type === 'win') updatePayload.wins = (existing.wins || 0) + 1;
-    else if (type === 'loss') updatePayload.losses = (existing.losses || 0) + 1;
-    else if (type === 'draw') updatePayload.draws = (existing.draws || 0) + 1;
-
-    if (Object.keys(updatePayload).length > 0) {
-      await supabase.from('arcade_scores').update(updatePayload).eq('id', existing.id);
-    }
-  } else {
-    const insertPayload: any = { member_id: profile.id, family_id: profile.family_id, game };
-    if (type === 'score') insertPayload.best_score = score;
-    else if (type === 'win') insertPayload.wins = 1;
-    else if (type === 'loss') insertPayload.losses = 1;
-    else if (type === 'draw') insertPayload.draws = 1;
-    await supabase.from('arcade_scores').insert([insertPayload]);
-  }
-}
 
 export function TetrisGame({ personalBest = 0 }: { personalBest?: number }) {
   const supabase = useSupabase()

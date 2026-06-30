@@ -5,36 +5,7 @@ import { ArrowDown, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupabase, useUser } from "@/supabase";
 
-const saveGameScore = async (supabase: any, profile: any, game: string, score: number, type: 'score' | 'win' | 'loss' | 'draw' = 'score') => {
-  if (!supabase || !profile?.id) return;
-  try {
-    const { data: existing } = await supabase.from('arcade_scores').select('*').eq('member_id', profile.id).eq('game', game).single();
-    if (existing) {
-      const best = Math.max(existing.best_score || 0, score);
-      await supabase.from('arcade_scores').update({
-        score: type === 'score' ? score : (existing.score || 0),
-        best_score: type === 'score' ? best : existing.best_score,
-        wins: type === 'win' ? (existing.wins || 0) + 1 : existing.wins,
-        losses: type === 'loss' ? (existing.losses || 0) + 1 : existing.losses,
-        draws: type === 'draw' ? (existing.draws || 0) + 1 : existing.draws,
-        last_played: new Date().toISOString()
-      }).eq('id', existing.id);
-    } else {
-      await supabase.from('arcade_scores').insert({
-        member_id: profile.id,
-        game,
-        score: type === 'score' ? score : 0,
-        best_score: type === 'score' ? score : 0,
-        wins: type === 'win' ? 1 : 0,
-        losses: type === 'loss' ? 1 : 0,
-        draws: type === 'draw' ? 1 : 0,
-        last_played: new Date().toISOString()
-      });
-    }
-  } catch (err) {
-    console.error("Failed to save score:", err);
-  }
-};
+import { saveGameScore } from '@/lib/arcade-utils'
 
 interface ConnectFourProps {
   personalBest?: number;
