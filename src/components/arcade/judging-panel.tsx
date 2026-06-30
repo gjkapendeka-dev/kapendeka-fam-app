@@ -46,16 +46,18 @@ export function JudgingPanel() {
       audio.playSad() // Or we can use playBoom for a loud X
       audio.playBoom()
     } else if (status === "golden") {
-      audio.playWin()
-      audio.playBoom()
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#FFA500', '#FFFFFF']
-      })
+      audio.playGoldenBuzzer()
+      // Multi-burst confetti over 5 seconds to match the fanfare
+      const colors = ['#FFD700', '#FFA500', '#FFFFFF', '#FFE066', '#FF6B35']
+      confetti({ particleCount: 200, spread: 120, origin: { y: 0.6 }, colors })
+      setTimeout(() => confetti({ particleCount: 150, spread: 100, origin: { x: 0.2, y: 0.7 }, colors }), 800)
+      setTimeout(() => confetti({ particleCount: 180, spread: 130, origin: { x: 0.8, y: 0.7 }, colors }), 1600)
+      setTimeout(() => confetti({ particleCount: 250, spread: 150, origin: { y: 0.5 }, colors }), 2500)
+      setTimeout(() => confetti({ particleCount: 200, angle: 60, spread: 80, origin: { x: 0, y: 0.6 }, colors }), 3200)
+      setTimeout(() => confetti({ particleCount: 200, angle: 120, spread: 80, origin: { x: 1, y: 0.6 }, colors }), 3200)
+      setTimeout(() => confetti({ particleCount: 300, spread: 180, origin: { y: 0.4 }, startVelocity: 40, colors }), 4000)
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([200, 100, 200, 100, 500])
+        navigator.vibrate([300, 100, 300, 100, 300, 100, 800])
       }
     }
 

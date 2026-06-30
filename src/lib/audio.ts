@@ -275,6 +275,148 @@ class AudioEngine {
     }
   }
 
+  public playGoldenBuzzer() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const duration = 5.0;
+
+    // ── LAYER 1: Deep Sub Bass Rise ──────────────────────────────────────
+    const sub = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(40, now);
+    sub.frequency.exponentialRampToValueAtTime(120, now + 0.5);
+    sub.frequency.exponentialRampToValueAtTime(80, now + duration);
+    subGain.gain.setValueAtTime(0, now);
+    subGain.gain.linearRampToValueAtTime(0.8, now + 0.2);
+    subGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    sub.connect(subGain);
+    subGain.connect(ctx.destination);
+    sub.start(now);
+    sub.stop(now + duration);
+
+    // ── LAYER 2: Brass Swell (sawtooth, sweeping up) ─────────────────────
+    const brass = ctx.createOscillator();
+    const brassGain = ctx.createGain();
+    const brassFilter = ctx.createBiquadFilter();
+    brass.type = 'sawtooth';
+    brass.frequency.setValueAtTime(110, now);
+    brass.frequency.exponentialRampToValueAtTime(440, now + 1.5);
+    brass.frequency.exponentialRampToValueAtTime(880, now + 3.0);
+    brass.frequency.exponentialRampToValueAtTime(660, now + duration);
+    brassFilter.type = 'lowpass';
+    brassFilter.frequency.setValueAtTime(400, now);
+    brassFilter.frequency.exponentialRampToValueAtTime(4000, now + 2.0);
+    brassGain.gain.setValueAtTime(0, now);
+    brassGain.gain.linearRampToValueAtTime(0.25, now + 0.5);
+    brassGain.gain.linearRampToValueAtTime(0.35, now + 2.5);
+    brassGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    brass.connect(brassFilter);
+    brassFilter.connect(brassGain);
+    brassGain.connect(ctx.destination);
+    brass.start(now);
+    brass.stop(now + duration);
+
+    // ── LAYER 3: Bright Harmonic Twinkle ─────────────────────────────────
+    const sparkle = ctx.createOscillator();
+    const sparkleGain = ctx.createGain();
+    sparkle.type = 'square';
+    sparkle.frequency.setValueAtTime(880, now + 0.5);
+    sparkle.frequency.setValueAtTime(1108, now + 1.0);
+    sparkle.frequency.setValueAtTime(1318, now + 1.5);
+    sparkle.frequency.setValueAtTime(1760, now + 2.0);
+    sparkle.frequency.setValueAtTime(2093, now + 2.5);
+    sparkle.frequency.setValueAtTime(2637, now + 3.0);
+    sparkle.frequency.setValueAtTime(3520, now + 3.5);
+    sparkleGain.gain.setValueAtTime(0, now);
+    sparkleGain.gain.linearRampToValueAtTime(0.07, now + 0.8);
+    sparkleGain.gain.linearRampToValueAtTime(0.12, now + 2.5);
+    sparkleGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    sparkle.connect(sparkleGain);
+    sparkleGain.connect(ctx.destination);
+    sparkle.start(now + 0.5);
+    sparkle.stop(now + duration);
+
+    // ── LAYER 4: Triumphant Chord Stabs ─────────────────────────────────
+    const chordNotes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C major
+    chordNotes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + 1.0);
+      osc.frequency.setValueAtTime(freq * 2, now + 2.0);
+      osc.frequency.setValueAtTime(freq * 3, now + 3.0);
+      g.gain.setValueAtTime(0, now + 1.0);
+      g.gain.linearRampToValueAtTime(0.15, now + 1.2 + i * 0.05);
+      g.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now + 1.0);
+      osc.stop(now + duration);
+    });
+
+    // ── LAYER 5: Noise Cymbal Crash ──────────────────────────────────────
+    const bufferSize = ctx.sampleRate * 0.6;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const crash = ctx.createBufferSource();
+    crash.buffer = buffer;
+    const crashFilter = ctx.createBiquadFilter();
+    crashFilter.type = 'highpass';
+    crashFilter.frequency.setValueAtTime(6000, now);
+    const crashGain = ctx.createGain();
+    crashGain.gain.setValueAtTime(0.4, now);
+    crashGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    crash.connect(crashFilter);
+    crashFilter.connect(crashGain);
+    crashGain.connect(ctx.destination);
+    crash.start(now);
+
+    // Second crash at the peak
+    const crash2 = ctx.createBufferSource();
+    crash2.buffer = buffer;
+    const crash2Filter = ctx.createBiquadFilter();
+    crash2Filter.type = 'highpass';
+    crash2Filter.frequency.setValueAtTime(8000, now + 2.0);
+    const crash2Gain = ctx.createGain();
+    crash2Gain.gain.setValueAtTime(0.6, now + 2.0);
+    crash2Gain.gain.exponentialRampToValueAtTime(0.01, now + 2.6);
+    crash2.connect(crash2Filter);
+    crash2Filter.connect(crash2Gain);
+    crash2Gain.connect(ctx.destination);
+    crash2.start(now + 2.0);
+
+    // ── LAYER 6: 3D Stereo Pan Sweep ────────────────────────────────────
+    if (ctx.createStereoPanner) {
+      const sweepOsc = ctx.createOscillator();
+      const sweepGain = ctx.createGain();
+      const panner = ctx.createStereoPanner();
+      sweepOsc.type = 'sine';
+      sweepOsc.frequency.setValueAtTime(220, now + 1.5);
+      sweepOsc.frequency.exponentialRampToValueAtTime(880, now + 3.5);
+      // Sweep pan from left to right
+      panner.pan.setValueAtTime(-1, now + 1.5);
+      panner.pan.linearRampToValueAtTime(1, now + 4.0);
+      panner.pan.linearRampToValueAtTime(0, now + duration);
+      sweepGain.gain.setValueAtTime(0, now + 1.5);
+      sweepGain.gain.linearRampToValueAtTime(0.18, now + 2.0);
+      sweepGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      sweepOsc.connect(sweepGain);
+      sweepGain.connect(panner);
+      panner.connect(ctx.destination);
+      sweepOsc.start(now + 1.5);
+      sweepOsc.stop(now + duration);
+    }
+
+    // ── HAPTIC ────────────────────────────────────────────────────────────
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([300, 100, 300, 100, 300, 100, 800]);
+    }
+  }
+
   public playWin() {
     const ctx = this.getContext();
     if (!ctx) return;
