@@ -96,6 +96,12 @@ export function SupabaseProvider({
     const fetchProfile = async () => {
       const { data } = await supabase.from('profiles').select('*').eq('id', selectedProfileId).single();
       if (data) {
+        // Normalize properties for backwards compatibility
+        if (data.family_id && !data.familyId) data.familyId = data.family_id;
+        if (data.familyId && !data.family_id) data.family_id = data.familyId;
+        if (data.display_name && !data.displayName) data.displayName = data.display_name;
+        if (data.displayName && !data.display_name) data.display_name = data.displayName;
+        
         setProfile(data);
       } else {
         // Invalid profile ID, clear it
@@ -111,7 +117,12 @@ export function SupabaseProvider({
         { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${selectedProfileId}` },
         (payload) => {
           if (payload.new) {
-            setProfile(payload.new);
+            const data = payload.new;
+            if (data.family_id && !data.familyId) data.familyId = data.family_id;
+            if (data.familyId && !data.family_id) data.family_id = data.familyId;
+            if (data.display_name && !data.displayName) data.displayName = data.display_name;
+            if (data.displayName && !data.display_name) data.display_name = data.displayName;
+            setProfile(data);
           }
         }
       )
