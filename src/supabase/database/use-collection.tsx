@@ -47,7 +47,7 @@ export function useCollection<T = any>(queryBuilder: any | null) {
 
     let channel: any = null;
     if (tableName) {
-       channel = supabase.channel(`public:${tableName}`)
+       channel = supabase.channel(`public:${tableName}-${Math.random()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
           fetchData(); // refetch on change
         })

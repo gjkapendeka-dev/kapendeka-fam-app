@@ -45,7 +45,7 @@ export function useDoc<T = any>(queryBuilder: any | null) {
 
     let channel: any = null;
     if (tableName) {
-       channel = supabase.channel(`public:${tableName}_doc`)
+       channel = supabase.channel(`public:${tableName}_doc-${Math.random()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
           fetchData(); // refetch on change
         })
