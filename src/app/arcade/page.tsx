@@ -2156,9 +2156,9 @@ export default function ArcadePage() {
         targetId: targetUser.id,
         targetName: targetUser.name,
         challengerId: profile?.id,
-        challengerName: profile?.first_name,
+        challengerName: profile?.first_name || profile?.username || 'Someone',
         game: game,
-        matchId: Math.random().toString(36).substring(7)
+        matchId: crypto.randomUUID()
       }
     });
     alert(`Challenge sent to ${targetUser.name}!`);
@@ -2320,7 +2320,15 @@ export default function ArcadePage() {
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-300 animate-pulse" />
               <CardTitle className="text-sm font-bold uppercase tracking-widest">
-                {incomingChallenge.challengerName} challenged you to {incomingChallenge.game}!
+                {incomingChallenge.challengerName} challenged you to {
+                  incomingChallenge.game === 'multi_rps' ? 'RPS' :
+                  incomingChallenge.game === 'multi_math' ? 'Math Race' :
+                  incomingChallenge.game === 'multi_react' ? 'Reaction' :
+                  incomingChallenge.game === 'multi_dots' ? 'Dots & Boxes' :
+                  incomingChallenge.game === 'multi_guess' ? 'Number Race' :
+                  incomingChallenge.game === 'multi_word' ? 'Word Race' :
+                  incomingChallenge.game
+                }!
               </CardTitle>
             </div>
             <div className="flex gap-2">
