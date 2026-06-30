@@ -8,6 +8,7 @@ import { useSupabase, useUser } from "@/supabase";
 interface WordRaceProps {
   matchId?: string;
   role?: 'X' | 'O';
+  opponentName?: string;
   onLeave?: () => void;
 }
 
@@ -18,7 +19,7 @@ const WORDS = [
   "SPRING", "AUTUMN", "NATURE", "FOREST", "RIVER"
 ];
 
-export function WordRaceMultiplayer({ matchId, role, onLeave }: WordRaceProps) {
+export function WordRaceMultiplayer({ matchId, role, opponentName, onLeave }: WordRaceProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -162,14 +163,14 @@ export function WordRaceMultiplayer({ matchId, role, onLeave }: WordRaceProps) {
         <p className="text-sm font-bold text-muted-foreground">Unscramble the word! First to 5 wins!</p>
       </div>
 
-      <div className="flex w-full max-w-md justify-between px-8 py-4 bg-muted/20 rounded-3xl">
+      <div className="flex w-full max-w-md justify-between px-8 py-2 bg-muted/20 rounded-3xl">
         <div className="text-center">
-          <p className="font-bold text-primary">You</p>
-          <p className="text-4xl font-black text-primary">{myScore}</p>
+          <p className="font-bold text-blue-500">You</p>
+          <p className="text-2xl font-black text-blue-500">{myScore}</p>
         </div>
         <div className="text-center">
-          <p className="font-bold text-accent">Opponent</p>
-          <p className="text-4xl font-black text-accent">{opponentScore}</p>
+          <p className="font-bold text-red-500">{matchId ? (opponentName || 'Opponent') : 'Opponent'}</p>
+          <p className="text-2xl font-black text-red-500">{opponentScore}</p>
         </div>
       </div>
 

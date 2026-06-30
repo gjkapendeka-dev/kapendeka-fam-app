@@ -9,10 +9,11 @@ import { cn } from "@/lib/utils";
 interface ReactionRaceProps {
   matchId?: string;
   role?: 'X' | 'O';
+  opponentName?: string;
   onLeave?: () => void;
 }
 
-export function ReactionRaceMultiplayer({ matchId, role, onLeave }: ReactionRaceProps) {
+export function ReactionRaceMultiplayer({ matchId, role, opponentName, onLeave }: ReactionRaceProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -34,17 +35,20 @@ export function ReactionRaceMultiplayer({ matchId, role, onLeave }: ReactionRace
           setWinner(null);
         }
       })
-      .on('broadcast', { event: 'tap' }, (payload) => {
-        if (gameState !== 'done') {
-          setGameState('done');
-          setWinner('Opponent Wins! 😢');
+      .on('broadcast', { event: 'reaction' }, (payload) => {
+        setGameState('done');
+        if (payload.payload.player !== role) {
+          setWinner(`${matchId ? (opponentName || 'Opponent') : 'Opponent'} Wins! 😢`);
+        } else {
+          setWinner('You Win! 🎉');
         }
       })
       .on('broadcast', { event: 'false_start' }, (payload) => {
-        if (gameState !== 'done') {
-          setGameState('done');
-          setWinner('You Win! Opponent false started. 🎉');
-          saveScore();
+        setGameState('done');
+        if (payload.payload.player !== role) {
+          setWinner(`You Win! ${matchId ? (opponentName || 'Opponent') : 'Opponent'} false started. 🎉`);
+        } else {
+          setWinner(`${matchId ? (opponentName || 'Opponent') : 'Opponent'} Wins! You false started. 😢`);
         }
       })
       .subscribe();

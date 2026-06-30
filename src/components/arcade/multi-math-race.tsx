@@ -8,10 +8,11 @@ import { useSupabase, useUser } from "@/supabase";
 interface MathRaceProps {
   matchId?: string;
   role?: 'X' | 'O'; // 'X' is host, 'O' is guest
+  opponentName?: string;
   onLeave?: () => void;
 }
 
-export function MathRaceMultiplayer({ matchId, role, onLeave }: MathRaceProps) {
+export function MathRaceMultiplayer({ matchId, role, opponentName, onLeave }: MathRaceProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -165,14 +166,14 @@ export function MathRaceMultiplayer({ matchId, role, onLeave }: MathRaceProps) {
         <p className="text-sm font-bold text-muted-foreground">First to 5 points wins!</p>
       </div>
 
-      <div className="flex w-full max-w-md justify-between px-8 py-4 bg-muted/20 rounded-3xl">
+      <div className="flex w-full max-w-md justify-between px-8 py-2 bg-muted/20 rounded-3xl">
         <div className="text-center">
-          <p className="font-bold text-primary">You</p>
-          <p className="text-4xl font-black text-primary">{myScore}</p>
+          <p className="font-bold text-blue-500">You</p>
+          <p className="text-2xl font-black text-blue-500">{myScore}</p>
         </div>
         <div className="text-center">
-          <p className="font-bold text-accent">Opponent</p>
-          <p className="text-4xl font-black text-accent">{opponentScore}</p>
+          <p className="font-bold text-red-500">{matchId ? (opponentName || 'Opponent') : 'Opponent'}</p>
+          <p className="text-2xl font-black text-red-500">{opponentScore}</p>
         </div>
       </div>
 

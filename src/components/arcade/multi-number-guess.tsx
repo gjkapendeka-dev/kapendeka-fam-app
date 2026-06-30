@@ -8,10 +8,11 @@ import { useSupabase, useUser } from "@/supabase";
 interface NumberGuessProps {
   matchId?: string;
   role?: 'X' | 'O';
+  opponentName?: string;
   onLeave?: () => void;
 }
 
-export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessProps) {
+export function NumberGuessMultiplayer({ matchId, role, opponentName, onLeave }: NumberGuessProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -160,7 +161,7 @@ export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessPr
           <HelpCircle className="h-6 w-6" /> Number Race
         </h3>
         <p className="text-sm font-bold text-muted-foreground">
-          {winner ? (winner === role ? "You Win! 🎉" : "Opponent Wins! 😢") : `Turn: ${xIsNext ? 'X' : 'O'}`}
+          {winner ? (winner === role ? "You Win! 🎉" : `${matchId ? (opponentName || 'Opponent') : 'Opponent'} Wins! 😢`) : `Turn: ${xIsNext ? 'X' : 'O'}`}
         </p>
       </div>
 
@@ -178,36 +179,37 @@ export function NumberGuessMultiplayer({ matchId, role, onLeave }: NumberGuessPr
         ) : (
           <>
             <div className="text-center">
-              <p className="text-lg font-bold text-muted-foreground">The number is between</p>
+              <p className="font-bold text-muted-foreground">The number is between</p>
               <div className="flex items-center justify-center gap-4 mt-2">
-                <div className="bg-primary/10 text-primary font-black text-4xl px-6 py-4 rounded-3xl">{min}</div>
-                <span className="font-bold text-xl text-muted-foreground">and</span>
-                <div className="bg-primary/10 text-primary font-black text-4xl px-6 py-4 rounded-3xl">{max}</div>
+                <span className="text-4xl font-black text-primary">{min}</span>
+                <span className="text-2xl font-bold text-muted-foreground">and</span>
+                <span className="text-4xl font-black text-primary">{max}</span>
               </div>
             </div>
 
             {lastGuess && !winner && (
-              <div className="flex flex-col items-center gap-2 animate-in zoom-in duration-300">
-                <p className="font-bold text-muted-foreground text-sm uppercase tracking-widest">
-                  Player {lastGuess.player} Guessed {lastGuess.val}
+              <div className="text-center animate-in slide-in-from-bottom-4">
+                <p className="text-lg font-bold">
+                  {lastGuess.player === role ? 'You' : `${matchId ? (opponentName || 'Opponent') : 'Opponent'}`} guessed <span className="text-2xl text-primary font-black">{lastGuess.val}</span>
                 </p>
-                <div className="flex items-center gap-2 font-black text-2xl">
-                  {lastGuess.hint === 'Higher' ? <ArrowUp className="text-emerald-500 h-8 w-8" /> : <ArrowDown className="text-rose-500 h-8 w-8" />}
-                  <span className={lastGuess.hint === 'Higher' ? "text-emerald-500" : "text-rose-500"}>
-                    {lastGuess.hint}
-                  </span>
+                <div className="mt-2 flex items-center justify-center gap-2 text-xl font-black">
+                  {lastGuess.hint === 'Higher' ? (
+                    <><ArrowUp className="h-6 w-6 text-emerald-500" /> <span className="text-emerald-500">Higher!</span></>
+                  ) : (
+                    <><ArrowDown className="h-6 w-6 text-rose-500" /> <span className="text-rose-500">Lower!</span></>
+                  )}
                 </div>
               </div>
             )}
 
             {!winner && (
-              <form onSubmit={handleGuessSubmit} className="flex gap-2 w-full max-w-xs mt-4">
+              <form onSubmit={handleGuessSubmit} className="flex gap-2 w-full max-w-[280px]">
                 <input 
                   type="number" 
                   value={guessInput}
                   onChange={e => setGuessInput(e.target.value)}
-                  disabled={(xIsNext && role !== 'X') || (!xIsNext && role !== 'O')}
-                  placeholder={(xIsNext && role !== 'X') || (!xIsNext && role !== 'O') ? "Opponent's turn..." : "Your guess"}
+                  disabled={role ? ((xIsNext && role !== 'X') || (!xIsNext && role !== 'O')) : false}
+                  placeholder={role ? (((xIsNext && role !== 'X') || (!xIsNext && role !== 'O')) ? `${matchId ? (opponentName || 'Opponent') : 'Opponent'}'s turn...` : "Your guess") : "Your guess"}
                   className="flex-1 h-14 rounded-2xl border-2 border-primary/20 text-center text-xl font-bold focus:outline-none focus:border-primary disabled:opacity-50"
                   autoFocus
                 />

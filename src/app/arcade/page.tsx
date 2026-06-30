@@ -2080,7 +2080,7 @@ export default function ArcadePage() {
   const [onlineUsers, setOnlineUsers] = React.useState<any[]>([]);
   const [lobbyChannel, setLobbyChannel] = React.useState<any>(null);
   const [incomingChallenge, setIncomingChallenge] = React.useState<any>(null);
-  const [activeMatch, setActiveMatch] = React.useState<{id: string, game: string, role: string} | null>(null);
+  const [activeMatch, setActiveMatch] = React.useState<{ id: string, game: string, role: string, opponentName?: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState('leaderboard');
 
   React.useEffect(() => {
@@ -2105,7 +2105,12 @@ export default function ArcadePage() {
       })
       .on('broadcast', { event: 'accept_challenge' }, (payload) => {
         if (payload.payload.targetId === profile.id) {
-          setActiveMatch({ id: payload.payload.matchId, game: payload.payload.game, role: 'X' });
+          setActiveMatch({ 
+            id: payload.payload.matchId, 
+            game: payload.payload.game, 
+            role: 'X',
+            opponentName: payload.payload.targetName
+          });
           setActiveTab(payload.payload.game);
         }
       })
@@ -2134,6 +2139,7 @@ export default function ArcadePage() {
       event: 'challenge',
       payload: {
         targetId: targetUser.id,
+        targetName: targetUser.name,
         challengerId: profile?.id,
         challengerName: profile?.first_name,
         game: game,
@@ -2150,11 +2156,17 @@ export default function ArcadePage() {
       event: 'accept_challenge',
       payload: {
         targetId: incomingChallenge.challengerId,
+        targetName: profile?.first_name,
         matchId: incomingChallenge.matchId,
         game: incomingChallenge.game
       }
     });
-    setActiveMatch({ id: incomingChallenge.matchId, game: incomingChallenge.game, role: 'O' });
+    setActiveMatch({ 
+      id: incomingChallenge.matchId, 
+      game: incomingChallenge.game, 
+      role: 'O',
+      opponentName: incomingChallenge.challengerName
+    });
     setActiveTab(incomingChallenge.game);
     setIncomingChallenge(null);
   };
@@ -2366,12 +2378,12 @@ export default function ArcadePage() {
           <TabsContent value="wordguess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordGuess /></Card></TabsContent>
                     <TabsContent value="stacker"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><TowerStacker personalBest={personalBests["Stacker"] || 0} /></Card></TabsContent>
           <TabsContent value="judge"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 shadow-xl overflow-hidden border-0"><JudgingPanel /></Card></TabsContent>
-          <TabsContent value="multi_rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><RockPaperScissorsMultiplayer matchId={activeMatch?.game === "multi_rps" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="multi_math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><MathRaceMultiplayer matchId={activeMatch?.game === "multi_math" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="multi_react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ReactionRaceMultiplayer matchId={activeMatch?.game === "multi_react" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="multi_dots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><DotsAndBoxesMultiplayer matchId={activeMatch?.game === "multi_dots" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="multi_guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><NumberGuessMultiplayer matchId={activeMatch?.game === "multi_guess" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
-          <TabsContent value="multi_word"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordRaceMultiplayer matchId={activeMatch?.game === "multi_word" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_rps"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><RockPaperScissorsMultiplayer matchId={activeMatch?.game === "multi_rps" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_math"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><MathRaceMultiplayer matchId={activeMatch?.game === "multi_math" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_react"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><ReactionRaceMultiplayer matchId={activeMatch?.game === "multi_react" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_dots"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><DotsAndBoxesMultiplayer matchId={activeMatch?.game === "multi_dots" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_guess"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><NumberGuessMultiplayer matchId={activeMatch?.game === "multi_guess" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
+          <TabsContent value="multi_word"><Card className="rounded-[2.5rem] md:rounded-[3rem] bg-white shadow-xl overflow-hidden border-0"><WordRaceMultiplayer matchId={activeMatch?.game === "multi_word" ? activeMatch.id : undefined} role={activeMatch?.role as "X" | "O"} opponentName={activeMatch?.opponentName} onLeave={() => setActiveMatch(null)} /></Card></TabsContent>
         </div>
       </Tabs>
     </div>

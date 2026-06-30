@@ -9,10 +9,11 @@ import { cn } from "@/lib/utils";
 interface DotsBoxesProps {
   matchId?: string;
   role?: 'X' | 'O';
+  opponentName?: string;
   onLeave?: () => void;
 }
 
-export function DotsAndBoxesMultiplayer({ matchId, role, onLeave }: DotsBoxesProps) {
+export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }: DotsBoxesProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -164,12 +165,12 @@ export function DotsAndBoxesMultiplayer({ matchId, role, onLeave }: DotsBoxesPro
 
       <div className="flex w-full max-w-md justify-between px-8 py-2 bg-muted/20 rounded-3xl">
         <div className="text-center">
-          <p className="font-bold text-primary">Player X</p>
-          <p className="text-2xl font-black text-primary">{xScore}</p>
+          <p className="font-bold text-blue-500">{matchId ? (role === 'X' ? 'You' : opponentName || 'Opponent') : 'Player X'}</p>
+          <p className="text-2xl font-black text-blue-500">{xScore}</p>
         </div>
         <div className="text-center">
-          <p className="font-bold text-accent">Player O</p>
-          <p className="text-2xl font-black text-accent">{oScore}</p>
+          <p className="font-bold text-red-500">{matchId ? (role === 'O' ? 'You' : opponentName || 'Opponent') : 'Player O'}</p>
+          <p className="text-2xl font-black text-red-500">{oScore}</p>
         </div>
       </div>
 
@@ -219,7 +220,7 @@ export function DotsAndBoxesMultiplayer({ matchId, role, onLeave }: DotsBoxesPro
               key={`b-${r}-${c}`}
               className={cn(
                 "absolute flex items-center justify-center text-3xl font-black transition-all",
-                val === 'X' ? "text-primary" : "text-accent"
+                val === 'X' ? "text-blue-500" : "text-red-500"
               )}
               style={{ top: r * 70 + 10, left: c * 70 + 10, width: 60, height: 60 }}
             >

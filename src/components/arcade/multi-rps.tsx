@@ -8,10 +8,11 @@ import { useSupabase, useUser } from "@/supabase";
 interface RPSProps {
   matchId?: string;
   role?: 'X' | 'O';
+  opponentName?: string;
   onLeave?: () => void;
 }
 
-export function RockPaperScissorsMultiplayer({ matchId, role, onLeave }: RPSProps) {
+export function RockPaperScissorsMultiplayer({ matchId, role, opponentName, onLeave }: RPSProps) {
   const supabase = useSupabase();
   const { profile } = useUser();
 
@@ -159,23 +160,23 @@ export function RockPaperScissorsMultiplayer({ matchId, role, onLeave }: RPSProp
           <div className="flex flex-col items-center gap-6">
             <div className="flex items-center gap-8">
               <div className="text-center">
-                <div className="h-24 w-24 rounded-[2rem] bg-primary flex items-center justify-center shadow-lg">
+                <div className="h-24 w-24 rounded-[2rem] bg-blue-500 flex items-center justify-center shadow-lg">
                   {myChoice === 'rock' && <HandMetal className="h-12 w-12 text-white" />}
                   {myChoice === 'paper' && <File className="h-12 w-12 text-white" />}
                   {myChoice === 'scissors' && <Scissors className="h-12 w-12 text-white" />}
                 </div>
-                <p className="mt-2 font-bold">You</p>
+                <p className="mt-2 font-bold text-blue-500">You</p>
               </div>
               
               <div className="text-2xl font-black text-muted-foreground">VS</div>
 
               <div className="text-center">
-                <div className="h-24 w-24 rounded-[2rem] bg-accent flex items-center justify-center shadow-lg">
+                <div className="h-24 w-24 rounded-[2rem] bg-red-500 flex items-center justify-center shadow-lg">
                   {opponentChoice === 'rock' && <HandMetal className="h-12 w-12 text-white" />}
                   {opponentChoice === 'paper' && <File className="h-12 w-12 text-white" />}
                   {opponentChoice === 'scissors' && <Scissors className="h-12 w-12 text-white" />}
                 </div>
-                <p className="mt-2 font-bold">Opponent</p>
+                <p className="mt-2 font-bold text-red-500">{matchId ? (opponentName || 'Opponent') : 'Bot'}</p>
               </div>
             </div>
 
