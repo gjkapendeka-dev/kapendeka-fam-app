@@ -27,6 +27,7 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
   const [channel, setChannel] = useState<any>(null);
   const [rolling, setRolling] = useState(false);
   const [currentRoll, setCurrentRoll] = useState(1);
+  const [localMode, setLocalMode] = useState(false);
 
   useEffect(() => {
     if (!matchId || !supabase) return;
@@ -57,9 +58,9 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
   }, [matchId, supabase]);
 
   const handleRoll = () => {
-    if (!myTurn || gameOver || rolling) return;
+    if ((!localMode && !myTurn) || gameOver || rolling) return;
     setRolling(true);
-    setMyTurn(false);
+    if (!localMode) setMyTurn(false);
     
     // Animate roll
     let rolls = 0;
@@ -72,6 +73,35 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
          const finalRoll = Math.floor(Math.random() * 6) + 1;
          setCurrentRoll(finalRoll);
          
+         if (localMode) {
+            let activePos = myTurn ? myPos : oppPos;
+            let otherPos = myTurn ? oppPos : myPos;
+            
+            let newPos = activePos + finalRoll;
+            if (newPos > BOARD_SIZE) newPos = BOARD_SIZE - (newPos - BOARD_SIZE);
+            
+            if (newPos === otherPos && newPos !== 0 && newPos !== BOARD_SIZE) {
+               otherPos = 0;
+               audio.playCrash();
+            } else {
+               audio.playDramatic3D(0, 1.2);
+            }
+
+            if (myTurn) {
+               setMyPos(newPos);
+               setOppPos(otherPos);
+               if (newPos === BOARD_SIZE) { setGameOver('Player 1 Won! 🎉'); audio.playWin(); }
+               else setMyTurn(false);
+            } else {
+               setOppPos(newPos);
+               setMyPos(otherPos);
+               if (newPos === BOARD_SIZE) { setGameOver('Player 2 Won! 🎉'); audio.playWin(); }
+               else setMyTurn(true);
+            }
+            setRolling(false);
+            return;
+         }
+
          let newPos = myPos + finalRoll;
          if (newPos > BOARD_SIZE) newPos = BOARD_SIZE - (newPos - BOARD_SIZE); // Bounce back
          
@@ -138,22 +168,25 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
      return cells;
   }
 
-  if (!matchId) {
+  if (!matchId && !localMode) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
         <Dices className="w-16 h-16 text-slate-300" />
         <h3 className="text-xl font-bold">Waiting for opponent...</h3>
         <p className="text-muted-foreground text-sm">Join a multiplayer match from the main menu.</p>
-        <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        <div className="flex flex-col gap-2 w-full">
+           <Button variant="default" onClick={() => { setLocalMode(true); setMyTurn(true); }} className="bg-emerald-500 hover:bg-emerald-600 font-bold uppercase tracking-widest">Pass & Play Locally</Button>
+           <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center p-4 w-full">
-      {onLeave && (
+      {(onLeave || localMode) && (
         <div className="w-full flex justify-start mb-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground rounded-xl">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground rounded-xl">
             <ArrowLeft className="w-4 h-4 mr-2" /> Leave Match
           </Button>
         </div>
@@ -165,19 +198,19 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
         <div className="w-full flex items-center justify-between px-4 py-2 bg-slate-100 rounded-2xl">
           <div className="flex items-center gap-2">
              <CircleDot className="w-4 h-4 text-blue-500" />
-             <div className={`text-sm font-bold ${role === 'X' ? 'text-primary' : 'text-slate-500'}`}>You</div>
+             <div className={`text-sm font-bold ${role === 'X' || localMode ? 'text-primary' : 'text-slate-500'}`}>{localMode ? 'Player 1' : 'You'}</div>
           </div>
           <div className="flex flex-col items-center">
             {gameOver ? (
               <span className="font-black text-rose-500 uppercase tracking-widest">{gameOver}</span>
             ) : (
               <span className="font-bold text-slate-600 uppercase tracking-widest text-xs">
-                {myTurn ? "Your Turn" : "Enemy Turn"}
+                {localMode ? (myTurn ? "P1 Turn" : "P2 Turn") : (myTurn ? "Your Turn" : "Enemy Turn")}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-             <div className={`text-sm font-bold ${role === 'O' ? 'text-rose-500' : 'text-slate-500'}`}>{opponentName || 'Enemy'}</div>
+             <div className={`text-sm font-bold ${role === 'O' || localMode ? 'text-rose-500' : 'text-slate-500'}`}>{localMode ? 'Player 2' : opponentName || 'Enemy'}</div>
              <CircleDot className="w-4 h-4 text-rose-500" />
           </div>
         </div>
@@ -198,11 +231,11 @@ export function LudoMultiplayer({ matchId, role, opponentName, onLeave }: PVPPro
              <Button 
                 size="lg" 
                 onClick={handleRoll} 
-                disabled={!myTurn || rolling}
+                disabled={(!localMode && !myTurn) || rolling}
                 className="rounded-xl font-black uppercase tracking-widest px-8 shadow-lg bg-blue-500 hover:bg-blue-600"
              >
                 <Dices className="w-5 h-5 mr-2" /> 
-                {myTurn ? (rolling ? 'Rolling...' : 'Roll Dice') : 'Waiting...'}
+                {localMode ? (rolling ? 'Rolling...' : `Roll Dice (${myTurn ? 'P1' : 'P2'})`) : (myTurn ? (rolling ? 'Rolling...' : 'Roll Dice') : 'Waiting...')}
              </Button>
            </div>
         )}

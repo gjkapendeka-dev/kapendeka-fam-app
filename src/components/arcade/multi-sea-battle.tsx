@@ -29,6 +29,7 @@ export function SeaBattleMultiplayer({ matchId, role, opponentName, onLeave }: P
   const [myTurn, setMyTurn] = useState<boolean>(role === 'X'); // X goes first
   const [gameOver, setGameOver] = useState<string | null>(null);
   const [channel, setChannel] = useState<any>(null);
+  const [localMode, setLocalMode] = useState(false);
 
   // Generate random board
   useEffect(() => {
@@ -155,22 +156,24 @@ export function SeaBattleMultiplayer({ matchId, role, opponentName, onLeave }: P
     }
   };
 
-  if (!matchId) {
+  if (!matchId && !localMode) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
-        <Ship className="w-16 h-16 text-slate-300" />
         <h3 className="text-xl font-bold">Waiting for opponent...</h3>
         <p className="text-muted-foreground text-sm">Join a multiplayer match from the main menu.</p>
-        <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        <div className="flex flex-col gap-2 w-full max-w-[200px]">
+           <Button variant="default" onClick={() => { setLocalMode(true); if(typeof setMyTurn !== 'undefined') setMyTurn(true); }} className="bg-emerald-500 hover:bg-emerald-600 font-bold uppercase tracking-widest">Practice Locally</Button>
+           <Button variant="outline" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }}>Cancel</Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center p-4">
-      {onLeave && (
+      {(onLeave || localMode) && (
         <div className="w-full flex justify-start mb-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground rounded-xl">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground rounded-xl">
             <ArrowLeft className="w-4 h-4 mr-2" /> Leave Match
           </Button>
         </div>

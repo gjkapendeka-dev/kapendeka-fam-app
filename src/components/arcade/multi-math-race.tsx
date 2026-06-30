@@ -132,6 +132,16 @@ export function MathRaceMultiplayer({ matchId, role, opponentName, onLeave }: Ma
     }
   };
 
+  React.useEffect(() => {
+    if (!matchId && localMode && !winner && question) {
+      const timer = setTimeout(() => {
+         const newScore = opponentScore + 1;
+         setOpponentScore(newScore);
+      }, 3000 + Math.random() * 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [matchId, localMode, winner, question, opponentScore]);
+
   const startNewGame = () => {
     if (matchId && role !== 'X') return;
     const q = generateQuestion();
@@ -152,7 +162,7 @@ export function MathRaceMultiplayer({ matchId, role, opponentName, onLeave }: Ma
     <div className="flex flex-col items-center space-y-4 py-4 px-4 relative w-full h-full min-h-[400px]">
       {matchId && (
         <div className="absolute top-4 left-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground hover:text-primary">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Leave Match
           </Button>

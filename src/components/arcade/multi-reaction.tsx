@@ -116,11 +116,24 @@ export function ReactionRaceMultiplayer({ matchId, role, opponentName, onLeave }
     }
   };
 
+  React.useEffect(() => {
+    if (!matchId && localMode && gameState === 'go' && !winner) {
+       // Bot taps after a delay (reaction time between 250ms and 500ms)
+       const timer = setTimeout(() => {
+          if (gameState === 'go') {
+             setGameState('done');
+             setWinner('You Lose! 😢');
+          }
+       }, 250 + Math.random() * 250);
+       return () => clearTimeout(timer);
+    }
+  }, [matchId, localMode, gameState, winner]);
+
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4 relative w-full h-full min-h-[400px]">
       {matchId && (
         <div className="absolute top-4 left-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground hover:text-primary">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Leave Match
           </Button>

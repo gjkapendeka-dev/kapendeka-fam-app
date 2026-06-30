@@ -118,7 +118,7 @@ export function RockPaperScissorsMultiplayer({ matchId, role, opponentName, onLe
     <div className="flex flex-col items-center space-y-4 py-4 px-4 relative w-full h-full min-h-[400px]">
       {matchId && (
         <div className="absolute top-4 left-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground hover:text-primary">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Leave Match
           </Button>

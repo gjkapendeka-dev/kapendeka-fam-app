@@ -129,8 +129,9 @@ export function NumberGuessMultiplayer({ matchId, role, opponentName, onLeave }:
     }
 
     const nextPlayer = xIsNext ? 'O' : 'X';
+    const currentPlayer = xIsNext ? 'X' : 'O';
     
-    setLastGuess({ val: guess, player: role || 'X', hint });
+    setLastGuess({ val: guess, player: currentPlayer, hint });
     setMin(newMin);
     setMax(newMax);
     setXIsNext(nextPlayer === 'X');
@@ -149,7 +150,7 @@ export function NumberGuessMultiplayer({ matchId, role, opponentName, onLeave }:
     <div className="flex flex-col items-center space-y-4 py-4 px-4 relative w-full h-full min-h-[400px]">
       {matchId && (
         <div className="absolute top-4 left-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground hover:text-primary">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Leave Match
           </Button>

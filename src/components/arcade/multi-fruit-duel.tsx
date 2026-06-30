@@ -22,6 +22,7 @@ export function FruitDuelMultiplayer({ matchId, role, opponentName, onLeave }: P
   const [oppClicks, setOppClicks] = useState(0);
   const [gameOver, setGameOver] = useState<string | null>(null);
   const [channel, setChannel] = useState<any>(null);
+  const [localMode, setLocalMode] = useState(false);
 
   const WIN_SCORE = 30;
 
@@ -49,10 +50,23 @@ export function FruitDuelMultiplayer({ matchId, role, opponentName, onLeave }: P
     return () => { supabase.removeChannel(newChannel); };
   }, [matchId, supabase]);
 
-  const handleSlice = () => {
+  const handleSlice = (player: 'me' | 'opp' = 'me') => {
     if (gameOver) return;
-    
     audio.playBlip(600);
+    
+    if (localMode) {
+      if (player === 'me') {
+        const newClicks = myClicks + 1;
+        setMyClicks(newClicks);
+        if (newClicks >= WIN_SCORE) { setGameOver('Player 1 Won! 🎉'); audio.playWin(); }
+      } else {
+        const newClicks = oppClicks + 1;
+        setOppClicks(newClicks);
+        if (newClicks >= WIN_SCORE) { setGameOver('Player 2 Won! 🎉'); audio.playWin(); }
+      }
+      return;
+    }
+
     const newClicks = myClicks + 1;
     setMyClicks(newClicks);
 
@@ -81,22 +95,25 @@ export function FruitDuelMultiplayer({ matchId, role, opponentName, onLeave }: P
     }
   };
 
-  if (!matchId) {
+  if (!matchId && !localMode) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
         <Swords className="w-16 h-16 text-slate-300" />
         <h3 className="text-xl font-bold">Waiting for opponent...</h3>
         <p className="text-muted-foreground text-sm">Join a multiplayer match from the main menu.</p>
-        <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        <div className="flex flex-col gap-2 w-full">
+           <Button variant="default" onClick={() => setLocalMode(true)} className="bg-emerald-500 hover:bg-emerald-600 font-bold uppercase tracking-widest">Pass & Play Locally</Button>
+           <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center p-4 w-full">
-      {onLeave && (
+    <div className="flex flex-col items-center p-4 w-full select-none">
+      {(onLeave || localMode) && (
         <div className="w-full flex justify-start mb-4">
-          <Button variant="ghost" size="sm" onClick={onLeave} className="text-muted-foreground rounded-xl">
+          <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground rounded-xl">
             <ArrowLeft className="w-4 h-4 mr-2" /> Leave Match
           </Button>
         </div>
@@ -138,13 +155,24 @@ export function FruitDuelMultiplayer({ matchId, role, opponentName, onLeave }: P
                 </div>
             </div>
         ) : (
-            <Button 
-                onClick={handleSlice}
-                className="w-48 h-48 rounded-full bg-amber-400 hover:bg-amber-500 border-8 border-amber-200 shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center space-y-2 group"
-            >
-                <Zap className="w-16 h-16 text-white group-active:scale-125 transition-transform" />
-                <span className="font-black text-white text-2xl uppercase tracking-widest">Slice!</span>
-            </Button>
+            <div className="flex gap-4 w-full justify-center">
+              <Button 
+                  onClick={() => handleSlice('me')}
+                  className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-amber-400 hover:bg-amber-500 border-8 border-amber-200 shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center space-y-2 group"
+              >
+                  <Zap className="w-12 h-12 md:w-16 md:h-16 text-white group-active:scale-125 transition-transform" />
+                  <span className="font-black text-white text-xl md:text-2xl uppercase tracking-widest">{localMode ? 'P1' : 'Slice!'}</span>
+              </Button>
+              {localMode && (
+                <Button 
+                    onClick={() => handleSlice('opp')}
+                    className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-rose-400 hover:bg-rose-500 border-8 border-rose-200 shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center space-y-2 group"
+                >
+                    <Zap className="w-12 h-12 md:w-16 md:h-16 text-white group-active:scale-125 transition-transform" />
+                    <span className="font-black text-white text-xl md:text-2xl uppercase tracking-widest">P2</span>
+                </Button>
+              )}
+            </div>
         )}
       </div>
     </div>
