@@ -2119,7 +2119,7 @@ export default function ArcadePage() {
         if (status === 'SUBSCRIBED') {
           await channel.track({
             id: profile.id,
-            name: profile.first_name,
+            name: profile.display_name,
             avatar: profile.avatar_url,
             status: myStatus,
             online_at: new Date().toISOString(),
@@ -2139,7 +2139,7 @@ export default function ArcadePage() {
     if (lobbyChannel) {
       await lobbyChannel.track({
         id: profile.id,
-        name: profile.first_name,
+        name: profile.display_name,
         avatar: profile.avatar_url,
         status: newStatus,
         online_at: new Date().toISOString(),
@@ -2156,7 +2156,7 @@ export default function ArcadePage() {
         targetId: targetUser.id,
         targetName: targetUser.name,
         challengerId: profile?.id,
-        challengerName: profile?.first_name || profile?.username || 'Someone',
+        challengerName: profile?.display_name || profile?.username || 'Someone',
         game: game,
         matchId: crypto.randomUUID()
       }
