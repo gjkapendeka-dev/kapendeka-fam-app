@@ -101,7 +101,7 @@ export default function SelectProfilePage() {
       {!selectedForPin ? (
         <div className="w-full max-w-4xl mx-auto space-y-12 animate-in fade-in zoom-in duration-500">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tight">Who's watching?</h1>
+            <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tight">Who's playing?</h1>
             <p className="text-muted-foreground text-sm md:text-base font-medium">Select your profile to enter the Universe</p>
           </div>
 

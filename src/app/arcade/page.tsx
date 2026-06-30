@@ -2082,6 +2082,7 @@ export default function ArcadePage() {
   const [incomingChallenge, setIncomingChallenge] = React.useState<any>(null);
   const [activeMatch, setActiveMatch] = React.useState<{ id: string, game: string, role: string, opponentName?: string } | null>(null);
   const [activeTab, setActiveTab] = React.useState('leaderboard');
+  const [myStatus, setMyStatus] = React.useState('Ready to play!');
 
   React.useEffect(() => {
     if (!supabase || !profile) return;
@@ -2120,6 +2121,7 @@ export default function ArcadePage() {
             id: profile.id,
             name: profile.first_name,
             avatar: profile.avatar_url,
+            status: myStatus,
             online_at: new Date().toISOString(),
           });
         }
@@ -2130,7 +2132,20 @@ export default function ArcadePage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, profile]);
+  }, [supabase, profile, myStatus]);
+
+  const updateStatus = async (newStatus: string) => {
+    setMyStatus(newStatus);
+    if (lobbyChannel) {
+      await lobbyChannel.track({
+        id: profile.id,
+        name: profile.first_name,
+        avatar: profile.avatar_url,
+        status: newStatus,
+        online_at: new Date().toISOString(),
+      });
+    }
+  };
 
   const sendChallenge = (targetUser: any, game: string) => {
     if (!lobbyChannel) return;
@@ -2244,17 +2259,31 @@ export default function ArcadePage() {
       </header>
 
       {/* Lobby Challenge UI */}
-      {onlineUsers.length > 0 && (
-        <Card className="rounded-[2rem] border-none shadow-md bg-white/50 mb-4">
-          <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
+      <Card className="rounded-[2rem] border-none shadow-md bg-white/50 mb-4">
+        <CardHeader className="py-3 px-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-green-500 animate-pulse" />
             <CardTitle className="text-sm font-bold uppercase tracking-widest">Online Family Members</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4 pt-0 flex gap-2 overflow-x-auto">
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground">My Status:</span>
+            <input 
+              type="text" 
+              className="text-xs px-2 py-1 rounded-md border bg-white max-w-[150px]"
+              value={myStatus}
+              onChange={(e) => setMyStatus(e.target.value)}
+              onBlur={(e) => updateStatus(e.target.value)}
+              placeholder="What's up?"
+            />
+          </div>
+        </CardHeader>
+        {onlineUsers.length > 0 ? (
+          <CardContent className="px-4 pb-4 pt-0 flex gap-4 overflow-x-auto">
             {onlineUsers.map(u => (
-              <div key={u.id} className="flex flex-col items-center gap-1">
-                <img src={u.avatar || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${u.id}`} className="w-10 h-10 rounded-full border-2 border-green-500" />
-                <span className="text-[10px] font-bold truncate w-12 text-center">{u.name}</span>
+              <div key={u.id} className="flex flex-col items-center gap-1 min-w-[80px]">
+                <img src={u.avatar || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${u.id}`} className="w-12 h-12 rounded-full border-2 border-green-500 shadow-sm" />
+                <span className="text-xs font-black truncate w-20 text-center text-slate-800">{u.name || 'Anonymous'}</span>
+                {u.status && <span className="text-[10px] font-medium truncate w-24 text-center text-muted-foreground italic px-1">"{u.status}"</span>}
                 <select 
                   className="text-[10px] p-1 rounded border bg-white mt-1"
                   onChange={(e) => {
@@ -2278,8 +2307,12 @@ export default function ArcadePage() {
               </div>
             ))}
           </CardContent>
-        </Card>
-      )}
+        ) : (
+          <CardContent className="px-4 pb-4 pt-0">
+            <p className="text-sm font-bold text-muted-foreground">No one else is online right now. Practice solo!</p>
+          </CardContent>
+        )}
+      </Card>
 
       {incomingChallenge && (
         <Card className="rounded-[2rem] border-none shadow-md bg-primary text-white mb-4 animate-in slide-in-from-top">
