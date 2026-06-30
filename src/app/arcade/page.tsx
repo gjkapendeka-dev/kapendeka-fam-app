@@ -70,7 +70,7 @@ const saveGameScore = async (supabase: any, profile: any, game: string, score: n
   if (!supabase || !profile) return
   
   const payload: any = {
-    family_id: profile.familyId, // Fix family_id mapping
+    family_id: profile.family_id,
     member_id: profile.id,
     game: game,
     updated_at: new Date().toISOString()
@@ -1957,7 +1957,7 @@ function Leaderboard() {
       const { data } = await supabase
         .from('arcade_scores')
         .select('*, profiles!arcade_scores_member_id_fkey(display_name)')
-        .eq('family_id', profile.familyId) // Fix familyId
+        .eq('family_id', profile.family_id)
         .gte('updated_at', startOfWeek) // Fix created_at -> updated_at
         .order('best_score', { ascending: false }); // Fix score -> best_score
 
