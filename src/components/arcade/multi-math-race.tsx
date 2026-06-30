@@ -21,6 +21,7 @@ export function MathRaceMultiplayer({ matchId, role, opponentName, onLeave }: Ma
   const [opponentScore, setOpponentScore] = React.useState(0);
   const [winner, setWinner] = React.useState<string | null>(null);
   const [channel, setChannel] = React.useState<any>(null);
+  const [localMode, setLocalMode] = React.useState(false);
 
   const [answerInput, setAnswerInput] = React.useState("");
 

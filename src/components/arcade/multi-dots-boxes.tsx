@@ -29,6 +29,7 @@ export function DotsAndBoxesMultiplayer({ matchId, role, opponentName, onLeave }
   
   const [xIsNext, setXIsNext] = React.useState(true);
   const [channel, setChannel] = React.useState<any>(null);
+  const [localMode, setLocalMode] = React.useState(false);
 
   React.useEffect(() => {
     if (!matchId || !supabase) return;

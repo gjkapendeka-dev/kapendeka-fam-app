@@ -24,6 +24,7 @@ export function NumberGuessMultiplayer({ matchId, role, opponentName, onLeave }:
   const [lastGuess, setLastGuess] = React.useState<{ val: number, player: string, hint: string } | null>(null);
   const [winner, setWinner] = React.useState<string | null>(null);
   const [channel, setChannel] = React.useState<any>(null);
+  const [localMode, setLocalMode] = React.useState(false);
 
   const [guessInput, setGuessInput] = React.useState("");
 

@@ -20,6 +20,7 @@ export function RockPaperScissorsMultiplayer({ matchId, role, opponentName, onLe
   const [opponentChoice, setOpponentChoice] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<string | null>(null);
   const [channel, setChannel] = React.useState<any>(null);
+  const [localMode, setLocalMode] = React.useState(false);
 
   // Networking Setup
   React.useEffect(() => {

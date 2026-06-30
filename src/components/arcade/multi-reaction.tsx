@@ -20,6 +20,7 @@ export function ReactionRaceMultiplayer({ matchId, role, opponentName, onLeave }
   const [gameState, setGameState] = React.useState<'waiting' | 'ready' | 'go' | 'done'>('waiting');
   const [winner, setWinner] = React.useState<string | null>(null);
   const [channel, setChannel] = React.useState<any>(null);
+  const [localMode, setLocalMode] = React.useState(false);
 
   React.useEffect(() => {
     if (!matchId || !supabase) return;
@@ -129,9 +130,23 @@ export function ReactionRaceMultiplayer({ matchId, role, opponentName, onLeave }
     }
   }, [matchId, localMode, gameState, winner]);
 
+  if (!matchId && !localMode) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <Zap className="w-16 h-16 text-slate-300" />
+        <h3 className="text-xl font-bold">Reaction Race</h3>
+        <p className="text-muted-foreground text-sm">Tap as fast as you can when it goes green! Race against a bot locally.</p>
+        <div className="flex flex-col gap-2 w-full max-w-[220px]">
+          <Button variant="default" onClick={() => { setLocalMode(true); }} className="bg-emerald-500 hover:bg-emerald-600 font-bold uppercase tracking-widest">Practice Locally</Button>
+          <Button variant="outline" onClick={onLeave}>Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4 py-4 px-4 relative w-full h-full min-h-[400px]">
-      {matchId && (
+      {(matchId || localMode) && (
         <div className="absolute top-4 left-4">
           <Button variant="ghost" size="sm" onClick={() => { if(localMode) setLocalMode(false); else if(onLeave) onLeave(); }} className="text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-4 w-4 mr-2" />
