@@ -51,15 +51,63 @@ export default function MealPlannerPage() {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("recipes").select("*").eq("family_id", profile.family_id)
   }, [supabase, profile?.family_id])
-  const { data: recipes, loading: recipesLoading } = useCollection(recipesQuery)
+  const { data: recipes, loading: recipesLoading, refresh: refreshRecipes } = useCollection(recipesQuery)
 
   // Fetch Current Meal Plan
   const mealPlanQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("meal_plans").select("*").eq("family_id", profile.family_id)
   }, [supabase, profile?.family_id])
-  const { data: mealPlans } = useCollection(mealPlanQuery)
+  const { data: mealPlans, refresh: refreshMealPlan } = useCollection(mealPlanQuery)
   const currentPlan = mealPlans?.[0]
+
+  // Recipe Modal State
+  const [selectedRecipe, setSelectedRecipe] = React.useState<any>(null)
+  
+  // Day Picker State
+  const [selectedDay, setSelectedDay] = React.useState<string | null>(null)
+
+  const handleSaveAiSuggestion = async (recipe: any) => {
+    if (!supabase || !profile?.family_id) return
+    const recipeData = {
+      family_id: profile.family_id,
+      title: recipe.title,
+      ingredients: recipe.ingredients || [],
+      instructions: recipe.instructions || "",
+      tags: ["AI Suggested", ...(recipe.tags || [])],
+      created_at: new Date().toISOString(),
+    }
+    try {
+      await supabase.from("recipes").insert([recipeData])
+      if (refreshRecipes) refreshRecipes()
+      toast({ title: "Saved!", description: `"${recipe.title}" added to your box.` })
+      setAiSuggestions(prev => prev.filter(r => r !== recipe))
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save recipe." })
+    }
+  }
+
+  const handleAssignMeal = async (recipeId: string) => {
+    if (!supabase || !profile?.family_id || !selectedDay) return;
+    try {
+      if (currentPlan) {
+        const updatedDays = { ...currentPlan.days, [selectedDay]: { dinner: recipeId } };
+        await supabase.from("meal_plans").update({ days: updatedDays }).eq("id", currentPlan.id);
+      } else {
+        const newPlan = {
+          family_id: profile.family_id,
+          week_start: new Date().toISOString().split('T')[0],
+          days: { [selectedDay]: { dinner: recipeId } }
+        };
+        await supabase.from("meal_plans").insert([newPlan]);
+      }
+      if (refreshMealPlan) refreshMealPlan();
+      setSelectedDay(null);
+      toast({ title: "Meal Assigned", description: `Assigned to ${selectedDay}.` })
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to assign meal." })
+    }
+  }
 
   const handleSuggest = async () => {
     if (!queryStr) return
@@ -96,6 +144,7 @@ export default function MealPlannerPage() {
 
     try {
       await supabase.from("recipes").insert([recipeData])
+      if (refreshRecipes) refreshRecipes()
       setIsAddOpen(false)
       setNewRecipeTitle("")
       toast({ title: "Recipe Added", description: "Start adding ingredients to your new recipe!" })
@@ -194,6 +243,7 @@ export default function MealPlannerPage() {
       }
       
       await supabase.from("recipes").insert([recipeData])
+      if (refreshRecipes) refreshRecipes()
       
       toast({
         title: "Recipe Identified!",
@@ -224,7 +274,7 @@ export default function MealPlannerPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <Button 
             variant="outline" 
-            className="rounded-xl h-10 px-4 font-bold border-primary/20 text-primary active:scale-95"
+            className="rounded-xl h-10 px-4 font-bold border-primary/20 text-primary active:scale-95 hover:bg-primary/5"
             onClick={() => router.push("/shopping")}
           >
             <ShoppingBasket className="h-4 w-4 mr-2" /> Shopping
@@ -324,6 +374,7 @@ export default function MealPlannerPage() {
                 className="h-14 pl-12 rounded-2xl border-none bg-white/95 text-primary font-bold placeholder:text-muted-foreground/60 text-lg focus-visible:ring-accent"
                 value={queryStr}
                 onChange={(e) => setQueryStr(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSuggest()}
               />
             </div>
             <Button 
@@ -337,28 +388,45 @@ export default function MealPlannerPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-xl font-bold flex items-center gap-2 uppercase tracking-tighter">
             <ChefHat className="h-5 w-5 text-primary" />
             {aiSuggestions.length > 0 ? "AI Recommended" : "Recipe Box"}
+            {aiSuggestions.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setAiSuggestions([])} className="ml-auto text-xs font-black uppercase text-muted-foreground hover:text-primary">
+                Clear
+              </Button>
+            )}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {recipesLoading ? (
               [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted animate-pulse rounded-3xl" />)
             ) : (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).length > 0 ? (
-              (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).map((recipe, i) => (
-                <Card key={recipe.id || i} className="group overflow-hidden rounded-[1.5rem] md:rounded-2xl hover:shadow-xl transition-all border-none shadow-md cursor-pointer active:scale-[0.98]">
+              (aiSuggestions.length > 0 ? aiSuggestions : recipes || []).map((recipe, i) => {
+                const isAi = aiSuggestions.length > 0;
+                return (
+                <Card 
+                  key={recipe.id || i} 
+                  onClick={() => !isAi && setSelectedRecipe(recipe)}
+                  className="group overflow-hidden rounded-[1.5rem] md:rounded-2xl hover:shadow-xl transition-all border-none shadow-md cursor-pointer active:scale-[0.98]"
+                >
                   <div className="h-44 md:h-48 bg-muted relative overflow-hidden">
                     <img 
-                      src={`https://picsum.photos/seed/${recipe.id || i + 50}/600/400`} 
+                      src={recipe.photoUrl || `https://picsum.photos/seed/${recipe.id || i + 50}/600/400`} 
                       alt={recipe.title} 
                       className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" 
                     />
-                    <div className="absolute top-3 right-3">
-                      <Button size="icon" variant="secondary" className="h-9 w-9 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      {isAi ? (
+                        <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSaveAiSuggestion(recipe); }} className="h-9 px-3 rounded-xl bg-accent hover:bg-accent/90 text-white font-bold shadow-lg">
+                          <Plus className="h-4 w-4 mr-1" /> Save
+                        </Button>
+                      ) : (
+                        <Button size="icon" variant="secondary" className="h-9 w-9 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg text-primary">
+                          <ChefHat className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <CardContent className="p-5">
@@ -368,17 +436,21 @@ export default function MealPlannerPage() {
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {(recipe.tags || []).map((tag: string) => (
-                        <Badge key={tag} variant="outline" className="text-[9px] font-black uppercase py-0.5 px-2 border-primary/10 text-primary/70">
+                        <Badge key={tag} variant="secondary" className="text-[9px] font-black uppercase py-0.5 px-2 bg-primary/5 text-primary/80">
                           {tag}
                         </Badge>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
-              ))
+              )
+              })
             ) : (
-              <div className="col-span-full py-16 text-center bg-muted/20 rounded-[2rem] border-2 border-dashed">
+              <div className="col-span-full py-16 text-center bg-muted/20 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center gap-4">
                 <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Recipe Box Empty</p>
+                <Button onClick={() => setIsAddOpen(true)} className="rounded-xl h-12 px-6 font-bold bg-primary shadow-lg shadow-primary/20 active:scale-95">
+                  <Plus className="h-4 w-4 mr-2" /> Add Your First Recipe
+                </Button>
               </div>
             )}
           </div>
@@ -398,23 +470,25 @@ export default function MealPlannerPage() {
                 const meal = currentPlan?.days?.[day]?.dinner
                 const recipe = recipes?.find(r => r.id === meal)
                 return (
-                  <div key={day} className="flex items-center gap-4 group cursor-pointer hover:bg-muted/30 p-2 rounded-xl transition-all active:scale-[0.98]">
-                    <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center font-black text-primary text-[10px] uppercase">
+                  <div key={day} onClick={() => setSelectedDay(day)} className="flex items-center gap-4 group cursor-pointer hover:bg-primary/5 p-2 rounded-xl transition-all active:scale-[0.98] border border-transparent hover:border-primary/10">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-[10px] uppercase shadow-inner">
                       {day.substring(0, 3)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold truncate">
-                        {recipe?.title || 'Dinner not set'}
+                      <div className={`text-sm font-bold truncate ${recipe ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {recipe?.title || 'Click to set dinner'}
                       </div>
-                      <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Dinner</div>
+                      <div className="text-[9px] text-muted-foreground/70 font-black uppercase tracking-wider">Dinner</div>
                     </div>
-                    <Plus className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${recipe ? 'bg-primary text-white' : 'bg-muted/50 text-muted-foreground group-hover:bg-primary group-hover:text-white'}`}>
+                      {recipe ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    </div>
                   </div>
                 )
               })}
               <Button 
                 variant="outline" 
-                className="w-full mt-4 font-black uppercase tracking-widest text-xs h-12 rounded-xl border-primary/10 text-primary active:scale-95"
+                className="w-full mt-4 font-black uppercase tracking-widest text-xs h-12 rounded-xl border-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
                 onClick={handleGenerateShoppingList}
                 disabled={isGeneratingList}
               >
@@ -431,6 +505,106 @@ export default function MealPlannerPage() {
           </Card>
         </div>
       </div>
+
+      {/* Modals */}
+      
+      {/* View/Edit Recipe Modal */}
+      <Dialog open={!!selectedRecipe} onOpenChange={(open) => !open && setSelectedRecipe(null)}>
+        <DialogContent className="rounded-[2rem] max-w-lg overflow-y-auto max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter">{selectedRecipe?.title}</DialogTitle>
+            <DialogDescription className="flex gap-2 pt-2 flex-wrap">
+              {(selectedRecipe?.tags || []).map((tag: string) => (
+                <Badge key={tag} className="text-[9px] uppercase font-black bg-primary/10 text-primary hover:bg-primary/20 border-none">{tag}</Badge>
+              ))}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="rounded-2xl overflow-hidden h-48 bg-muted">
+              <img 
+                src={selectedRecipe?.photoUrl || `https://picsum.photos/seed/${selectedRecipe?.id || 10}/600/400`} 
+                alt={selectedRecipe?.title} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+                <ShoppingBasket className="h-4 w-4 text-primary" /> Ingredients
+              </h4>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {(selectedRecipe?.ingredients || []).length > 0 ? (
+                  selectedRecipe.ingredients.map((ing: string, i: number) => (
+                    <li key={i} className="text-sm font-medium flex items-center gap-2 bg-muted/30 p-2 rounded-lg">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" /> {ing}
+                    </li>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No ingredients listed.</p>
+                )}
+              </ul>
+            </div>
+            {selectedRecipe?.instructions && (
+              <div>
+                <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+                  <ChefHat className="h-4 w-4 text-primary" /> Instructions
+                </h4>
+                <div className="bg-primary/5 p-4 rounded-2xl text-sm font-medium whitespace-pre-wrap leading-relaxed text-primary/90">
+                  {selectedRecipe.instructions}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="rounded-xl w-full h-12 font-black uppercase tracking-widest" onClick={() => setSelectedRecipe(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Select Meal for Day Modal */}
+      <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
+        <DialogContent className="rounded-[2rem] max-w-xl h-[80vh] flex flex-col p-6">
+          <DialogHeader className="pb-4 shrink-0">
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-primary">
+              Dinner for {selectedDay}
+            </DialogTitle>
+            <DialogDescription className="font-bold text-xs uppercase tracking-widest">
+              Select a recipe from your box
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+            {(recipes || []).length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground font-bold uppercase text-xs mb-4">Recipe Box is Empty</p>
+                <Button onClick={() => { setSelectedDay(null); setIsAddOpen(true); }} className="rounded-xl h-12 font-black uppercase tracking-widest">Add a Recipe</Button>
+              </div>
+            ) : (
+              (recipes || []).map(recipe => (
+                <div 
+                  key={recipe.id}
+                  onClick={() => handleAssignMeal(recipe.id)}
+                  className="flex items-center gap-4 p-3 rounded-2xl border-2 border-transparent hover:border-primary/20 bg-muted/20 hover:bg-primary/5 cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
+                >
+                  <div className="h-16 w-16 rounded-xl bg-muted overflow-hidden shrink-0 shadow-sm">
+                    <img src={`https://picsum.photos/seed/${recipe.id}/200`} alt={recipe.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm truncate">{recipe.title}</h4>
+                    <p className="text-xs text-muted-foreground truncate opacity-70">
+                      {recipe.ingredients?.join(', ') || 'No ingredients'}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary shadow-sm border border-primary/10">
+                    <Check className="h-4 w-4" />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter className="pt-4 shrink-0">
+             <Button variant="outline" className="w-full rounded-xl h-12 font-black uppercase tracking-widest" onClick={() => setSelectedDay(null)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -61,5 +61,14 @@ export function useCollection<T = any>(queryBuilder: any | null) {
     };
   }, [queryBuilder]);
 
-  return { data, loading, error };
+  const refresh = () => {
+    if (!queryBuilder) return;
+    setLoading(true);
+    queryBuilder.then(({ data, error }: any) => {
+      if (!error) setData(data);
+      setLoading(false);
+    });
+  };
+
+  return { data, loading, error, refresh };
 }
