@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { AIQuickAdd } from "@/components/ai-quick-add"
 import { FamilyAIBrief } from "@/components/family-ai-brief"
@@ -155,10 +156,17 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 md:gap-4">
-        {/* Main Feed */}
-        <div className="xl:col-span-8 space-y-4 md:space-y-5">
-          <FamilyAIBrief />
+      <Tabs defaultValue="overview" className="w-full mt-4">
+        <TabsList className="bg-muted/50 p-1 rounded-2xl mb-2 sm:mb-6 flex max-w-xs mx-auto md:mx-0">
+          <TabsTrigger value="overview" className="rounded-xl font-bold py-2 flex-1">Overview</TabsTrigger>
+          <TabsTrigger value="broadcasts" className="rounded-xl font-bold py-2 flex-1">Broadcasts</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 md:gap-4">
+            {/* Main Feed */}
+            <div className="xl:col-span-8 space-y-4 md:space-y-5">
+              <FamilyAIBrief />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
             <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-primary/5 bg-white p-4 md:p-5 group hover:shadow-primary/10 transition-all cursor-default relative overflow-hidden">
@@ -320,7 +328,55 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
-      </div>
+        </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="broadcasts">
+          <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
+            <div className="bg-primary/5 rounded-[2rem] p-6 md:p-8 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black text-primary uppercase tracking-tight">Family Broadcasts</h2>
+                <p className="text-muted-foreground font-bold text-sm mt-1">Announcements, Reminders, and Alerts</p>
+              </div>
+              <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-xl">
+                <Bell className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {broadcasts && broadcasts.length > 0 ? (
+                broadcasts.map(b => (
+                  <Card key={b.id} className="rounded-3xl border-none shadow-md overflow-hidden">
+                    <div className="h-2 w-full bg-primary" />
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                          {b.type === "reminder" ? <Clock className="h-6 w-6 text-primary" /> : <Info className="h-6 w-6 text-primary" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pt-1">
+                          <Badge variant="outline" className="mb-2 font-bold text-[10px] uppercase">{b.type}</Badge>
+                          <h4 className="text-lg md:text-xl font-black leading-tight text-foreground">{b.message}</h4>
+                          <p className="text-xs text-muted-foreground font-bold mt-2 flex items-center gap-1.5">
+                            <CalendarIcon className="h-3 w-3" />
+                            {format(new Date(b.created_at), "PPP 'at' p")}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white rounded-[3rem] shadow-sm">
+                  <Bell className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                  <h3 className="font-black text-xl uppercase text-primary">No Broadcasts</h3>
+                  <p className="text-muted-foreground font-bold text-sm">You're all caught up!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

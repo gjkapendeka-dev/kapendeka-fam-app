@@ -21,7 +21,16 @@ import {
   Pencil,
   Trash2,
   Send,
-  Users
+  Users,
+  Mic,
+  Square,
+  Download,
+  LayoutGrid,
+  List as ListIcon,
+  Bell,
+  Mail,
+  MessageCircle,
+  Monitor
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -30,6 +39,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Dialog, 
   DialogContent, 
@@ -51,6 +61,91 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 
+function useAudioRecorder() {
+  const [isRecording, setIsRecording] = React.useState(false)
+  const [audioBlob, setAudioBlob] = React.useState<Blob | null>(null)
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
+  const chunksRef = React.useRef<Blob[]>([])
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" })
+        setAudioBlob(blob)
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setAudioBlob(null)
+    } catch (err) {
+      console.error("Error accessing microphone:", err)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const discardRecording = () => {
+    setAudioBlob(null)
+  }
+
+  return { isRecording, startRecording, stopRecording, audioBlob, discardRecording }
+}
+
+function FileList({ files, title = "Attachments" }: { files: string[], title?: string }) {
+  if (!files || files.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2 mt-2">
+      {files.map((url, i) => {
+        const isAudio = url.includes('.webm') || url.includes('.ogg') || url.includes('.mp3') || url.includes('.wav')
+        if (isAudio) {
+          return (
+            <div key={i} className="flex flex-col gap-1 bg-slate-50 p-2 rounded-xl border border-slate-100">
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Mic className="h-3 w-3"/> Voice Note</span>
+              <audio controls src={url} className="h-10 w-full max-w-full" />
+            </div>
+          )
+        }
+        
+        let fileName = url.split('/').pop() || `Attachment ${i + 1}`
+        try { fileName = decodeURIComponent(fileName) } catch {}
+        
+        return (
+          <div key={i} className="flex items-center justify-between bg-blue-50/50 p-2 rounded-xl border border-blue-100 group">
+            <div className="flex items-center gap-2 truncate pr-2">
+              <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+              <span className="text-sm font-medium truncate text-slate-700">{fileName}</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <a href={url} target="_blank" rel="noreferrer" className="h-8 w-8 flex items-center justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg" title="View">
+                <LinkIcon className="h-4 w-4" />
+              </a>
+              <a href={url} download target="_blank" rel="noreferrer" className="h-8 w-8 flex items-center justify-center bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg" title="Download">
+                <Download className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+
 function AssignmentTimer({ a, supabase, refresh, canEdit }: { a: any, supabase: any, refresh: () => void, canEdit: boolean }) {
   const [running, setRunning] = React.useState(false)
   const [seconds, setSeconds] = React.useState(a.time_spent_seconds || 0)
@@ -68,7 +163,6 @@ function AssignmentTimer({ a, supabase, refresh, canEdit }: { a: any, supabase: 
   const toggle = async () => {
     if (!canEdit) return;
     if (running) {
-      // stopping, save time
       await supabase.from("homework").update({ time_spent_seconds: seconds }).eq("id", a.id)
     }
     setRunning(!running)
@@ -148,7 +242,7 @@ function ProgressBar({ assignment, supabase, refresh, canEdit }: { assignment: a
   )
 }
 
-function CommentSection({ assignment, supabase, refresh, canEdit }: { assignment: any, supabase: any, refresh: () => void, canEdit: boolean }) {
+function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { assignment: any, supabase: any, profile: any, refresh: () => void, canEdit: boolean }) {
   const [newComment, setNewComment] = React.useState("")
   const [sending, setSending] = React.useState(false)
 
@@ -164,7 +258,8 @@ function CommentSection({ assignment, supabase, refresh, canEdit }: { assignment
   const addComment = async () => {
     if (!newComment.trim() || !canEdit) return
     setSending(true)
-    const updated = [...existingComments, `${new Date().toLocaleDateString()} — ${newComment.trim()}`]
+    const author = profile?.display_name || "Someone"
+    const updated = [...existingComments, `**${author}** on ${new Date().toLocaleDateString()} — ${newComment.trim()}`]
     await supabase.from("homework").update({ comments: JSON.stringify(updated) }).eq("id", assignment.id)
     setNewComment("")
     setSending(false)
@@ -179,11 +274,26 @@ function CommentSection({ assignment, supabase, refresh, canEdit }: { assignment
       </div>
       {existingComments.length > 0 && (
         <div className="space-y-1.5 max-h-28 overflow-y-auto">
-          {existingComments.map((c, i) => (
-            <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-              {c}
-            </div>
-          ))}
+          {existingComments.map((c, i) => {
+            // Handle markdown-ish bold for authors if present
+            const isBoldAuthored = c.startsWith('**') && c.includes('** on');
+            if (isBoldAuthored) {
+              const authorEnd = c.indexOf('** on');
+              const author = c.substring(2, authorEnd);
+              const rest = c.substring(authorEnd + 5);
+              return (
+                <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
+                  <span className="font-bold text-primary">{author}</span> on {rest}
+                </div>
+              )
+            }
+
+            return (
+              <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
+                {c}
+              </div>
+            )
+          })}
         </div>
       )}
       {canEdit && (
@@ -209,6 +319,149 @@ function CommentSection({ assignment, supabase, refresh, canEdit }: { assignment
   )
 }
 
+function RemindersDialog({ a, supabase, refresh, profile }: { a: any, supabase: any, refresh: () => void, profile: any }) {
+  const [open, setOpen] = React.useState(false)
+  const [date, setDate] = React.useState("")
+  const [time, setTime] = React.useState("")
+  const [message, setMessage] = React.useState("")
+  const [pushEmail, setPushEmail] = React.useState(false)
+  const [pushWhatsapp, setPushWhatsapp] = React.useState(false)
+  const [pushDashboard, setPushDashboard] = React.useState(true)
+  const [saving, setSaving] = React.useState(false)
+
+  const reminders = a.reminders || []
+
+  const handleAdd = async () => {
+    if (!date || !time || !message || saving) return
+    setSaving(true)
+    
+    const newReminder = {
+      id: Date.now().toString(),
+      date,
+      time,
+      message,
+      pushEmail,
+      pushWhatsapp,
+      pushDashboard,
+      created_at: new Date().toISOString()
+    }
+
+    const updated = [...reminders, newReminder]
+    
+    try {
+      await supabase.from("homework").update({ reminders: updated }).eq("id", a.id)
+      
+      if (pushDashboard && profile?.family_id) {
+        // Send a broadcast immediately for demonstration (or it would be a background job)
+        await supabase.from("broadcasts").insert([{
+          family_id: profile.family_id,
+          message: `Reminder for ${a.title}: ${message}`,
+          type: "reminder"
+        }])
+      }
+
+      setDate("")
+      setTime("")
+      setMessage("")
+      setPushEmail(false)
+      setPushWhatsapp(false)
+      setPushDashboard(true)
+      refresh()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const updated = reminders.filter((r: any) => r.id !== id)
+    await supabase.from("homework").update({ reminders: updated }).eq("id", a.id)
+    refresh()
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary relative"
+          title="Reminders"
+        >
+          <Bell className="h-3.5 w-3.5" />
+          {reminders.length > 0 && (
+            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="rounded-2xl max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Assignment Reminders</DialogTitle>
+          <DialogDescription>Set up multiple reminders to notify everyone.</DialogDescription>
+        </DialogHeader>
+        
+        {reminders.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {reminders.map((r: any) => (
+              <div key={r.id} className="p-3 bg-slate-50 rounded-xl flex items-start justify-between border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold">{r.message}</p>
+                  <p className="text-xs text-muted-foreground">{r.date} at {r.time}</p>
+                  <div className="flex gap-1 mt-1">
+                    {r.pushEmail && <Badge variant="outline" className="text-[9px] px-1 py-0"><Mail className="w-2 h-2 mr-1"/>Email</Badge>}
+                    {r.pushWhatsapp && <Badge variant="outline" className="text-[9px] px-1 py-0"><MessageCircle className="w-2 h-2 mr-1"/>WhatsApp</Badge>}
+                    {r.pushDashboard && <Badge variant="outline" className="text-[9px] px-1 py-0"><Monitor className="w-2 h-2 mr-1"/>Dashboard</Badge>}
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(r.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-3 pt-4 border-t">
+          <Label className="font-bold">Add New Reminder</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label className="text-xs">Date</Label>
+              <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="h-8" />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-xs">Time</Label>
+              <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="h-8" />
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <Label className="text-xs">Message</Label>
+            <Input placeholder="e.g. Don't forget to pack your diorama!" value={message} onChange={e => setMessage(e.target.value)} className="h-8" />
+          </div>
+          <div className="grid gap-2 mt-2">
+            <Label className="text-xs font-bold">Push Notifications via:</Label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
+                <Checkbox checked={pushDashboard} onCheckedChange={(c) => setPushDashboard(c as boolean)} /> Dashboard
+              </label>
+              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
+                <Checkbox checked={pushEmail} onCheckedChange={(c) => setPushEmail(c as boolean)} /> Email
+              </label>
+              <label className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
+                <Checkbox checked={pushWhatsapp} onCheckedChange={(c) => setPushWhatsapp(c as boolean)} /> WhatsApp
+              </label>
+            </div>
+          </div>
+          <Button className="mt-2 h-8 rounded-lg" onClick={handleAdd} disabled={saving || !date || !time || !message}>
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3 mr-2" />}
+            Save Reminder
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function SchoolPage() {
   const { profile } = useUser()
   const supabase = useSupabase()
@@ -217,16 +470,24 @@ export default function SchoolPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [uploadingId, setUploadingId] = React.useState<string | null>(null)
+  
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
 
   // Form State
   const [title, setTitle] = React.useState("")
   const [subject, setSubject] = React.useState("Math")
   const [childName, setChildName] = React.useState("Gina")
   const [category, setCategory] = React.useState("Daily Homework")
-  const [comment, setComment] = React.useState("")
   const [activeTab, setActiveTab] = React.useState("active")
   const [dueDate, setDueDate] = React.useState("")
-  const [newFile, setNewFile] = React.useState<File | null>(null)
+  const [newFiles, setNewFiles] = React.useState<FileList | null>(null)
+  
+  const { isRecording, startRecording, stopRecording, audioBlob, discardRecording } = useAudioRecorder()
+
+  // Submission State
+  const [submitComment, setSubmitComment] = React.useState("")
+  const [submitFiles, setSubmitFiles] = React.useState<FileList | null>(null)
+  const submitAudio = useAudioRecorder()
 
   // Edit State
   const [editingAssignment, setEditingAssignment] = React.useState<any>(null)
@@ -328,24 +589,45 @@ export default function SchoolPage() {
     }
   }
 
+  const uploadFilesToSupabase = async (files: FileList | null, audio: Blob | null, folder: string) => {
+    if (!supabase || !profile?.family_id) return []
+    const uploadedUrls: string[] = []
+
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        const filePath = `${profile.family_id}/${folder}/${fileName}`
+        
+        const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, file)
+        if (!uploadError) {
+          const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+          uploadedUrls.push(data.publicUrl)
+        }
+      }
+    }
+
+    if (audio) {
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.webm`
+      const filePath = `${profile.family_id}/${folder}/${fileName}`
+      const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, audio, { contentType: 'audio/webm' })
+      if (!uploadError) {
+        const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+        uploadedUrls.push(data.publicUrl)
+      }
+    }
+
+    return uploadedUrls;
+  }
+
   const handleAddAssignment = async () => {
     if (!supabase || !profile?.family_id || !title) return
 
     setIsSubmitting(true)
-    let attachmentUrl = null;
 
     try {
-      if (newFile) {
-        const fileExt = newFile.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${profile.family_id}/new/${fileName}`
-        
-        const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, newFile)
-        if (uploadError) throw uploadError
-        
-        const { data: urlData } = supabase.storage.from('homework_files').getPublicUrl(filePath)
-        attachmentUrl = urlData.publicUrl
-      }
+      const attachmentUrls = await uploadFilesToSupabase(newFiles, audioBlob, 'new')
 
       const data = {
         family_id: profile.family_id,
@@ -358,8 +640,9 @@ export default function SchoolPage() {
         progress: 0,
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
         created_at: new Date().toISOString(),
-        attachment_url: attachmentUrl,
-        delegated_to: []
+        attachments: attachmentUrls,
+        delegated_to: [],
+        reminders: []
       }
 
       const { error } = await supabase.from("homework").insert([data])
@@ -367,7 +650,8 @@ export default function SchoolPage() {
 
       setIsDialogOpen(false)
       setTitle("")
-      setNewFile(null)
+      setNewFiles(null)
+      discardRecording()
       refresh()
       toast({ title: "Assignment Added", description: `Added ${title} for ${childName}.` })
     } catch (err: any) {
@@ -378,27 +662,36 @@ export default function SchoolPage() {
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string, commentTxt: string) => {
-    if (!e.target.files || e.target.files.length === 0 || !supabase) return
-    const file = e.target.files[0]
+  const handleSubmitWork = async (assignmentId: string) => {
+    if (!supabase || !profile?.family_id) return
     
-    setUploadingId(id)
+    setUploadingId(assignmentId)
     try {
-       const fileExt = file.name.split('.').pop()
-       const fileName = `${Math.random()}.${fileExt}`
-       const filePath = `${profile?.family_id}/${id}/${fileName}`
+       const submissionUrls = await uploadFilesToSupabase(submitFiles, submitAudio.audioBlob, assignmentId)
        
-       const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, file)
-       if (uploadError) throw uploadError
+       const assignment = assignments?.find(a => a.id === assignmentId)
+       const existingSubmissions = assignment?.submissions || []
+       const newSubmissions = [...existingSubmissions, ...submissionUrls]
+
+       const updates: any = { submissions: newSubmissions }
        
-       const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+       if (submitComment.trim()) {
+          const author = profile?.display_name || "Someone"
+          const existingComments = (() => {
+            try { return assignment?.comments ? JSON.parse(assignment.comments) : [] } catch { return assignment?.comments ? [assignment.comments] : [] }
+          })()
+          const newComments = [...existingComments, `**${author}** on ${new Date().toLocaleDateString()} — ${submitComment.trim()}`]
+          updates.comments = JSON.stringify(newComments)
+       }
+
+       await supabase.from("homework").update(updates).eq("id", assignmentId)
        
-       await supabase.from("homework").update({ 
-         submission_url: data.publicUrl,
-         comments: commentTxt 
-       }).eq("id", id)
+       toast({ title: "Work Attached!", description: "Files uploaded successfully.", className: "bg-emerald-500 text-white" })
        
-       toast({ title: "File Uploaded!", description: "Work attached successfully.", className: "bg-emerald-500 text-white" })
+       setSubmitFiles(null)
+       setSubmitComment("")
+       submitAudio.discardRecording()
+       
        refresh()
     } catch (error: any) {
        toast({ title: "Upload Failed", description: error.message, variant: "destructive" })
@@ -440,8 +733,10 @@ export default function SchoolPage() {
 
   const childrenList = ["Gina", "Natalie", "Tinashe"];
 
+  const filteredAssignments = assignments?.filter((a: any) => (activeTab === "active" ? a.status === "pending" : a.status === "done")) || []
+
   return (
-    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 pr-14">
+    <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 pr-14 relative">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <div className="flex items-center gap-3 mb-1">
@@ -453,13 +748,24 @@ export default function SchoolPage() {
           <p className="text-muted-foreground font-bold text-sm">Keep track of all your assignments and turn them in!</p>
         </div>
         {isParent && (
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+           <Dialog open={isDialogOpen} onOpenChange={(open) => {
+             setIsDialogOpen(open)
+             if (!open) {
+               discardRecording()
+               setNewFiles(null)
+             }
+           }}>
              <DialogTrigger asChild>
-               <Button className="rounded-xl h-11 px-6 font-black uppercase tracking-wider bg-primary shadow-lg shadow-primary/20">
-                 <Plus className="h-4 w-4 mr-2" /> Add Homework
-               </Button>
+               <>
+                 <Button className="hidden md:flex rounded-xl h-11 px-6 font-black uppercase tracking-wider bg-primary shadow-lg shadow-primary/20">
+                   <Plus className="h-4 w-4 mr-2" /> Add Homework
+                 </Button>
+                 <Button className="md:hidden fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl bg-primary z-50 p-0 flex items-center justify-center">
+                   <Plus className="h-6 w-6" />
+                 </Button>
+               </>
              </DialogTrigger>
-             <DialogContent className="rounded-2xl">
+             <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
                <DialogHeader>
                  <DialogTitle>New School Task</DialogTitle>
                  <DialogDescription>Add a new assignment or study goal.</DialogDescription>
@@ -511,15 +817,35 @@ export default function SchoolPage() {
                    </div>
                  </div>
                  <div className="grid gap-2">
-                   <Label>Attachment (Optional worksheet/instructions)</Label>
+                   <Label>Attachments (Documents, Photos)</Label>
                    <Input 
-                     type="file" 
-                     onChange={(e) => {
-                       if (e.target.files && e.target.files.length > 0) {
-                         setNewFile(e.target.files[0])
-                       }
-                     }} 
+                     type="file"
+                     multiple
+                     onChange={(e) => setNewFiles(e.target.files)} 
                    />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label>Voice Note (Instructions)</Label>
+                   <div className="flex items-center gap-3">
+                     {!isRecording && !audioBlob && (
+                       <Button type="button" variant="outline" className="rounded-xl w-full" onClick={startRecording}>
+                         <Mic className="h-4 w-4 mr-2" /> Start Recording
+                       </Button>
+                     )}
+                     {isRecording && (
+                       <Button type="button" variant="destructive" className="rounded-xl w-full animate-pulse" onClick={stopRecording}>
+                         <Square className="h-4 w-4 mr-2" /> Stop Recording
+                       </Button>
+                     )}
+                     {audioBlob && (
+                       <div className="flex items-center gap-2 w-full">
+                         <audio controls src={URL.createObjectURL(audioBlob)} className="h-10 flex-1" />
+                         <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={discardRecording}>
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     )}
+                   </div>
                  </div>
                </div>
                <DialogFooter>
@@ -619,7 +945,6 @@ export default function SchoolPage() {
             <p className="text-sm text-muted-foreground font-bold">Select who can modify this assignment:</p>
             <div className="flex flex-col gap-2">
               {childrenList.map(c => {
-                // Don't show the child who already owns it
                 if (c === delegatingAssignment?.child_name) return null;
                 const isDelegated = delegateTo.includes(c);
                 return (
@@ -646,26 +971,102 @@ export default function SchoolPage() {
       </Dialog>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-2xl w-full max-w-sm mb-6 flex h-auto">
-          <TabsTrigger value="active" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">Active</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">History</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-6">
+          <TabsList className="bg-muted/50 p-1 rounded-2xl w-full max-w-sm flex h-auto relative z-10">
+            <TabsTrigger value="active" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">Active</TabsTrigger>
+            <TabsTrigger value="history" className="rounded-xl font-bold py-2 flex-1 data-[state=active]:shadow-lg">History</TabsTrigger>
+          </TabsList>
+          
+          <div className="bg-muted/50 p-1 rounded-xl flex items-center gap-1 hidden sm:flex">
+            <Button 
+              variant={viewMode === "grid" ? "default" : "ghost"} 
+              size="icon" 
+              className={`h-8 w-8 rounded-lg ${viewMode === "grid" ? "shadow-sm" : ""}`}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === "list" ? "default" : "ghost"} 
+              size="icon" 
+              className={`h-8 w-8 rounded-lg ${viewMode === "list" ? "shadow-sm" : ""}`}
+              onClick={() => setViewMode("list")}
+            >
+              <ListIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
         <div className="space-y-4">
 
         {loading ? (
-          [1,2,3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-3xl" />)
-        ) : (!assignments || assignments.length === 0) ? (
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
+            {[1,2,3].map(i => <div key={i} className="h-40 bg-muted animate-pulse rounded-3xl" />)}
+          </div>
+        ) : filteredAssignments.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-[3rem] shadow-xl">
             <BookOpen className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
             <h3 className="font-black text-2xl uppercase tracking-tighter text-primary">No Homework!</h3>
             <p className="text-muted-foreground font-bold mt-2">Time to play in the Arcade!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
-            {assignments?.filter((a: any) => (activeTab === "active" ? a.status === "pending" : a.status === "done")).map((a: any) => {
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
+            {filteredAssignments.map((a: any) => {
               const canEdit = canEditAssignment(a);
               const isOwnerOrParent = isParent || a.child_name === profile?.display_name;
+
+              let allAttachments = [...(a.attachments || [])];
+              if (a.attachment_url && !allAttachments.includes(a.attachment_url)) allAttachments.push(a.attachment_url);
+
+              let allSubmissions = [...(a.submissions || [])];
+              if (a.submission_url && !allSubmissions.includes(a.submission_url)) allSubmissions.push(a.submission_url);
+
+              if (viewMode === "list") {
+                return (
+                  <Card key={a.id} className={`rounded-3xl border-none shadow-sm overflow-hidden flex flex-col sm:flex-row ${a.status === 'done' ? 'bg-emerald-50/50' : 'bg-white'}`}>
+                    <div className={`h-full w-2 shrink-0 ${a.status === 'done' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                    <CardContent className="p-4 sm:p-6 flex-1 flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="flex-1">
+                        <div className="flex gap-2 flex-wrap mb-2">
+                          <Badge className={`border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 ${getSubjectColor(a.subject)}`}>{a.subject}</Badge>
+                          {a.category && <Badge variant="outline" className="border-primary/20 font-black text-[10px] uppercase tracking-wider px-3 py-1 text-primary">{a.category}</Badge>}
+                        </div>
+                        <h4 className="font-black text-lg mb-1">{a.title}</h4>
+                        <div className="flex items-center text-xs font-bold text-muted-foreground gap-4">
+                           <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d") : "No date"}</span>
+                           <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col justify-center min-w-[200px]">
+                        <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:flex-col shrink-0">
+                        {canEdit && a.status === "pending" && (
+                          <Button onClick={() => toggleStatus(a.id, a.status)} className="rounded-xl font-bold bg-primary text-white flex-1 sm:w-full">Mark Done</Button>
+                        )}
+                        {canEdit && a.status === "done" && (
+                          <Button onClick={() => toggleStatus(a.id, a.status)} variant="outline" className="rounded-xl font-bold flex-1 sm:w-full">Mark Incomplete</Button>
+                        )}
+                        <div className="flex gap-1 justify-end">
+                          <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} />
+                          {isOwnerOrParent && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" onClick={() => openDelegateDialog(a)}>
+                              <Users className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {isParent && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" onClick={() => openEditDialog(a)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              }
 
               return (
               <Card key={a.id} className={`rounded-3xl border-none shadow-xl overflow-hidden ${a.status === 'done' ? 'bg-emerald-50/50' : 'bg-white'}`}>
@@ -688,6 +1089,7 @@ export default function SchoolPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
+                      <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} />
                       {isOwnerOrParent && (
                         <Button
                           size="icon"
@@ -722,25 +1124,18 @@ export default function SchoolPage() {
                      <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
                   </div>
 
-                  {/* Progress Bar */}
                   <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
 
                   {a.status === "pending" ? (
                      <div className="flex flex-col gap-3 mt-4">
                         <AssignmentTimer a={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                        
                         <div className="flex flex-col gap-2 mt-2">
-                          {a.attachment_url && (
-                             <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
-                                <LinkIcon className="h-4 w-4 mr-2" /> View Worksheet
-                             </a>
-                          )}
-                          {a.submission_url && (
-                             <a href={a.submission_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors">
-                                <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
-                             </a>
-                          )}
+                          <FileList files={allAttachments} title="Instructions" />
+                          <FileList files={allSubmissions} title="Submitted Work" />
+
                           {canEdit && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mt-2">
                               <Button 
                                 onClick={() => toggleStatus(a.id, a.status)}
                                 className="flex-1 rounded-xl font-bold h-12 bg-primary text-white"
@@ -748,17 +1143,23 @@ export default function SchoolPage() {
                                 Mark Done
                               </Button>
                               
-                            <Dialog>
+                            <Dialog onOpenChange={(open) => {
+                              if (!open) {
+                                submitAudio.discardRecording();
+                                setSubmitFiles(null);
+                                setSubmitComment("");
+                              }
+                            }}>
                               <DialogTrigger asChild>
                                 <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
                                   {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                                   {uploadingId !== a.id && "Attach Work"}
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="rounded-2xl">
+                              <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Upload Completed Work</DialogTitle>
-                                  <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                                  <DialogDescription>Add photos, documents, and voice notes for your completed work.</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                   <div className="grid gap-2">
@@ -766,54 +1167,75 @@ export default function SchoolPage() {
                                     <Textarea 
                                       placeholder="e.g. Struggled with question 4" 
                                       className="rounded-xl"
-                                      onChange={(e) => setComment(e.target.value)}
+                                      value={submitComment}
+                                      onChange={(e) => setSubmitComment(e.target.value)}
                                     />
                                   </div>
                                   <div className="grid gap-2">
-                                    <Label>Upload Photo / Document</Label>
+                                    <Label>Photos / Documents</Label>
                                     <Input 
                                       type="file" 
+                                      multiple
                                       accept="image/*,application/pdf"
-                                      capture="environment"
                                       className="rounded-xl"
-                                      onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                      onChange={(e) => setSubmitFiles(e.target.files)}
                                     />
                                   </div>
+                                  <div className="grid gap-2">
+                                    <Label>Voice Note (Optional)</Label>
+                                    <div className="flex items-center gap-3">
+                                      {!submitAudio.isRecording && !submitAudio.audioBlob && (
+                                        <Button type="button" variant="outline" className="rounded-xl w-full" onClick={submitAudio.startRecording}>
+                                          <Mic className="h-4 w-4 mr-2" /> Start Recording
+                                        </Button>
+                                      )}
+                                      {submitAudio.isRecording && (
+                                        <Button type="button" variant="destructive" className="rounded-xl w-full animate-pulse" onClick={submitAudio.stopRecording}>
+                                          <Square className="h-4 w-4 mr-2" /> Stop Recording
+                                        </Button>
+                                      )}
+                                      {submitAudio.audioBlob && (
+                                        <div className="flex items-center gap-2 w-full">
+                                          <audio controls src={URL.createObjectURL(submitAudio.audioBlob)} className="h-10 flex-1" />
+                                          <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={submitAudio.discardRecording}>
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
+                                <DialogFooter>
+                                  <Button onClick={() => handleSubmitWork(a.id)} disabled={uploadingId === a.id || (!submitFiles && !submitAudio.audioBlob && !submitComment)}>
+                                    {uploadingId === a.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Upload & Save
+                                  </Button>
+                                </DialogFooter>
                               </DialogContent>
                             </Dialog>
 
                             </div>
                           )}
                           {!canEdit && (
-                            <div className="bg-slate-50 text-slate-500 font-bold text-xs p-3 rounded-xl text-center border border-slate-100">
+                            <div className="bg-slate-50 text-slate-500 font-bold text-xs p-3 rounded-xl text-center border border-slate-100 mt-2">
                               You do not have access to modify this assignment.
                             </div>
                           )}
                         </div>
 
-                        {/* Comments Section */}
-                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                        <CommentSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
                      </div>
                   ) : (
                      <div className="flex flex-col gap-2 mt-4">
-                        {a.attachment_url && (
-                           <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
-                              <LinkIcon className="h-4 w-4 mr-2" /> View Worksheet
-                           </a>
-                        )}
-                        {a.submission_url && (
-                           <a href={a.submission_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition-colors">
-                              <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
-                           </a>
-                        )}
-                        <div className="text-xs font-bold text-slate-500 mt-1">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
+                        <FileList files={allAttachments} title="Instructions" />
+                        <FileList files={allSubmissions} title="Submitted Work" />
                         
-                        {/* Comments Section for done items */}
-                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                        <div className="text-xs font-bold text-slate-500 mt-2">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
+                        
+                        <CommentSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
 
                         {canEdit && (
-                          <div className="flex gap-2 mt-2">
+                          <div className="flex gap-2 mt-4">
                              <Button 
                                onClick={() => toggleStatus(a.id, a.status)}
                                variant="ghost" 
@@ -822,17 +1244,23 @@ export default function SchoolPage() {
                                 Mark Incomplete
                              </Button>
                              
-                            <Dialog>
+                             <Dialog onOpenChange={(open) => {
+                              if (!open) {
+                                submitAudio.discardRecording();
+                                setSubmitFiles(null);
+                                setSubmitComment("");
+                              }
+                            }}>
                               <DialogTrigger asChild>
                                 <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
                                   {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                                  {uploadingId !== a.id && "Attach Work"}
+                                  {uploadingId !== a.id && "Attach More Work"}
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="rounded-2xl">
+                              <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Upload Completed Work</DialogTitle>
-                                  <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                                  <DialogDescription>Add photos, documents, and voice notes for your completed work.</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                   <div className="grid gap-2">
@@ -840,20 +1268,50 @@ export default function SchoolPage() {
                                     <Textarea 
                                       placeholder="e.g. Struggled with question 4" 
                                       className="rounded-xl"
-                                      onChange={(e) => setComment(e.target.value)}
+                                      value={submitComment}
+                                      onChange={(e) => setSubmitComment(e.target.value)}
                                     />
                                   </div>
                                   <div className="grid gap-2">
-                                    <Label>Upload Photo / Document</Label>
+                                    <Label>Photos / Documents</Label>
                                     <Input 
                                       type="file" 
+                                      multiple
                                       accept="image/*,application/pdf"
-                                      capture="environment"
                                       className="rounded-xl"
-                                      onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                      onChange={(e) => setSubmitFiles(e.target.files)}
                                     />
                                   </div>
+                                  <div className="grid gap-2">
+                                    <Label>Voice Note (Optional)</Label>
+                                    <div className="flex items-center gap-3">
+                                      {!submitAudio.isRecording && !submitAudio.audioBlob && (
+                                        <Button type="button" variant="outline" className="rounded-xl w-full" onClick={submitAudio.startRecording}>
+                                          <Mic className="h-4 w-4 mr-2" /> Start Recording
+                                        </Button>
+                                      )}
+                                      {submitAudio.isRecording && (
+                                        <Button type="button" variant="destructive" className="rounded-xl w-full animate-pulse" onClick={submitAudio.stopRecording}>
+                                          <Square className="h-4 w-4 mr-2" /> Stop Recording
+                                        </Button>
+                                      )}
+                                      {submitAudio.audioBlob && (
+                                        <div className="flex items-center gap-2 w-full">
+                                          <audio controls src={URL.createObjectURL(submitAudio.audioBlob)} className="h-10 flex-1" />
+                                          <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={submitAudio.discardRecording}>
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
+                                <DialogFooter>
+                                  <Button onClick={() => handleSubmitWork(a.id)} disabled={uploadingId === a.id || (!submitFiles && !submitAudio.audioBlob && !submitComment)}>
+                                    {uploadingId === a.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Upload & Save
+                                  </Button>
+                                </DialogFooter>
                               </DialogContent>
                             </Dialog>
   
