@@ -291,7 +291,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
 
             return (
               <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                <span className="font-bold text-primary">Unknown</span> on {c}
+                {c}
               </div>
             )
           })}
