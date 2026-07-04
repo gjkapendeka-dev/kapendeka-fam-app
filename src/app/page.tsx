@@ -328,9 +328,8 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
-        </div>
-          </div>
-        </TabsContent>
+      </div>
+    </TabsContent>
 
         <TabsContent value="broadcasts">
           <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
