@@ -333,7 +333,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
 
   const renderCommentText = (text: string) => {
     if (!text) return null;
-    const parts = text.split(/(?<=\s|^)(@[a-zA-Z0-9_]+)(?=\s|$|[.,!?])/g);
+    const parts = text.split(/(@[a-zA-Z0-9_]+)/g);
     return parts.map((part, idx) => {
       if (part.startsWith('@')) {
         return <span key={idx} className="font-bold text-primary bg-primary/10 px-1 rounded mx-0.5">{part}</span>;
@@ -1025,7 +1025,7 @@ export default function SchoolPage() {
               <div className="h-10 w-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg">
                  <GraduationCap className="h-6 w-6" />
               </div>
-              <h1 className="text-3xl font-black uppercase italic tracking-tight text-primary">School & Homework</h1>
+              <h1 className="text-3xl font-black uppercase tracking-tight text-primary">School & Homework</h1>
            </div>
           <p className="text-muted-foreground font-bold text-sm">Keep track of all your assignments and turn them in!</p>
         </div>
@@ -1321,7 +1321,7 @@ export default function SchoolPage() {
                         <h4 className="font-black text-lg mb-1">{a.title}</h4>
                         <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mt-2 mb-2">
                            <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
-                           <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide" style={{ backgroundColor: themeColor }}>{a.child_name}</span>
+                           <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide bg-primary" style={{ backgroundColor: themeColor !== "var(--primary)" ? themeColor : undefined }}>{a.child_name || "Student"}</span>
                            <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
                            {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                         </div>
@@ -1423,7 +1423,7 @@ export default function SchoolPage() {
                   <h4 className="font-black text-xl mb-1">{a.title}</h4>
                   <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mb-4">
                      <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
-                     <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide" style={{ backgroundColor: themeColor }}>{a.child_name}</span>
+                     <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide bg-primary" style={{ backgroundColor: themeColor !== "var(--primary)" ? themeColor : undefined }}>{a.child_name || "Student"}</span>
                      <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
                      {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                   </div>
