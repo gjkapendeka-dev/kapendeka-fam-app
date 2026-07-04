@@ -98,20 +98,23 @@ export default function MealPlannerPage() {
     try {
       if (currentPlan) {
         const updatedDays = { ...currentPlan.days, [selectedDay]: { dinner: recipeId } };
-        await supabase.from("meal_plans").update({ days: updatedDays }).eq("id", currentPlan.id);
+        const { error } = await supabase.from("meal_plans").update({ days: updatedDays }).eq("id", currentPlan.id);
+        if (error) throw error;
       } else {
         const newPlan = {
           family_id: profile.family_id,
           week_start: new Date().toISOString().split('T')[0],
           days: { [selectedDay]: { dinner: recipeId } }
         };
-        await supabase.from("meal_plans").insert([newPlan]);
+        const { error } = await supabase.from("meal_plans").insert([newPlan]);
+        if (error) throw error;
       }
       if (refreshMealPlan) refreshMealPlan();
       setSelectedDay(null);
       toast({ title: "Meal Assigned", description: `Assigned to ${selectedDay}.` })
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to assign meal." })
+    } catch (e: any) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Error", description: e.message || "Failed to assign meal." })
     }
   }
 
@@ -149,13 +152,15 @@ export default function MealPlannerPage() {
     }
 
     try {
-      await supabase.from("recipes").insert([recipeData])
+      const { error } = await supabase.from("recipes").insert([recipeData])
+      if (error) throw error
       if (refreshRecipes) refreshRecipes()
       setIsAddOpen(false)
       setNewRecipeTitle("")
       toast({ title: "Recipe Added", description: "Start adding ingredients to your new recipe!" })
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not save recipe." })
+    } catch (e: any) {
+      console.error(e)
+      toast({ variant: "destructive", title: "Error", description: e.message || "Could not save recipe." })
     }
   }
 
@@ -180,22 +185,23 @@ export default function MealPlannerPage() {
       })
 
       if (!supabase) return
-      await supabase.from("shopping_lists").insert([{
+      const { error } = await supabase.from("shopping_lists").insert([{
         family_id: profile?.family_id,
         name: result.listName,
         items: result.items.map(item => ({ ...item, checked: false })),
         is_auto_generated: true,
         created_at: new Date().toISOString()
       }])
+      if (error) throw error;
 
       toast({
         title: "Shopping List Generated!",
         description: `Created "${result.listName}" with ${result.items.length} items.`,
       })
       router.push("/shopping")
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
-      toast({ variant: "destructive", title: "AI Error", description: "Failed to generate shopping list." })
+      toast({ variant: "destructive", title: "AI Error", description: e.message || "Failed to generate shopping list." })
     } finally {
       setIsGeneratingList(false)
     }
@@ -248,7 +254,8 @@ export default function MealPlannerPage() {
         created_at: new Date().toISOString(),
       }
       
-      await supabase.from("recipes").insert([recipeData])
+      const { error } = await supabase.from("recipes").insert([recipeData])
+      if (error) throw error;
       if (refreshRecipes) refreshRecipes()
       
       toast({
@@ -256,12 +263,12 @@ export default function MealPlannerPage() {
         description: `"${result.title}" has been added to your recipe box.`,
       })
       stopCamera()
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
       toast({
         variant: "destructive",
         title: "Scan Failed",
-        description: "Could not identify the recipe. Please try again with better lighting.",
+        description: e.message || "Could not identify recipe from image.",
       })
     } finally {
       setIsScanning(false)
