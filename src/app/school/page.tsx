@@ -17,7 +17,10 @@ import {
   Timer as TimerIcon,
   Play,
   Pause,
-  MessageSquare
+  MessageSquare,
+  Pencil,
+  Trash2,
+  Send
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -85,6 +88,121 @@ function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refr
   )
 }
 
+function ProgressBar({ assignment, supabase, refresh }: { assignment: any, supabase: any, refresh: () => void }) {
+  const progress = assignment.progress || 0
+  const [localProgress, setLocalProgress] = React.useState(progress)
+  const [saving, setSaving] = React.useState(false)
+  const debounceRef = React.useRef<any>(null)
+
+  React.useEffect(() => {
+    setLocalProgress(assignment.progress || 0)
+  }, [assignment.progress])
+
+  const handleChange = (val: number) => {
+    setLocalProgress(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setSaving(true)
+      await supabase.from("homework").update({ progress: val }).eq("id", assignment.id)
+      setSaving(false)
+      refresh()
+    }, 500)
+  }
+
+  const getProgressColor = (p: number) => {
+    if (p >= 80) return "bg-emerald-500"
+    if (p >= 50) return "bg-amber-500"
+    if (p >= 25) return "bg-orange-500"
+    return "bg-red-400"
+  }
+
+  return (
+    <div className="w-full space-y-1.5">
+      <div className="flex items-center justify-between text-xs font-bold">
+        <span className="text-muted-foreground">Progress</span>
+        <span className={`tabular-nums ${localProgress >= 80 ? 'text-emerald-600' : localProgress >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+          {localProgress}%
+          {saving && <Loader2 className="inline h-3 w-3 ml-1 animate-spin" />}
+        </span>
+      </div>
+      <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div 
+          className={`h-full rounded-full transition-all duration-300 ${getProgressColor(localProgress)}`}
+          style={{ width: `${localProgress}%` }}
+        />
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={localProgress}
+        onChange={(e) => handleChange(Number(e.target.value))}
+        className="w-full h-1 accent-primary cursor-pointer"
+      />
+    </div>
+  )
+}
+
+function CommentSection({ assignment, supabase, refresh }: { assignment: any, supabase: any, refresh: () => void }) {
+  const [newComment, setNewComment] = React.useState("")
+  const [sending, setSending] = React.useState(false)
+
+  const existingComments: string[] = React.useMemo(() => {
+    if (!assignment.comments) return []
+    try {
+      const parsed = JSON.parse(assignment.comments)
+      if (Array.isArray(parsed)) return parsed
+    } catch {}
+    return assignment.comments ? [assignment.comments] : []
+  }, [assignment.comments])
+
+  const addComment = async () => {
+    if (!newComment.trim()) return
+    setSending(true)
+    const updated = [...existingComments, `${new Date().toLocaleDateString()} — ${newComment.trim()}`]
+    await supabase.from("homework").update({ comments: JSON.stringify(updated) }).eq("id", assignment.id)
+    setNewComment("")
+    setSending(false)
+    refresh()
+  }
+
+  return (
+    <div className="space-y-2 mt-2">
+      <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+        <MessageSquare className="h-3 w-3" />
+        Comments {existingComments.length > 0 && `(${existingComments.length})`}
+      </div>
+      {existingComments.length > 0 && (
+        <div className="space-y-1.5 max-h-28 overflow-y-auto">
+          {existingComments.map((c, i) => (
+            <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
+              {c}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-1.5">
+        <Input
+          placeholder="Add a comment..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          className="h-8 text-xs rounded-lg"
+          onKeyDown={(e) => e.key === "Enter" && addComment()}
+        />
+        <Button 
+          size="icon" 
+          className="h-8 w-8 rounded-lg shrink-0" 
+          onClick={addComment}
+          disabled={!newComment.trim() || sending}
+        >
+          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function SchoolPage() {
   const { profile } = useUser()
   const supabase = useSupabase()
@@ -104,6 +222,16 @@ export default function SchoolPage() {
   const [dueDate, setDueDate] = React.useState("")
   const [newFile, setNewFile] = React.useState<File | null>(null)
 
+  // Edit State
+  const [editingAssignment, setEditingAssignment] = React.useState<any>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+  const [editTitle, setEditTitle] = React.useState("")
+  const [editSubject, setEditSubject] = React.useState("")
+  const [editChildName, setEditChildName] = React.useState("")
+  const [editCategory, setEditCategory] = React.useState("")
+  const [editDueDate, setEditDueDate] = React.useState("")
+  const [isEditSubmitting, setIsEditSubmitting] = React.useState(false)
+
   const [refreshCount, setRefreshCount] = React.useState(0)
   const refresh = () => setRefreshCount(c => c + 1)
 
@@ -113,6 +241,51 @@ export default function SchoolPage() {
   }, [supabase, profile?.family_id, refreshCount])
 
   const { data: assignments, loading } = useCollection(homeworkQuery)
+
+  const openEditDialog = (a: any) => {
+    setEditingAssignment(a)
+    setEditTitle(a.title || "")
+    setEditSubject(a.subject || "Math")
+    setEditChildName(a.child_name || "Gina")
+    setEditCategory(a.category || "Daily Homework")
+    setEditDueDate(a.due_date ? format(new Date(a.due_date), "yyyy-MM-dd") : "")
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditAssignment = async () => {
+    if (!supabase || !editingAssignment) return
+    setIsEditSubmitting(true)
+    try {
+      const { error } = await supabase.from("homework").update({
+        title: editTitle,
+        subject: editSubject,
+        child_name: editChildName,
+        category: editCategory,
+        due_date: editDueDate ? new Date(editDueDate).toISOString() : undefined,
+      }).eq("id", editingAssignment.id)
+      if (error) throw error
+      setIsEditDialogOpen(false)
+      setEditingAssignment(null)
+      refresh()
+      toast({ title: "Assignment Updated", description: `Updated "${editTitle}" successfully.` })
+    } catch (err: any) {
+      toast({ title: "Error updating", description: err.message, variant: "destructive" })
+    } finally {
+      setIsEditSubmitting(false)
+    }
+  }
+
+  const handleDeleteAssignment = async (id: string, assignmentTitle: string) => {
+    if (!supabase) return
+    try {
+      const { error } = await supabase.from("homework").delete().eq("id", id)
+      if (error) throw error
+      refresh()
+      toast({ title: "Deleted", description: `Removed "${assignmentTitle}".` })
+    } catch (err: any) {
+      toast({ title: "Error deleting", description: err.message, variant: "destructive" })
+    }
+  }
 
   const handleAddAssignment = async () => {
     if (!supabase || !profile?.family_id || !title) return
@@ -141,6 +314,7 @@ export default function SchoolPage() {
         category,
         time_spent_seconds: 0,
         status: "pending",
+        progress: 0,
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
         created_at: new Date().toISOString(),
         attachment_url: attachmentUrl
@@ -194,7 +368,9 @@ export default function SchoolPage() {
   const toggleStatus = async (id: string, current: string) => {
     if (!supabase) return
     const next = current === "pending" ? "done" : "pending"
-    await supabase.from("homework").update({ status: next }).eq("id", id)
+    const updates: any = { status: next }
+    if (next === "done") updates.progress = 100
+    await supabase.from("homework").update(updates).eq("id", id)
     refresh()
   }
 
@@ -211,6 +387,8 @@ export default function SchoolPage() {
     return colors[subj] || "bg-slate-100 text-slate-700"
   }
 
+  const isParent = profile?.role === "adult" || profile?.role === "parent"
+
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -223,7 +401,7 @@ export default function SchoolPage() {
            </div>
           <p className="text-muted-foreground font-bold text-sm">Keep track of all your assignments and turn them in!</p>
         </div>
-        {(profile?.role === "adult" || profile?.role === "parent") && (
+        {isParent && (
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
              <DialogTrigger asChild>
                <Button className="rounded-xl h-11 px-6 font-black uppercase tracking-wider bg-primary shadow-lg shadow-primary/20">
@@ -304,6 +482,81 @@ export default function SchoolPage() {
         )}
       </header>
 
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Assignment</DialogTitle>
+            <DialogDescription>Update this assignment&apos;s details.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Assignment Title</Label>
+              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Child Name</Label>
+                <Select value={editChildName} onValueChange={setEditChildName}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Gina", "Natalie", "Tinashe"].map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Category</Label>
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Daily Homework", "Project", "Reading", "Exam Prep", "Other"].map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Subject</Label>
+                <Select value={editSubject} onValueChange={setEditSubject}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Math", "Science", "English", "History", "Arts", "isiZulu", "Afrikaans"].map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Due Date</Label>
+                <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            {editingAssignment && (
+              <Button
+                variant="destructive"
+                className="rounded-xl mr-auto"
+                onClick={() => {
+                  handleDeleteAssignment(editingAssignment.id, editingAssignment.title)
+                  setIsEditDialogOpen(false)
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-1" /> Delete
+              </Button>
+            )}
+            <Button onClick={handleEditAssignment} disabled={!editTitle || isEditSubmitting} className="rounded-xl">
+              {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full max-w-sm mb-6 flex h-auto">
@@ -328,7 +581,7 @@ export default function SchoolPage() {
                 <div className={`h-3 w-full ${a.status === 'done' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Badge className={`border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 ${getSubjectColor(a.subject)}`}>
                         {a.subject}
                       </Badge>
@@ -338,19 +591,34 @@ export default function SchoolPage() {
                         </Badge>
                       )}
                     </div>
-                    <Badge variant={a.status === "done" ? "default" : "secondary"} className={a.status === "done" ? "bg-emerald-500" : ""}>
-                      {a.status === "done" ? "Turned In" : "Pending"}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      {isParent && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary"
+                          onClick={() => openEditDialog(a)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Badge variant={a.status === "done" ? "default" : "secondary"} className={a.status === "done" ? "bg-emerald-500" : ""}>
+                        {a.status === "done" ? "Turned In" : "Pending"}
+                      </Badge>
+                    </div>
                   </div>
                   
                   <h4 className="font-black text-xl mb-1">{a.title}</h4>
-                  <div className="flex items-center text-xs font-bold text-muted-foreground gap-4 mb-6">
-                     <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {format(new Date(a.due_date), "MMM d")}</span>
+                  <div className="flex items-center text-xs font-bold text-muted-foreground gap-4 mb-4">
+                     <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d") : "No date"}</span>
                      <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
                   </div>
 
+                  {/* Progress Bar */}
+                  <ProgressBar assignment={a} supabase={supabase} refresh={refresh} />
+
                   {a.status === "pending" ? (
-                     <div className="flex flex-col gap-3 mt-2">
+                     <div className="flex flex-col gap-3 mt-4">
                         <AssignmentTimer a={a} supabase={supabase} refresh={refresh} />
                         <div className="flex flex-col gap-2 mt-2">
                           {a.attachment_url && (
@@ -408,9 +676,12 @@ export default function SchoolPage() {
 
                           </div>
                         </div>
+
+                        {/* Comments Section */}
+                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} />
                      </div>
                   ) : (
-                     <div className="flex flex-col gap-2">
+                     <div className="flex flex-col gap-2 mt-4">
                         {a.attachment_url && (
                            <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
                               <LinkIcon className="h-4 w-4 mr-2" /> View Worksheet
@@ -421,13 +692,12 @@ export default function SchoolPage() {
                               <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
                            </a>
                         )}
-                        {a.comments && (
-                           <div className="bg-muted p-3 rounded-xl text-sm italic text-muted-foreground mt-2 border-l-4 border-primary">
-                             "${a.comments}"
-                           </div>
-                        )}
                         <div className="text-xs font-bold text-slate-500 mt-1">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
-                        <div className="flex gap-2">
+                        
+                        {/* Comments Section for done items */}
+                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} />
+
+                        <div className="flex gap-2 mt-2">
                            <Button 
                              onClick={() => toggleStatus(a.id, a.status)}
                              variant="ghost" 
