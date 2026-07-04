@@ -14,7 +14,9 @@ import {
   Copy,
   CheckCircle2,
   Lock,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Palette,
+  Plus
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -50,6 +52,9 @@ export default function ProfilePage() {
   // PIN state
   const [currentPin, setCurrentPin] = React.useState("")
   const [newPin, setNewPin] = React.useState("")
+
+  // Theme Color State
+  const [themeColor, setThemeColor] = React.useState("#4f46e5")
   
   // Avatar Modal State
   const [isAvatarModalOpen, setIsAvatarModalOpen] = React.useState(false)
@@ -67,6 +72,7 @@ export default function ProfilePage() {
       setName(profile.display_name || "")
       setRole(profile.role || "child")
       setAvatarUrl(profile.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${profile.id}`)
+      setThemeColor(profile.theme_color || "#4f46e5")
     }
   }, [profile])
 
@@ -90,7 +96,8 @@ export default function ProfilePage() {
       const updates: any = {
         display_name: name,
         role: role,
-        avatar_url: avatarUrl
+        avatar_url: avatarUrl,
+        theme_color: themeColor
       }
       
       if (newPin) {
@@ -211,6 +218,39 @@ export default function ProfilePage() {
                       className="rounded-xl h-12 font-mono tracking-[0.5em]"
                       placeholder="••••"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  Universe Theme Color
+                </h3>
+                <div className="flex gap-3 flex-wrap">
+                  {["#4f46e5", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#f43f5e"].map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setThemeColor(color)}
+                      className={`w-10 h-10 rounded-full shadow-sm transition-transform hover:scale-110 flex items-center justify-center ${themeColor === color ? 'ring-4 ring-offset-2 ring-primary scale-110' : ''}`}
+                      style={{ backgroundColor: color }}
+                    >
+                      {themeColor === color && <CheckCircle2 className="h-5 w-5 text-white shadow-sm rounded-full bg-black/20" />}
+                    </button>
+                  ))}
+                  <div className="relative">
+                    <input 
+                      type="color" 
+                      value={themeColor} 
+                      onChange={(e) => setThemeColor(e.target.value)}
+                      className="absolute opacity-0 inset-0 cursor-pointer w-full h-full z-10"
+                    />
+                    <button
+                      className="w-10 h-10 rounded-full shadow-sm border-2 border-dashed border-muted-foreground flex items-center justify-center hover:bg-muted"
+                      style={{ backgroundColor: themeColor }}
+                    >
+                      <Plus className="h-4 w-4 mix-blend-difference text-white" />
+                    </button>
                   </div>
                 </div>
               </div>

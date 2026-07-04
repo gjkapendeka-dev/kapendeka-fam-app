@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/select"
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
+import { format, formatDistanceToNowStrict } from "date-fns"
 
 
 function useAudioRecorder() {
@@ -331,6 +331,17 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
   const [newComment, setNewComment] = React.useState("")
   const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "👏"]
 
+  const renderCommentText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(?<=\s|^)(@[a-zA-Z0-9_]+)(?=\s|$|[.,!?])/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('@')) {
+        return <span key={idx} className="font-bold text-primary bg-primary/10 px-1 rounded mx-0.5">{part}</span>;
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
+
   const existingComments: any[] = React.useMemo(() => {
     if (!assignment.comments) return []
     try {
@@ -469,7 +480,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
                 <div className="mb-1">
                   <span className="font-bold text-primary">{obj?.author || "Unknown"}</span> <span className="opacity-70">on {obj?.date || "Unknown date"}</span>
                 </div>
-                {obj?.text && <p className="mb-1">{obj.text}</p>}
+                {obj?.text && <p className="mb-1">{renderCommentText(obj.text)}</p>}
                 {obj?.audioUrl && (
                   <div className="mt-2 mb-1">
                     <audio controls src={obj.audioUrl} className="h-8 w-full max-w-[200px]" />
@@ -720,6 +731,13 @@ export default function SchoolPage() {
   const { toast } = useToast()
 
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+
+  // Fetch family members for theme colors
+  const membersQuery = React.useMemo(() => {
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("profiles").select("*").eq("family_id", profile.family_id)
+  }, [supabase, profile?.family_id])
+  const { data: familyMembers } = useCollection(membersQuery)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [uploadingId, setUploadingId] = React.useState<string | null>(null)
   
@@ -1281,6 +1299,9 @@ export default function SchoolPage() {
               const canEdit = canEditAssignment(a);
               const isOwnerOrParent = isParent || a.child_name === profile?.display_name;
 
+              const childProfile = familyMembers?.find((m: any) => m.display_name === a.child_name);
+              const themeColor = childProfile?.theme_color || "var(--primary)";
+
               let allAttachments = [...(a.attachments || [])];
               if (a.attachment_url && !allAttachments.includes(a.attachment_url)) allAttachments.push(a.attachment_url);
 
@@ -1300,7 +1321,7 @@ export default function SchoolPage() {
                         <h4 className="font-black text-lg mb-1">{a.title}</h4>
                         <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mt-2 mb-2">
                            <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
-                           <span className="flex items-center text-accent"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                           <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide" style={{ backgroundColor: themeColor }}>{a.child_name}</span>
                            <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
                            {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                         </div>
@@ -1308,6 +1329,14 @@ export default function SchoolPage() {
                       
                       <div className="flex-1 flex flex-col justify-center min-w-[200px]">
                         <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                        {a.due_date && a.status !== 'done' && (
+                          <div className="flex items-center justify-between text-[10px] font-bold mt-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                            <span className="text-muted-foreground">Due Time</span>
+                            <span className={new Date(a.due_date) < new Date() ? "text-red-500 animate-pulse" : "text-primary"}>
+                              {new Date(a.due_date) < new Date() ? "Overdue" : formatDistanceToNowStrict(new Date(a.due_date))} left
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 sm:flex-col shrink-0">
@@ -1394,12 +1423,20 @@ export default function SchoolPage() {
                   <h4 className="font-black text-xl mb-1">{a.title}</h4>
                   <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mb-4">
                      <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
-                     <span className="flex items-center text-accent"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                     <span className="flex items-center font-black px-2 py-0.5 rounded text-white text-[10px] tracking-wide" style={{ backgroundColor: themeColor }}>{a.child_name}</span>
                      <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
                      {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                   </div>
 
                   <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
+                  {a.due_date && a.status !== 'done' && (
+                    <div className="flex items-center justify-between text-[10px] font-bold mt-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                      <span className="text-muted-foreground">Due Time</span>
+                      <span className={new Date(a.due_date) < new Date() ? "text-red-500 animate-pulse" : "text-primary"}>
+                        {new Date(a.due_date) < new Date() ? "Overdue" : formatDistanceToNowStrict(new Date(a.due_date))} left
+                      </span>
+                    </div>
+                  )}
 
                   {a.status === "pending" ? (
                      <div className="flex flex-col gap-3 mt-4">
