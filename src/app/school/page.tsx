@@ -245,6 +245,10 @@ function ProgressBar({ assignment, supabase, refresh, canEdit }: { assignment: a
 function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { assignment: any, supabase: any, profile: any, refresh: () => void, canEdit: boolean }) {
   const { isRecording, startRecording, stopRecording, audioBlob, discardRecording } = useAudioRecorder()
   const [commentFiles, setCommentFiles] = React.useState<FileList | null>(null)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [sending, setSending] = React.useState(false)
+  const [newComment, setNewComment] = React.useState("")
+  const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "👏"]
 
   const existingComments: any[] = React.useMemo(() => {
     if (!assignment.comments) return []
@@ -316,6 +320,48 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
     refresh()
   }
 
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [existingComments])
+
+  const toggleReaction = async (commentIndex: number, emoji: string) => {
+    if (!profile?.display_name) return
+    const authorName = profile.display_name
+    
+    const updatedComments = [...existingComments]
+    const targetComment = updatedComments[commentIndex]
+    
+    let commentObj: any = targetComment
+    if (typeof targetComment === 'string') {
+       commentObj = {
+         author: targetComment.startsWith('**') ? targetComment.substring(2, targetComment.indexOf('** on')) : "Unknown",
+         date: targetComment.startsWith('**') ? targetComment.substring(targetComment.indexOf('** on') + 5, targetComment.indexOf(' — ')) : "",
+         text: targetComment.includes(' — ') ? targetComment.substring(targetComment.indexOf(' — ') + 3) : targetComment,
+         attachments: [],
+         audioUrl: null,
+         reactions: {}
+       }
+    } else {
+       commentObj = { ...targetComment, reactions: targetComment.reactions || {} }
+    }
+    
+    if (!commentObj.reactions[emoji]) commentObj.reactions[emoji] = []
+    
+    const usersWhoReacted = commentObj.reactions[emoji]
+    if (usersWhoReacted.includes(authorName)) {
+       commentObj.reactions[emoji] = usersWhoReacted.filter((n: string) => n !== authorName)
+       if (commentObj.reactions[emoji].length === 0) delete commentObj.reactions[emoji]
+    } else {
+       commentObj.reactions[emoji].push(authorName)
+    }
+    
+    updatedComments[commentIndex] = commentObj
+    await supabase.from("homework").update({ comments: JSON.stringify(updatedComments) }).eq("id", assignment.id)
+    refresh()
+  }
+
   return (
     <div className="space-y-2 mt-2">
       <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
@@ -323,45 +369,54 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
         Comments {existingComments.length > 0 && `(${existingComments.length})`}
       </div>
       {existingComments.length > 0 && (
-        <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+        <div ref={scrollRef} className="space-y-1.5 max-h-28 overflow-y-auto pr-1 scroll-smooth">
           {existingComments.map((c, i) => {
-            // Check if it's the new object format
-            if (typeof c === 'object' && c !== null) {
-              return (
-                <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                  <div className="mb-1">
-                    <span className="font-bold text-primary">{c.author}</span> <span className="opacity-70">on {c.date}</span>
-                  </div>
-                  {c.text && <p className="mb-1">{c.text}</p>}
-                  {c.audioUrl && (
-                    <div className="mt-2 mb-1">
-                      <audio controls src={c.audioUrl} className="h-8 w-full max-w-[200px]" />
-                    </div>
-                  )}
-                  {c.attachments && c.attachments.length > 0 && (
-                    <FileList files={c.attachments} title="" />
-                  )}
-                </div>
-              )
-            }
-
-            // Fallback for old string comments
-            const strC = String(c);
-            const isBoldAuthored = strC.startsWith('**') && strC.includes('** on');
-            if (isBoldAuthored) {
-              const authorEnd = strC.indexOf('** on');
-              const author = strC.substring(2, authorEnd);
-              const rest = strC.substring(authorEnd + 5);
-              return (
-                <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                  <span className="font-bold text-primary">{author}</span> on {rest}
-                </div>
-              )
+            if (!c) return null;
+            
+            let obj = c;
+            if (typeof c === 'string') {
+              obj = {
+                author: c.startsWith('**') ? c.substring(2, c.indexOf('** on')) : "Unknown",
+                date: c.startsWith('**') ? c.substring(c.indexOf('** on') + 5, c.indexOf(' — ')) : "",
+                text: c.includes(' — ') ? c.substring(c.indexOf(' — ') + 3) : c,
+                reactions: {}
+              }
             }
 
             return (
               <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                {strC}
+                <div className="mb-1">
+                  <span className="font-bold text-primary">{obj?.author || "Unknown"}</span> <span className="opacity-70">on {obj?.date || "Unknown date"}</span>
+                </div>
+                {obj?.text && <p className="mb-1">{obj.text}</p>}
+                {obj?.audioUrl && (
+                  <div className="mt-2 mb-1">
+                    <audio controls src={obj.audioUrl} className="h-8 w-full max-w-[200px]" />
+                  </div>
+                )}
+                {obj?.attachments && obj.attachments.length > 0 && (
+                  <FileList files={obj.attachments} title="" />
+                )}
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {obj?.reactions && Object.entries(obj.reactions).map(([emoji, users]: [string, any]) => (
+                    <button 
+                      key={emoji} 
+                      onClick={() => toggleReaction(i, emoji)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full border ${Array.isArray(users) && users.includes(profile?.display_name) ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white border-slate-200 text-slate-500'}`}
+                      title={Array.isArray(users) ? users.join(", ") : ""}
+                    >
+                      {emoji} {Array.isArray(users) ? users.length : 0}
+                    </button>
+                  ))}
+                  <div className="group/react relative inline-block">
+                     <button className="text-[10px] px-1.5 py-0.5 rounded-full border bg-white border-slate-200 text-slate-400 hover:bg-slate-100 transition-colors">+</button>
+                     <div className="absolute left-0 bottom-full mb-1 hidden group-hover/react:flex bg-white shadow-md border rounded-full px-1.5 py-1 gap-1.5 z-10">
+                       {REACTION_EMOJIS.map(e => (
+                         <button key={e} onClick={() => toggleReaction(i, e)} className="hover:scale-125 transition-transform text-sm">{e}</button>
+                       ))}
+                     </div>
+                  </div>
+                </div>
               </div>
             )
           })}
