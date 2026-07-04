@@ -220,7 +220,7 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col">
                           <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest">
-                            {item.startTime ? format(new Date(item.startTime), "HH:mm") : "TBD"}
+                            {item.startTime ? format(new Date(item.startTime), "MMM d 'at' HH:mm") : "TBD"}
                           </span>
                           <h3 className="text-lg md:text-xl font-bold mt-1 group-hover:text-primary transition-colors">{item.title}</h3>
                         </div>

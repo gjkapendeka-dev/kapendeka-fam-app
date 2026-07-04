@@ -259,8 +259,9 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
     if (!newComment.trim() || !canEdit) return
     setSending(true)
     const author = profile?.display_name || "Someone"
-    const updated = [...existingComments, `**${author}** on ${new Date().toLocaleDateString()} — ${newComment.trim()}`]
-    await supabase.from("homework").update({ comments: JSON.stringify(updated) }).eq("id", assignment.id)
+    const timestamp = format(new Date(), "MMM d, yyyy 'at' h:mm a")
+    const updated = [...existingComments, `**${author}** on ${timestamp} — ${newComment.trim()}`]
+    await supabase.from("homework").update({ comments: JSON.stringify(updated), updated_at: new Date().toISOString() }).eq("id", assignment.id)
     setNewComment("")
     setSending(false)
     refresh()
@@ -319,7 +320,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
   )
 }
 
-function RemindersDialog({ a, supabase, refresh, profile }: { a: any, supabase: any, refresh: () => void, profile: any }) {
+function RemindersDialog({ a, supabase, refresh, profile, user }: { a: any, supabase: any, refresh: () => void, profile: any, user: any }) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState("")
   const [time, setTime] = React.useState("")
@@ -349,7 +350,7 @@ function RemindersDialog({ a, supabase, refresh, profile }: { a: any, supabase: 
     const updated = [...reminders, newReminder]
     
     try {
-      await supabase.from("homework").update({ reminders: updated }).eq("id", a.id)
+      await supabase.from("homework").update({ reminders: updated, updated_at: new Date().toISOString() }).eq("id", a.id)
       
       if (pushDashboard && profile?.family_id) {
         // Send a broadcast immediately for demonstration (or it would be a background job)
@@ -358,6 +359,18 @@ function RemindersDialog({ a, supabase, refresh, profile }: { a: any, supabase: 
           message: `Reminder for ${a.title}: ${message}`,
           type: "reminder"
         }])
+      }
+
+      if (pushEmail && user?.email) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: user.email,
+            subject: `Kapendeka Reminder: ${a.title}`,
+            html: `<p>A reminder has been set for <strong>${a.title}</strong>:</p><p><em>"${message}"</em></p><p>Scheduled for: <strong>${date} at ${time}</strong></p><p>— Sent via Kapendeka Universe Hub</p>`
+          })
+        })
       }
 
       setDate("")
@@ -463,7 +476,7 @@ function RemindersDialog({ a, supabase, refresh, profile }: { a: any, supabase: 
 }
 
 export default function SchoolPage() {
-  const { profile } = useUser()
+  const { profile, user } = useUser()
   const supabase = useSupabase()
   const { toast } = useToast()
 
@@ -564,6 +577,7 @@ export default function SchoolPage() {
         child_name: editChildName,
         category: editCategory,
         due_date: editDueDate ? new Date(editDueDate).toISOString() : undefined,
+        updated_at: new Date().toISOString()
       }).eq("id", editingAssignment.id)
       if (error) throw error
       setIsEditDialogOpen(false)
@@ -640,6 +654,7 @@ export default function SchoolPage() {
         progress: 0,
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         attachments: attachmentUrls,
         delegated_to: [],
         reminders: []
@@ -673,14 +688,15 @@ export default function SchoolPage() {
        const existingSubmissions = assignment?.submissions || []
        const newSubmissions = [...existingSubmissions, ...submissionUrls]
 
-       const updates: any = { submissions: newSubmissions }
+       const updates: any = { submissions: newSubmissions, updated_at: new Date().toISOString() }
        
        if (submitComment.trim()) {
           const author = profile?.display_name || "Someone"
           const existingComments = (() => {
             try { return assignment?.comments ? JSON.parse(assignment.comments) : [] } catch { return assignment?.comments ? [assignment.comments] : [] }
           })()
-          const newComments = [...existingComments, `**${author}** on ${new Date().toLocaleDateString()} — ${submitComment.trim()}`]
+          const timestamp = format(new Date(), "MMM d, yyyy 'at' h:mm a")
+          const newComments = [...existingComments, `**${author}** on ${timestamp} — ${submitComment.trim()}`]
           updates.comments = JSON.stringify(newComments)
        }
 
@@ -703,7 +719,7 @@ export default function SchoolPage() {
   const toggleStatus = async (id: string, current: string) => {
     if (!supabase) return
     const next = current === "pending" ? "done" : "pending"
-    const updates: any = { status: next }
+    const updates: any = { status: next, updated_at: new Date().toISOString() }
     if (next === "done") updates.progress = 100
     await supabase.from("homework").update(updates).eq("id", id)
     refresh()
@@ -1032,9 +1048,11 @@ export default function SchoolPage() {
                           {a.category && <Badge variant="outline" className="border-primary/20 font-black text-[10px] uppercase tracking-wider px-3 py-1 text-primary">{a.category}</Badge>}
                         </div>
                         <h4 className="font-black text-lg mb-1">{a.title}</h4>
-                        <div className="flex items-center text-xs font-bold text-muted-foreground gap-4">
-                           <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d") : "No date"}</span>
-                           <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                        <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mt-2 mb-2">
+                           <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
+                           <span className="flex items-center text-accent"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                           <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
+                           {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                         </div>
                       </div>
                       
@@ -1050,7 +1068,7 @@ export default function SchoolPage() {
                           <Button onClick={() => toggleStatus(a.id, a.status)} variant="outline" className="rounded-xl font-bold flex-1 sm:w-full">Mark Incomplete</Button>
                         )}
                         <div className="flex gap-1 justify-end">
-                          <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} />
+                          <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} user={user} />
                           {isOwnerOrParent && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" onClick={() => openDelegateDialog(a)}>
                               <Users className="h-4 w-4" />
@@ -1089,7 +1107,7 @@ export default function SchoolPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} />
+                      <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} user={user} />
                       {isOwnerOrParent && (
                         <Button
                           size="icon"
@@ -1119,9 +1137,11 @@ export default function SchoolPage() {
                   </div>
                   
                   <h4 className="font-black text-xl mb-1">{a.title}</h4>
-                  <div className="flex items-center text-xs font-bold text-muted-foreground gap-4 mb-4">
-                     <span className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d") : "No date"}</span>
-                     <span className="flex items-center"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                  <div className="flex items-center text-[10px] font-bold text-muted-foreground gap-4 flex-wrap mb-4">
+                     <span className="flex items-center text-primary"><CalendarIcon className="w-3 h-3 mr-1"/> {a.due_date ? format(new Date(a.due_date), "MMM d, yyyy") : "No date"}</span>
+                     <span className="flex items-center text-accent"><FileText className="w-3 h-3 mr-1"/> For: {a.child_name}</span>
+                     <span className="flex items-center opacity-70"><Clock className="w-3 h-3 mr-1"/> Posted: {a.created_at ? format(new Date(a.created_at), "MMM d 'at' h:mm a") : "Unknown"}</span>
+                     {a.updated_at && <span className="flex items-center opacity-70"><Pencil className="w-3 h-3 mr-1"/> Edited: {format(new Date(a.updated_at), "MMM d 'at' h:mm a")}</span>}
                   </div>
 
                   <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
