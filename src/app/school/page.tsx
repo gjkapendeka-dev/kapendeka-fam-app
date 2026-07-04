@@ -291,7 +291,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
 
             return (
               <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                {c}
+                <span className="font-bold text-primary">Unknown</span> on {c}
               </div>
             )
           })}
@@ -771,16 +771,18 @@ export default function SchoolPage() {
                setNewFiles(null)
              }
            }}>
-             <DialogTrigger asChild>
-               <>
+             <>
+               <DialogTrigger asChild>
                  <Button className="hidden md:flex rounded-xl h-11 px-6 font-black uppercase tracking-wider bg-primary shadow-lg shadow-primary/20">
                    <Plus className="h-4 w-4 mr-2" /> Add Homework
                  </Button>
+               </DialogTrigger>
+               <DialogTrigger asChild>
                  <Button className="md:hidden fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl bg-primary z-50 p-0 flex items-center justify-center">
                    <Plus className="h-6 w-6" />
                  </Button>
-               </>
-             </DialogTrigger>
+               </DialogTrigger>
+             </>
              <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
                <DialogHeader>
                  <DialogTitle>New School Task</DialogTitle>
@@ -1074,7 +1076,7 @@ export default function SchoolPage() {
                               <Users className="h-4 w-4" />
                             </Button>
                           )}
-                          {isParent && (
+                          {isOwnerOrParent && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" onClick={() => openEditDialog(a)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -1119,7 +1121,7 @@ export default function SchoolPage() {
                           <Users className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      {isParent && (
+                      {isOwnerOrParent && (
                         <Button
                           size="icon"
                           variant="ghost"
