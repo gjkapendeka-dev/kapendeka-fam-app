@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Pencil,
   Trash2,
-  Send
+  Send,
+  Users
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -50,7 +51,7 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 
-function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refresh: () => void }) {
+function AssignmentTimer({ a, supabase, refresh, canEdit }: { a: any, supabase: any, refresh: () => void, canEdit: boolean }) {
   const [running, setRunning] = React.useState(false)
   const [seconds, setSeconds] = React.useState(a.time_spent_seconds || 0)
 
@@ -65,6 +66,7 @@ function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refr
   }, [running])
 
   const toggle = async () => {
+    if (!canEdit) return;
     if (running) {
       // stopping, save time
       await supabase.from("homework").update({ time_spent_seconds: seconds }).eq("id", a.id)
@@ -80,7 +82,7 @@ function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refr
 
   return (
     <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1 pr-3 w-fit">
-      <Button size="icon" variant={running ? "destructive" : "default"} className="h-8 w-8 rounded-lg" onClick={toggle}>
+      <Button size="icon" variant={running ? "destructive" : "default"} className="h-8 w-8 rounded-lg" onClick={toggle} disabled={!canEdit}>
         {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </Button>
       <span className="font-bold text-sm text-slate-700 font-mono w-16 text-center">{formatTime(seconds)}</span>
@@ -88,7 +90,7 @@ function AssignmentTimer({ a, supabase, refresh }: { a: any, supabase: any, refr
   )
 }
 
-function ProgressBar({ assignment, supabase, refresh }: { assignment: any, supabase: any, refresh: () => void }) {
+function ProgressBar({ assignment, supabase, refresh, canEdit }: { assignment: any, supabase: any, refresh: () => void, canEdit: boolean }) {
   const progress = assignment.progress || 0
   const [localProgress, setLocalProgress] = React.useState(progress)
   const [saving, setSaving] = React.useState(false)
@@ -99,6 +101,7 @@ function ProgressBar({ assignment, supabase, refresh }: { assignment: any, supab
   }, [assignment.progress])
 
   const handleChange = (val: number) => {
+    if (!canEdit) return;
     setLocalProgress(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
@@ -138,13 +141,14 @@ function ProgressBar({ assignment, supabase, refresh }: { assignment: any, supab
         step={5}
         value={localProgress}
         onChange={(e) => handleChange(Number(e.target.value))}
-        className="w-full h-1 accent-primary cursor-pointer"
+        className={`w-full h-1 accent-primary ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+        disabled={!canEdit}
       />
     </div>
   )
 }
 
-function CommentSection({ assignment, supabase, refresh }: { assignment: any, supabase: any, refresh: () => void }) {
+function CommentSection({ assignment, supabase, refresh, canEdit }: { assignment: any, supabase: any, refresh: () => void, canEdit: boolean }) {
   const [newComment, setNewComment] = React.useState("")
   const [sending, setSending] = React.useState(false)
 
@@ -158,7 +162,7 @@ function CommentSection({ assignment, supabase, refresh }: { assignment: any, su
   }, [assignment.comments])
 
   const addComment = async () => {
-    if (!newComment.trim()) return
+    if (!newComment.trim() || !canEdit) return
     setSending(true)
     const updated = [...existingComments, `${new Date().toLocaleDateString()} — ${newComment.trim()}`]
     await supabase.from("homework").update({ comments: JSON.stringify(updated) }).eq("id", assignment.id)
@@ -182,23 +186,25 @@ function CommentSection({ assignment, supabase, refresh }: { assignment: any, su
           ))}
         </div>
       )}
-      <div className="flex gap-1.5">
-        <Input
-          placeholder="Add a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          className="h-8 text-xs rounded-lg"
-          onKeyDown={(e) => e.key === "Enter" && addComment()}
-        />
-        <Button 
-          size="icon" 
-          className="h-8 w-8 rounded-lg shrink-0" 
-          onClick={addComment}
-          disabled={!newComment.trim() || sending}
-        >
-          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-        </Button>
-      </div>
+      {canEdit && (
+        <div className="flex gap-1.5">
+          <Input
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="h-8 text-xs rounded-lg"
+            onKeyDown={(e) => e.key === "Enter" && addComment()}
+          />
+          <Button 
+            size="icon" 
+            className="h-8 w-8 rounded-lg shrink-0" 
+            onClick={addComment}
+            disabled={!newComment.trim() || sending}
+          >
+            {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -232,6 +238,11 @@ export default function SchoolPage() {
   const [editDueDate, setEditDueDate] = React.useState("")
   const [isEditSubmitting, setIsEditSubmitting] = React.useState(false)
 
+  // Delegate State
+  const [isDelegateDialogOpen, setIsDelegateDialogOpen] = React.useState(false)
+  const [delegatingAssignment, setDelegatingAssignment] = React.useState<any>(null)
+  const [delegateTo, setDelegateTo] = React.useState<string[]>([])
+
   const [refreshCount, setRefreshCount] = React.useState(0)
   const refresh = () => setRefreshCount(c => c + 1)
 
@@ -250,6 +261,36 @@ export default function SchoolPage() {
     setEditCategory(a.category || "Daily Homework")
     setEditDueDate(a.due_date ? format(new Date(a.due_date), "yyyy-MM-dd") : "")
     setIsEditDialogOpen(true)
+  }
+
+  const openDelegateDialog = (a: any) => {
+    setDelegatingAssignment(a)
+    setDelegateTo(a.delegated_to || [])
+    setIsDelegateDialogOpen(true)
+  }
+
+  const toggleDelegate = (child: string) => {
+    if (delegateTo.includes(child)) {
+      setDelegateTo(delegateTo.filter(c => c !== child))
+    } else {
+      setDelegateTo([...delegateTo, child])
+    }
+  }
+
+  const handleDelegateSave = async () => {
+    if (!supabase || !delegatingAssignment) return
+    try {
+      const { error } = await supabase.from("homework").update({
+        delegated_to: delegateTo
+      }).eq("id", delegatingAssignment.id)
+      if (error) throw error
+      setIsDelegateDialogOpen(false)
+      setDelegatingAssignment(null)
+      refresh()
+      toast({ title: "Delegation Updated", description: `Updated access successfully.` })
+    } catch (err: any) {
+      toast({ title: "Error delegating", description: err.message, variant: "destructive" })
+    }
   }
 
   const handleEditAssignment = async () => {
@@ -317,7 +358,8 @@ export default function SchoolPage() {
         progress: 0,
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date().toISOString(),
         created_at: new Date().toISOString(),
-        attachment_url: attachmentUrl
+        attachment_url: attachmentUrl,
+        delegated_to: []
       }
 
       const { error } = await supabase.from("homework").insert([data])
@@ -389,6 +431,15 @@ export default function SchoolPage() {
 
   const isParent = profile?.role === "adult" || profile?.role === "parent"
 
+  const canEditAssignment = (a: any) => {
+    if (isParent) return true;
+    if (a.child_name === profile?.display_name) return true;
+    if (a.delegated_to && a.delegated_to.includes(profile?.display_name)) return true;
+    return false;
+  };
+
+  const childrenList = ["Gina", "Natalie", "Tinashe"];
+
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -424,7 +475,7 @@ export default function SchoolPage() {
                      <Select value={childName} onValueChange={setChildName}>
                        <SelectTrigger><SelectValue /></SelectTrigger>
                        <SelectContent>
-                         {["Gina", "Natalie", "Tinashe"].map(c => (
+                         {childrenList.map(c => (
                            <SelectItem key={c} value={c}>{c}</SelectItem>
                          ))}
                        </SelectContent>
@@ -500,7 +551,7 @@ export default function SchoolPage() {
                 <Select value={editChildName} onValueChange={setEditChildName}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Gina", "Natalie", "Tinashe"].map(c => (
+                    {childrenList.map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
@@ -557,6 +608,42 @@ export default function SchoolPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Delegate Dialog */}
+      <Dialog open={isDelegateDialogOpen} onOpenChange={setIsDelegateDialogOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Delegate Assignment</DialogTitle>
+            <DialogDescription>Allow other children to work on this assignment.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <p className="text-sm text-muted-foreground font-bold">Select who can modify this assignment:</p>
+            <div className="flex flex-col gap-2">
+              {childrenList.map(c => {
+                // Don't show the child who already owns it
+                if (c === delegatingAssignment?.child_name) return null;
+                const isDelegated = delegateTo.includes(c);
+                return (
+                  <Button 
+                    key={c}
+                    variant={isDelegated ? "default" : "outline"}
+                    className={`justify-start rounded-xl ${isDelegated ? 'bg-primary text-white' : ''}`}
+                    onClick={() => toggleDelegate(c)}
+                  >
+                    {isDelegated && <CheckCircle2 className="h-4 w-4 mr-2" />}
+                    {!isDelegated && <Users className="h-4 w-4 mr-2" />}
+                    {c}
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleDelegateSave} className="rounded-xl">
+              Save Delegation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-2xl w-full max-w-sm mb-6 flex h-auto">
@@ -576,7 +663,11 @@ export default function SchoolPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             
-            {assignments?.filter((a: any) => (activeTab === "active" ? a.status === "pending" : a.status === "done")).map((a: any) => (
+            {assignments?.filter((a: any) => (activeTab === "active" ? a.status === "pending" : a.status === "done")).map((a: any) => {
+              const canEdit = canEditAssignment(a);
+              const isOwnerOrParent = isParent || a.child_name === profile?.display_name;
+
+              return (
               <Card key={a.id} className={`rounded-3xl border-none shadow-xl overflow-hidden ${a.status === 'done' ? 'bg-emerald-50/50' : 'bg-white'}`}>
                 <div className={`h-3 w-full ${a.status === 'done' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
                 <CardContent className="p-6">
@@ -590,14 +681,31 @@ export default function SchoolPage() {
                           {a.category}
                         </Badge>
                       )}
+                      {a.delegated_to && a.delegated_to.length > 0 && (
+                        <Badge variant="secondary" className="border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 bg-slate-200">
+                          <Users className="h-3 w-3 mr-1" /> Delegated
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
+                      {isOwnerOrParent && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary"
+                          onClick={() => openDelegateDialog(a)}
+                          title="Delegate Access"
+                        >
+                          <Users className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       {isParent && (
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary"
                           onClick={() => openEditDialog(a)}
+                          title="Edit Details"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
@@ -615,11 +723,11 @@ export default function SchoolPage() {
                   </div>
 
                   {/* Progress Bar */}
-                  <ProgressBar assignment={a} supabase={supabase} refresh={refresh} />
+                  <ProgressBar assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
 
                   {a.status === "pending" ? (
                      <div className="flex flex-col gap-3 mt-4">
-                        <AssignmentTimer a={a} supabase={supabase} refresh={refresh} />
+                        <AssignmentTimer a={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
                         <div className="flex flex-col gap-2 mt-2">
                           {a.attachment_url && (
                              <a href={a.attachment_url} target="_blank" rel="noreferrer" className="flex items-center justify-center w-full h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
@@ -631,54 +739,61 @@ export default function SchoolPage() {
                                 <LinkIcon className="h-4 w-4 mr-2" /> View Uploaded Work
                              </a>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              onClick={() => toggleStatus(a.id, a.status)}
-                              className="flex-1 rounded-xl font-bold h-12 bg-primary text-white"
-                            >
-                               Mark Done
-                            </Button>
-                            
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
-                                {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                                {uploadingId !== a.id && "Attach Work"}
+                          {canEdit && (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                onClick={() => toggleStatus(a.id, a.status)}
+                                className="flex-1 rounded-xl font-bold h-12 bg-primary text-white"
+                              >
+                                Mark Done
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent className="rounded-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Upload Completed Work</DialogTitle>
-                                <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                  <Label>Comments (Optional)</Label>
-                                  <Textarea 
-                                    placeholder="e.g. Struggled with question 4" 
-                                    className="rounded-xl"
-                                    onChange={(e) => setComment(e.target.value)}
-                                  />
+                              
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
+                                  {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                  {uploadingId !== a.id && "Attach Work"}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="rounded-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Upload Completed Work</DialogTitle>
+                                  <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <div className="grid gap-2">
+                                    <Label>Comments (Optional)</Label>
+                                    <Textarea 
+                                      placeholder="e.g. Struggled with question 4" 
+                                      className="rounded-xl"
+                                      onChange={(e) => setComment(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <Label>Upload Photo / Document</Label>
+                                    <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      capture="environment"
+                                      className="rounded-xl"
+                                      onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                    />
+                                  </div>
                                 </div>
-                                <div className="grid gap-2">
-                                  <Label>Upload Photo / Document</Label>
-                                  <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    capture="environment"
-                                    className="rounded-xl"
-                                    onChange={(e) => handleFileUpload(e, a.id, comment)}
-                                  />
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                              </DialogContent>
+                            </Dialog>
 
-                          </div>
+                            </div>
+                          )}
+                          {!canEdit && (
+                            <div className="bg-slate-50 text-slate-500 font-bold text-xs p-3 rounded-xl text-center border border-slate-100">
+                              You do not have access to modify this assignment.
+                            </div>
+                          )}
                         </div>
 
                         {/* Comments Section */}
-                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} />
+                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
                      </div>
                   ) : (
                      <div className="flex flex-col gap-2 mt-4">
@@ -695,58 +810,61 @@ export default function SchoolPage() {
                         <div className="text-xs font-bold text-slate-500 mt-1">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
                         
                         {/* Comments Section for done items */}
-                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} />
+                        <CommentSection assignment={a} supabase={supabase} refresh={refresh} canEdit={canEdit} />
 
-                        <div className="flex gap-2 mt-2">
-                           <Button 
-                             onClick={() => toggleStatus(a.id, a.status)}
-                             variant="ghost" 
-                             className="flex-1 rounded-xl text-muted-foreground text-xs"
-                           >
-                              Mark Incomplete
-                           </Button>
-                           
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
-                                {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                                {uploadingId !== a.id && "Attach Work"}
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="rounded-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Upload Completed Work</DialogTitle>
-                                <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                  <Label>Comments (Optional)</Label>
-                                  <Textarea 
-                                    placeholder="e.g. Struggled with question 4" 
-                                    className="rounded-xl"
-                                    onChange={(e) => setComment(e.target.value)}
-                                  />
+                        {canEdit && (
+                          <div className="flex gap-2 mt-2">
+                             <Button 
+                               onClick={() => toggleStatus(a.id, a.status)}
+                               variant="ghost" 
+                               className="flex-1 rounded-xl text-muted-foreground text-xs"
+                             >
+                                Mark Incomplete
+                             </Button>
+                             
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button className="rounded-xl h-12 px-4 bg-primary/10 text-primary font-bold hover:bg-primary/20" disabled={uploadingId === a.id}>
+                                  {uploadingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                  {uploadingId !== a.id && "Attach Work"}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="rounded-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Upload Completed Work</DialogTitle>
+                                  <DialogDescription>Upload a photo of the completed work and add any comments.</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <div className="grid gap-2">
+                                    <Label>Comments (Optional)</Label>
+                                    <Textarea 
+                                      placeholder="e.g. Struggled with question 4" 
+                                      className="rounded-xl"
+                                      onChange={(e) => setComment(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <Label>Upload Photo / Document</Label>
+                                    <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      capture="environment"
+                                      className="rounded-xl"
+                                      onChange={(e) => handleFileUpload(e, a.id, comment)}
+                                    />
+                                  </div>
                                 </div>
-                                <div className="grid gap-2">
-                                  <Label>Upload Photo / Document</Label>
-                                  <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    capture="environment"
-                                    className="rounded-xl"
-                                    onChange={(e) => handleFileUpload(e, a.id, comment)}
-                                  />
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-
-                        </div>
+                              </DialogContent>
+                            </Dialog>
+  
+                          </div>
+                        )}
                      </div>
                   )}
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
