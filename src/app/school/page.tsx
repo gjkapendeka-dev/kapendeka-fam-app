@@ -243,10 +243,10 @@ function ProgressBar({ assignment, supabase, refresh, canEdit }: { assignment: a
 }
 
 function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { assignment: any, supabase: any, profile: any, refresh: () => void, canEdit: boolean }) {
-  const [newComment, setNewComment] = React.useState("")
-  const [sending, setSending] = React.useState(false)
+  const { isRecording, startRecording, stopRecording, audioBlob, discardRecording } = useAudioRecorder()
+  const [commentFiles, setCommentFiles] = React.useState<FileList | null>(null)
 
-  const existingComments: string[] = React.useMemo(() => {
+  const existingComments: any[] = React.useMemo(() => {
     if (!assignment.comments) return []
     try {
       const parsed = JSON.parse(assignment.comments)
@@ -255,14 +255,63 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
     return assignment.comments ? [assignment.comments] : []
   }, [assignment.comments])
 
+  // Helper to upload files specifically for comments
+  const uploadFiles = async (files: FileList | null, audio: Blob | null) => {
+    if (!supabase || !profile?.family_id) return { files: [], audio: null }
+    const uploadedFiles: string[] = []
+    let uploadedAudio: string | null = null
+
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        const filePath = `${profile.family_id}/comments/${fileName}`
+        
+        const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, file)
+        if (!uploadError) {
+          const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+          uploadedFiles.push(data.publicUrl)
+        }
+      }
+    }
+
+    if (audio) {
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.webm`
+      const filePath = `${profile.family_id}/comments/${fileName}`
+      const { error: uploadError } = await supabase.storage.from('homework_files').upload(filePath, audio, { contentType: 'audio/webm' })
+      if (!uploadError) {
+        const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
+        uploadedAudio = data.publicUrl
+      }
+    }
+
+    return { files: uploadedFiles, audio: uploadedAudio }
+  }
+
   const addComment = async () => {
-    if (!newComment.trim() || !canEdit) return
+    if ((!newComment.trim() && !audioBlob && (!commentFiles || commentFiles.length === 0)) || !canEdit) return
     setSending(true)
+    
+    const { files: uploadedFiles, audio: uploadedAudio } = await uploadFiles(commentFiles, audioBlob)
+    
     const author = profile?.display_name || "Someone"
     const timestamp = format(new Date(), "MMM d, yyyy 'at' h:mm a")
-    const updated = [...existingComments, `**${author}** on ${timestamp} — ${newComment.trim()}`]
+    
+    const newCommentObj = {
+      author,
+      date: timestamp,
+      text: newComment.trim(),
+      attachments: uploadedFiles,
+      audioUrl: uploadedAudio
+    }
+    
+    const updated = [...existingComments, newCommentObj]
     await supabase.from("homework").update({ comments: JSON.stringify(updated), updated_at: new Date().toISOString() }).eq("id", assignment.id)
+    
     setNewComment("")
+    setCommentFiles(null)
+    discardRecording()
     setSending(false)
     refresh()
   }
@@ -274,14 +323,35 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
         Comments {existingComments.length > 0 && `(${existingComments.length})`}
       </div>
       {existingComments.length > 0 && (
-        <div className="space-y-1.5 max-h-28 overflow-y-auto">
+        <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
           {existingComments.map((c, i) => {
-            // Handle markdown-ish bold for authors if present
-            const isBoldAuthored = c.startsWith('**') && c.includes('** on');
+            // Check if it's the new object format
+            if (typeof c === 'object' && c !== null) {
+              return (
+                <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
+                  <div className="mb-1">
+                    <span className="font-bold text-primary">{c.author}</span> <span className="opacity-70">on {c.date}</span>
+                  </div>
+                  {c.text && <p className="mb-1">{c.text}</p>}
+                  {c.audioUrl && (
+                    <div className="mt-2 mb-1">
+                      <audio controls src={c.audioUrl} className="h-8 w-full max-w-[200px]" />
+                    </div>
+                  )}
+                  {c.attachments && c.attachments.length > 0 && (
+                    <FileList files={c.attachments} title="" />
+                  )}
+                </div>
+              )
+            }
+
+            // Fallback for old string comments
+            const strC = String(c);
+            const isBoldAuthored = strC.startsWith('**') && strC.includes('** on');
             if (isBoldAuthored) {
-              const authorEnd = c.indexOf('** on');
-              const author = c.substring(2, authorEnd);
-              const rest = c.substring(authorEnd + 5);
+              const authorEnd = strC.indexOf('** on');
+              const author = strC.substring(2, authorEnd);
+              const rest = strC.substring(authorEnd + 5);
               return (
                 <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
                   <span className="font-bold text-primary">{author}</span> on {rest}
@@ -291,29 +361,65 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
 
             return (
               <div key={i} className="bg-slate-50 p-2 rounded-lg text-xs text-slate-600 border-l-3 border-primary/30">
-                {c}
+                {strC}
               </div>
             )
           })}
         </div>
       )}
       {canEdit && (
-        <div className="flex gap-1.5">
-          <Input
-            placeholder="Add a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="h-8 text-xs rounded-lg"
-            onKeyDown={(e) => e.key === "Enter" && addComment()}
-          />
-          <Button 
-            size="icon" 
-            className="h-8 w-8 rounded-lg shrink-0" 
-            onClick={addComment}
-            disabled={!newComment.trim() || sending}
-          >
-            {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-          </Button>
+        <div className="flex flex-col gap-2 mt-2">
+          {audioBlob && (
+            <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl">
+              <audio controls src={URL.createObjectURL(audioBlob)} className="h-8 flex-1" />
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={discardRecording}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          {commentFiles && commentFiles.length > 0 && (
+             <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl text-xs font-bold text-slate-600">
+                <FileText className="h-4 w-4" />
+                {commentFiles.length} file(s) selected
+                <Button size="icon" variant="ghost" className="h-6 w-6 ml-auto" onClick={() => setCommentFiles(null)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+             </div>
+          )}
+          <div className="flex gap-1 items-end relative">
+            <div className="relative flex-1">
+               <Textarea 
+                 placeholder="Add a comment or note..." 
+                 value={newComment} 
+                 onChange={e => setNewComment(e.target.value)}
+                 className="min-h-[40px] h-[40px] resize-none rounded-2xl bg-white border-muted pr-[70px] text-xs py-2.5"
+                 onKeyDown={e => {
+                   if (e.key === "Enter" && !e.shiftKey) {
+                     e.preventDefault()
+                     addComment()
+                   }
+                 }}
+               />
+               <div className="absolute right-2 top-1.5 flex items-center gap-1">
+                 <Label className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-muted-foreground transition-colors">
+                   <Upload className="h-4 w-4" />
+                   <Input type="file" multiple className="hidden" onChange={(e) => setCommentFiles(e.target.files)} />
+                 </Label>
+                 {!isRecording ? (
+                   <Button size="icon" variant="ghost" type="button" className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-red-500 transition-colors" onClick={startRecording}>
+                     <Mic className="h-4 w-4" />
+                   </Button>
+                 ) : (
+                   <Button size="icon" variant="destructive" type="button" className="h-7 w-7 rounded-lg animate-pulse" onClick={stopRecording}>
+                     <Square className="h-3 w-3" />
+                   </Button>
+                 )}
+               </div>
+            </div>
+            <Button size="icon" className="h-10 w-10 shrink-0 rounded-2xl rounded-bl-sm bg-primary/90 hover:bg-primary shadow-lg shadow-primary/20 transition-all active:scale-95" onClick={addComment} disabled={sending || (!newComment.trim() && !audioBlob && !commentFiles)}>
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -696,7 +802,16 @@ export default function SchoolPage() {
             try { return assignment?.comments ? JSON.parse(assignment.comments) : [] } catch { return assignment?.comments ? [assignment.comments] : [] }
           })()
           const timestamp = format(new Date(), "MMM d, yyyy 'at' h:mm a")
-          const newComments = [...existingComments, `**${author}** on ${timestamp} — ${submitComment.trim()}`]
+          
+          const newCommentObj = {
+            author,
+            date: timestamp,
+            text: submitComment.trim(),
+            attachments: [],
+            audioUrl: null
+          }
+          
+          const newComments = [...existingComments, newCommentObj]
           updates.comments = JSON.stringify(newComments)
        }
 
