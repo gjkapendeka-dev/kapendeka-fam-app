@@ -46,19 +46,25 @@ export default function MealPlannerPage() {
   const videoRef = React.useRef<HTMLVideoElement>(null)
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
+  // Refresh Counters
+  const [recipesRefreshCounter, setRecipesRefreshCounter] = React.useState(0)
+  const refreshRecipes = () => setRecipesRefreshCounter(prev => prev + 1)
+  const [mealPlanRefreshCounter, setMealPlanRefreshCounter] = React.useState(0)
+  const refreshMealPlan = () => setMealPlanRefreshCounter(prev => prev + 1)
+
   // Fetch Family Recipes
   const recipesQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("recipes").select("*").eq("family_id", profile.family_id)
-  }, [supabase, profile?.family_id])
-  const { data: recipes, loading: recipesLoading, refresh: refreshRecipes } = useCollection(recipesQuery)
+  }, [supabase, profile?.family_id, recipesRefreshCounter])
+  const { data: recipes, loading: recipesLoading } = useCollection(recipesQuery)
 
   // Fetch Current Meal Plan
   const mealPlanQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("meal_plans").select("*").eq("family_id", profile.family_id)
-  }, [supabase, profile?.family_id])
-  const { data: mealPlans, refresh: refreshMealPlan } = useCollection(mealPlanQuery)
+  }, [supabase, profile?.family_id, mealPlanRefreshCounter])
+  const { data: mealPlans, loading: mealPlansLoading } = useCollection(mealPlanQuery)
   const currentPlan = mealPlans?.[0]
 
   // Recipe Modal State
