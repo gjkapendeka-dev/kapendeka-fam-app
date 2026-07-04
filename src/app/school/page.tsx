@@ -242,6 +242,87 @@ function ProgressBar({ assignment, supabase, refresh, canEdit }: { assignment: a
   )
 }
 
+function TeacherReviewSection({ assignment, supabase, profile, refresh, canEdit }: { assignment: any, supabase: any, profile: any, refresh: () => void, canEdit: boolean }) {
+  const isParent = profile?.role === "adult" || profile?.role === "parent";
+  const [score, setScore] = React.useState(assignment.teacher_review?.score || "");
+  const [feedback, setFeedback] = React.useState(assignment.teacher_review?.feedback || "");
+  const [saving, setSaving] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(!assignment.teacher_review);
+
+  const saveReview = async () => {
+    if (!score && !feedback) return;
+    setSaving(true);
+    await supabase.from("homework").update({
+      teacher_review: { score, feedback, reviewer: profile?.display_name, date: new Date().toISOString() }
+    }).eq("id", assignment.id);
+    setSaving(false);
+    setIsEditing(false);
+    refresh();
+  };
+
+  if (!isParent && !assignment.teacher_review) return null;
+
+  if (!isEditing && assignment.teacher_review) {
+    return (
+      <div className="bg-amber-50 rounded-xl p-3 border border-amber-200 mt-2 relative">
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex items-center gap-1.5 font-bold text-amber-800 text-xs uppercase tracking-wider">
+            <CheckCircle2 className="w-4 h-4" /> Teacher Review
+          </div>
+          {isParent && (
+            <Button size="icon" variant="ghost" className="h-6 w-6 text-amber-700 hover:bg-amber-100" onClick={() => setIsEditing(true)}>
+              <Pencil className="w-3 h-3" />
+            </Button>
+          )}
+        </div>
+        {assignment.teacher_review.score && (
+          <div className="text-2xl font-black text-amber-600 mb-1">{assignment.teacher_review.score}</div>
+        )}
+        {assignment.teacher_review.feedback && (
+          <p className="text-sm text-amber-900">{assignment.teacher_review.feedback}</p>
+        )}
+        <div className="text-[10px] text-amber-700/70 font-bold mt-2">
+          By {assignment.teacher_review.reviewer} on {format(new Date(assignment.teacher_review.date), "MMM d, yyyy")}
+        </div>
+      </div>
+    );
+  }
+
+  if (isParent) {
+    return (
+      <div className="bg-amber-50 rounded-xl p-3 border border-amber-200 mt-2">
+        <div className="font-bold text-amber-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1">
+          <CheckCircle2 className="w-4 h-4" /> Add Final Review
+        </div>
+        <div className="grid gap-2">
+          <Input 
+            placeholder="Score (e.g. A+, 10/10)" 
+            value={score} 
+            onChange={(e) => setScore(e.target.value)}
+            className="bg-white border-amber-200 h-8 text-xs"
+          />
+          <Textarea 
+            placeholder="Final feedback..." 
+            value={feedback} 
+            onChange={(e) => setFeedback(e.target.value)}
+            className="bg-white border-amber-200 min-h-[60px] text-xs py-2"
+          />
+          <Button 
+            className="bg-amber-500 hover:bg-amber-600 text-white w-full font-bold h-8 text-xs rounded-lg mt-1" 
+            onClick={saveReview} 
+            disabled={saving || (!score && !feedback)}
+          >
+            {saving ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : null}
+            {assignment.teacher_review ? "Update Review" : "Submit Review"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { assignment: any, supabase: any, profile: any, refresh: () => void, canEdit: boolean }) {
   const { isRecording, startRecording, stopRecording, audioBlob, discardRecording } = useAudioRecorder()
   const [commentFiles, setCommentFiles] = React.useState<FileList | null>(null)
@@ -397,25 +478,22 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
                 {obj?.attachments && obj.attachments.length > 0 && (
                   <FileList files={obj.attachments} title="" />
                 )}
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {obj?.reactions && Object.entries(obj.reactions).map(([emoji, users]: [string, any]) => (
-                    <button 
-                      key={emoji} 
-                      onClick={() => toggleReaction(i, emoji)}
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full border ${Array.isArray(users) && users.includes(profile?.display_name) ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white border-slate-200 text-slate-500'}`}
-                      title={Array.isArray(users) ? users.join(", ") : ""}
-                    >
-                      {emoji} {Array.isArray(users) ? users.length : 0}
-                    </button>
-                  ))}
-                  <div className="group/react relative inline-block">
-                     <button className="text-[10px] px-1.5 py-0.5 rounded-full border bg-white border-slate-200 text-slate-400 hover:bg-slate-100 transition-colors">+</button>
-                     <div className="absolute left-0 bottom-full mb-1 hidden group-hover/react:flex bg-white shadow-md border rounded-full px-1.5 py-1 gap-1.5 z-10">
-                       {REACTION_EMOJIS.map(e => (
-                         <button key={e} onClick={() => toggleReaction(i, e)} className="hover:scale-125 transition-transform text-sm">{e}</button>
-                       ))}
-                     </div>
-                  </div>
+                <div className="flex flex-wrap gap-1 mt-1.5 pt-1 border-t border-slate-200/50">
+                  {REACTION_EMOJIS.map(e => {
+                    const users = obj?.reactions?.[e] || [];
+                    const count = Array.isArray(users) ? users.length : 0;
+                    const hasReacted = Array.isArray(users) && users.includes(profile?.display_name);
+                    return (
+                      <button 
+                        key={e} 
+                        onClick={() => toggleReaction(i, e)}
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${hasReacted ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                        title={Array.isArray(users) && count > 0 ? users.join(", ") : ""}
+                      >
+                        {e} {count > 0 ? count : ""}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )
@@ -447,7 +525,7 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
                  placeholder="Add a comment or note..." 
                  value={newComment} 
                  onChange={e => setNewComment(e.target.value)}
-                 className="min-h-[40px] h-[40px] resize-none rounded-2xl bg-white border-muted pr-[70px] text-xs py-2.5"
+                 className="min-h-[40px] h-auto resize-none rounded-2xl bg-white border-muted pr-[70px] text-[10px] py-1.5"
                  onKeyDown={e => {
                    if (e.key === "Enter" && !e.shiftKey) {
                      e.preventDefault()
@@ -1254,6 +1332,11 @@ export default function SchoolPage() {
                         </div>
                       </div>
                     </CardContent>
+                    {a.status === "done" && (
+                      <div className="px-4 pb-4 sm:px-6 w-full">
+                         <TeacherReviewSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
+                      </div>
+                    )}
                   </Card>
                 )
               }
@@ -1414,6 +1497,10 @@ export default function SchoolPage() {
                             </div>
                           )}
                         </div>
+                        
+                        {a.status === "done" && (
+                           <TeacherReviewSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
+                        )}
 
                         <CommentSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
                      </div>
@@ -1423,6 +1510,8 @@ export default function SchoolPage() {
                         <FileList files={allSubmissions} title="Submitted Work" />
                         
                         <div className="text-xs font-bold text-slate-500 mt-2">Time spent: {Math.floor((a.time_spent_seconds || 0) / 60)}m {(a.time_spent_seconds || 0) % 60}s</div>
+                        
+                        <TeacherReviewSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
                         
                         <CommentSection assignment={a} supabase={supabase} profile={profile} refresh={refresh} canEdit={canEdit} />
 

@@ -27,7 +27,7 @@ import { supabase } from "@/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
-  { name: "Family Info", href: "/profile", icon: Fingerprint },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "My Stuff", href: "/vault", icon: Archive },
   { name: "Games", href: "/arcade", icon: Zap },
   { name: "Stories", href: "/stories", icon: Book },
