@@ -72,7 +72,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-headline font-black text-base leading-none tracking-tighter uppercase italic">Kapendeka</span>
-            <span className="text-[7px] font-black uppercase tracking-[0.3em] text-primary/60 mt-0.5">Universe Hub</span>
+            <span className="font-headline text-[7px] font-black uppercase tracking-[0.3em] text-primary/60 mt-0.5">Universe Hub</span>
           </div>
         </div>
       </SidebarHeader>

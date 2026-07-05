@@ -11,7 +11,10 @@ import {
   Calendar as CalendarIcon,
   Search,
   Loader2,
-  Bookmark
+  Bookmark,
+  CheckCircle2,
+  Circle,
+  ClipboardList
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,7 +22,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   Dialog, 
   DialogContent, 
@@ -29,9 +31,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+
 export default function FaithPage() {
   const { profile } = useUser()
   const supabase = useSupabase()
@@ -39,9 +49,9 @@ export default function FaithPage() {
 
   const [isEntryOpen, setIsEntryOpen] = React.useState(false)
   const [isPrayerOpen, setIsPrayerOpen] = React.useState(false)
+  const [isChurchWorkOpen, setIsChurchWorkOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  
   const [isDevoOpen, setIsDevoOpen] = React.useState(false)
   const [devoTitle, setDevoTitle] = React.useState("")
   const [devoVerse, setDevoVerse] = React.useState("")
@@ -64,12 +74,12 @@ export default function FaithPage() {
     setIsSubmitting(true)
     const devoData = {
       family_id: profile.familyId,
-      title: devoTitle, // we will just store title in reflection? No wait, schema has reflection. Wait I added 'title' to schema? No! Schema has author_id, author_name, reference, verse, reflection.
+      title: devoTitle,
       author_id: profile.id,
       author_name: profile.displayName,
       reference: devoRef,
       verse: devoVerse,
-      reflection: devoTitle + "\n\n" + devoReflection, // Combine them
+      reflection: devoTitle + "\n\n" + devoReflection,
     }
 
     const { error } = await supabase.from("devotionals").insert([devoData])
@@ -87,10 +97,19 @@ export default function FaithPage() {
     toast({ title: "Devotional Published", description: "Shared with the family." })
   }
 
-  // Form States
+  // Form States - Service Entry
   const [entryTitle, setEntryTitle] = React.useState("")
   const [entryNotes, setEntryNotes] = React.useState("")
-  const [newPrayer, setNewPrayer] = React.useState("")
+
+  // Form States - Church Work
+  const [cwTitle, setCwTitle] = React.useState("")
+  const [cwDesc, setCwDesc] = React.useState("")
+  const [cwDate, setCwDate] = React.useState("")
+  const [cwCategory, setCwCategory] = React.useState("Calling")
+
+  // Form States - Prayers
+  const [prayerText, setPrayerText] = React.useState("")
+  const [prayerCategory, setPrayerCategory] = React.useState("Family")
 
   // Fetch Faith Entries
   const faithQuery = React.useMemo(() => {
@@ -99,8 +118,25 @@ export default function FaithPage() {
       .select("*")
       .eq("familyId", profile.familyId).order("date", { ascending: false }).limit(20)
   }, [supabase, profile?.familyId])
-
   const { data: entries, loading } = useCollection(faithQuery)
+
+  // Fetch Church Work
+  const churchWorkQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("church_work")
+      .select("*")
+      .eq("family_id", profile.familyId).order("created_at", { ascending: false })
+  }, [supabase, profile?.familyId])
+  const { data: churchWorkTasks, refresh: refreshChurchWork } = useCollection(churchWorkQuery)
+
+  // Fetch Prayers
+  const prayersQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null
+    return supabase.from("prayers")
+      .select("*")
+      .eq("family_id", profile.familyId).order("created_at", { ascending: false })
+  }, [supabase, profile?.familyId])
+  const { data: realPrayers, refresh: refreshPrayers } = useCollection(prayersQuery)
 
   const handleAddEntry = async () => {
     if (!supabase || !profile?.familyId || !entryTitle) return
@@ -111,7 +147,7 @@ export default function FaithPage() {
       title: entryTitle,
       notes: entryNotes,
       date: new Date().toISOString(),
-      prayerPoints: [], // Can be populated later or from a specific list
+      prayerPoints: [],
       createdAt: new Date().toISOString(),
     }
 
@@ -128,12 +164,52 @@ export default function FaithPage() {
     toast({ title: "Faith Entry Added", description: "Your spiritual notes have been saved to the Hub." })
   }
 
-  // Placeholder for collective prayer points (could be a separate collection for MVP, or part of the entry)
-  const prayers = [
-    { text: "Safety for George's travel next week", category: "Family" },
-    { text: "Healing for Grandma's knee", category: "Health" },
-    { text: "Wisdom for Junior's exams", category: "Education" },
-  ]
+  const handleAddChurchWork = async () => {
+    if (!supabase || !profile?.familyId || !cwTitle) return
+    setIsSubmitting(true)
+    const { error } = await supabase.from("church_work").insert([{
+      family_id: profile.familyId,
+      title: cwTitle,
+      description: cwDesc,
+      due_date: cwDate || null,
+      status: "pending",
+      category: cwCategory,
+      assigned_to: profile.id,
+      created_at: new Date().toISOString()
+    }])
+    setIsSubmitting(false)
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" })
+    setIsChurchWorkOpen(false)
+    setCwTitle("")
+    setCwDesc("")
+    setCwDate("")
+    if (refreshChurchWork) refreshChurchWork()
+    toast({ title: "Church Work Logged", description: "Your activity has been added to the Hub." })
+  }
+
+  const handleAddPrayer = async () => {
+    if (!supabase || !profile?.familyId || !prayerText) return
+    setIsSubmitting(true)
+    const { error } = await supabase.from("prayers").insert([{
+      family_id: profile.familyId,
+      text: prayerText,
+      category: prayerCategory,
+      created_at: new Date().toISOString()
+    }])
+    setIsSubmitting(false)
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" })
+    setIsPrayerOpen(false)
+    setPrayerText("")
+    if (refreshPrayers) refreshPrayers()
+    toast({ title: "Prayer Added", description: "Added to the Family Prayer Wall." })
+  }
+
+  const toggleChurchWorkStatus = async (id: string, currentStatus: string) => {
+    if (!supabase) return
+    const newStatus = currentStatus === "completed" ? "pending" : "completed"
+    await supabase.from("church_work").update({ status: newStatus }).eq("id", id)
+    if (refreshChurchWork) refreshChurchWork()
+  }
 
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
@@ -143,6 +219,71 @@ export default function FaithPage() {
           <p className="text-muted-foreground font-medium">Tracking the spiritual growth of the Kapendeka World</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Add Church Work */}
+          <Dialog open={isChurchWorkOpen} onOpenChange={setIsChurchWorkOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="rounded-xl h-11 px-6 font-bold shadow-sm">
+                <ClipboardList className="h-4 w-4 mr-2 text-primary" /> Log Church Work
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="rounded-2xl sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Log Church Work / Activity</DialogTitle>
+                <DialogDescription>Track assignments, volunteer efforts, and personal callings.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="cwTitle">Task / Activity Name</Label>
+                  <Input 
+                    id="cwTitle" 
+                    placeholder="e.g. Prepare Sunday School Lesson" 
+                    value={cwTitle}
+                    onChange={(e) => setCwTitle(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Category</Label>
+                    <Select value={cwCategory} onValueChange={setCwCategory}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Calling">Calling</SelectItem>
+                        <SelectItem value="Volunteer">Volunteer</SelectItem>
+                        <SelectItem value="Study">Study</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cwDate">Date/Deadline</Label>
+                    <Input 
+                      id="cwDate" 
+                      type="date"
+                      value={cwDate}
+                      onChange={(e) => setCwDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="cwDesc">Description (Optional)</Label>
+                  <Textarea 
+                    id="cwDesc" 
+                    placeholder="Any details to help you complete this..." 
+                    className="min-h-[80px] rounded-xl"
+                    value={cwDesc}
+                    onChange={(e) => setCwDesc(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleAddChurchWork} disabled={!cwTitle || isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Task
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Sermon Note */}
           <Dialog open={isEntryOpen} onOpenChange={setIsEntryOpen}>
             <DialogTrigger asChild>
               <Button className="rounded-xl h-11 px-6 font-bold bg-primary shadow-lg shadow-primary/20">
@@ -187,66 +328,119 @@ export default function FaithPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left: Faith Journal Entries */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold flex items-center gap-2 text-foreground">
-              <BookOpen className="h-6 w-6 text-primary" />
-              Sermon Notes & Study
-            </h2>
-            <div className="relative w-full max-w-[200px] hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search notes, ..." className="pl-9 rounded-xl h-9" />
+        {/* Left: Faith Journal & Church Work */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          {/* Church Work Tracking */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center gap-2 text-foreground">
+                <ClipboardList className="h-6 w-6 text-primary" />
+                Church Work & Activities
+              </h2>
+            </div>
+            
+            <div className="grid gap-3">
+              {(churchWorkTasks || []).length > 0 ? (
+                churchWorkTasks?.map((task) => (
+                  <Card key={task.id} className="rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow bg-white overflow-hidden group">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <button 
+                        onClick={() => toggleChurchWorkStatus(task.id, task.status)}
+                        className={`shrink-0 h-6 w-6 rounded-full flex items-center justify-center transition-colors ${task.status === 'completed' ? 'bg-primary text-white' : 'border-2 border-muted-foreground/30 text-transparent hover:border-primary/50'}`}
+                      >
+                        {task.status === 'completed' && <CheckCircle2 className="h-4 w-4" />}
+                      </button>
+                      <div className={`flex-1 space-y-1 transition-opacity ${task.status === 'completed' ? 'opacity-50' : 'opacity-100'}`}>
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-bold ${task.status === 'completed' ? 'line-through' : ''}`}>{task.title}</h3>
+                          <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary">
+                            {task.category}
+                          </Badge>
+                        </div>
+                        {task.description && <p className="text-sm text-muted-foreground line-clamp-1">{task.description}</p>}
+                      </div>
+                      {task.due_date && (
+                        <div className="flex flex-col items-end shrink-0">
+                          <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground">
+                            {format(new Date(task.due_date), "MMM dd")}
+                          </Badge>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 bg-white rounded-2xl border-2 border-dashed border-muted flex flex-col items-center">
+                  <ClipboardList className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                  <p className="text-muted-foreground text-sm font-medium">No church work tasks assigned. Great job!</p>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Sermon Notes */}
           <div className="space-y-4">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-32 bg-muted animate-pulse rounded-2xl" />)
-            ) : (entries || []).length > 0 ? (
-              entries?.map((entry) => (
-                <Card key={entry.id} className="rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow bg-white overflow-hidden group">
-                  <div className="h-1 bg-primary/20 group-hover:bg-primary transition-colors" />
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/20">
-                            {entry.date ? format(new Date(entry.date.seconds * 1000), "MMM dd, yyyy") : ", ..."}
-                          </Badge>
-                          <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-widest bg-muted text-muted-foreground">
-                            Service
-                          </Badge>
-                        </div>
-                        <h3 className="text-xl font-bold text-foreground">{entry.title}</h3>
-                        <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-3">
-                          {entry.notes}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" className="rounded-full">
-                        <Bookmark className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-20 bg-muted/20 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center">
-                <div className="h-16 w-16 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-4">
-                  <Church className="h-8 w-8 text-muted-foreground/30" />
-                </div>
-                <h3 className="font-bold text-lg">Your Faith Journal is empty</h3>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
-                  Start logging your church services and personal Bible studies to see your growth.
-                </p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center gap-2 text-foreground">
+                <BookOpen className="h-6 w-6 text-primary" />
+                Sermon Notes & Study
+              </h2>
+              <div className="relative w-full max-w-[200px] hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search notes, ..." className="pl-9 rounded-xl h-9" />
               </div>
-            )}
+            </div>
+
+            <div className="space-y-4">
+              {loading ? (
+                [1, 2, 3].map(i => <div key={i} className="h-32 bg-muted animate-pulse rounded-2xl" />)
+              ) : (entries || []).length > 0 ? (
+                entries?.map((entry) => (
+                  <Card key={entry.id} className="rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow bg-white overflow-hidden group">
+                    <div className="h-1 bg-primary/20 group-hover:bg-primary transition-colors" />
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/20">
+                              {entry.date ? format(new Date(entry.date.seconds * 1000), "MMM dd, yyyy") : ", ..."}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-widest bg-muted text-muted-foreground">
+                              Service
+                            </Badge>
+                          </div>
+                          <h3 className="text-xl font-bold text-foreground">{entry.title}</h3>
+                          <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                            {entry.notes}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                          <Bookmark className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-muted/20 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center">
+                  <div className="h-16 w-16 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-4">
+                    <Church className="h-8 w-8 text-muted-foreground/30" />
+                  </div>
+                  <h3 className="font-bold text-lg">Your Faith Journal is empty</h3>
+                  <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
+                    Start logging your church services and personal Bible studies to see your growth.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
+
         </div>
 
         {/* Right: Prayer Wall & Daily Devotional */}
         <div className="lg:col-span-4 space-y-4">
-          {/* Prayer Wall */}
+          {/* Real Family Prayer Wall */}
           <Card className="rounded-[2rem] border-none shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -257,19 +451,64 @@ export default function FaithPage() {
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-3">
-                {prayers.map((prayer, i) => (
-                  <div key={i} className="bg-white/10 p-3 rounded-xl border border-white/10 group cursor-pointer hover:bg-white/20 transition-colors">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-70">{prayer.category}</span>
-                      <Heart className="h-3 w-3 text-accent group-hover:fill-accent" />
+                {(realPrayers || []).length > 0 ? (
+                  realPrayers?.map((prayer) => (
+                    <div key={prayer.id} className="bg-white/10 p-3 rounded-xl border border-white/10 group cursor-pointer hover:bg-white/20 transition-colors">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-70">{prayer.category}</span>
+                        <Heart className="h-3 w-3 text-accent/50 group-hover:fill-accent group-hover:text-accent transition-all" />
+                      </div>
+                      <p className="text-sm font-medium leading-tight">{prayer.text}</p>
                     </div>
-                    <p className="text-sm font-medium leading-tight">{prayer.text}</p>
+                  ))
+                ) : (
+                  <div className="text-center py-4 bg-white/5 rounded-xl border border-white/10">
+                    <p className="text-sm text-primary-foreground/70">No prayer requests active.</p>
                   </div>
-                ))}
+                )}
               </div>
-              <Button className="w-full bg-accent hover:bg-accent/90 text-white font-bold rounded-xl h-11 mt-2">
-                <Plus className="h-4 w-4 mr-2" /> Add Prayer Request
-              </Button>
+              
+              <Dialog open={isPrayerOpen} onOpenChange={setIsPrayerOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-accent hover:bg-accent/90 text-white font-bold rounded-xl h-11 mt-2">
+                    <Plus className="h-4 w-4 mr-2" /> Add Prayer Request
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-2xl sm:max-w-[400px]">
+                  <DialogHeader>
+                    <DialogTitle>Add to Prayer Wall</DialogTitle>
+                    <DialogDescription>Share what you need prayer for with the family.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Category</Label>
+                      <Select value={prayerCategory} onValueChange={setPrayerCategory}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Family">Family</SelectItem>
+                          <SelectItem value="Health">Health</SelectItem>
+                          <SelectItem value="Education">Education</SelectItem>
+                          <SelectItem value="Finances">Finances</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Prayer Request</Label>
+                      <Textarea 
+                        value={prayerText} 
+                        onChange={e => setPrayerText(e.target.value)} 
+                        placeholder="e.g. Please pray for my upcoming test..."
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAddPrayer} disabled={!prayerText || isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Prayer
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
