@@ -59,6 +59,7 @@ import {
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format, formatDistanceToNowStrict } from "date-fns"
+import { AssignmentQuiz } from "@/components/assignment-quiz"
 
 
 function useAudioRecorder() {
@@ -1347,6 +1348,13 @@ export default function SchoolPage() {
                           <Button onClick={() => toggleStatus(a.id, a.status)} variant="outline" className="rounded-xl font-bold flex-1 sm:w-full">Mark Incomplete</Button>
                         )}
                         <div className="flex gap-1 justify-end">
+                          <AssignmentQuiz
+                            assignmentId={a.id}
+                            supabase={supabase}
+                            profile={profile}
+                            familyId={profile?.family_id || ""}
+                            isParent={isParent}
+                          />
                           <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} user={user} />
                           {isOwnerOrParent && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" onClick={() => openDelegateDialog(a)}>
@@ -1392,6 +1400,13 @@ export default function SchoolPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <RemindersDialog a={a} supabase={supabase} refresh={refresh} profile={profile} user={user} />
+                      <AssignmentQuiz
+                        assignmentId={a.id}
+                        supabase={supabase}
+                        profile={profile}
+                        familyId={profile?.family_id || ""}
+                        isParent={isParent}
+                      />
                       {isOwnerOrParent && (
                         <Button
                           size="icon"
