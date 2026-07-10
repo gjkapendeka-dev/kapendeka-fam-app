@@ -34,7 +34,9 @@ interface QuizQuestion {
   correct_value?: number
   pin_image_url?: string
   pin_region?: { x: number; y: number; radius: number }
+  pin_region?: { x: number; y: number; radius: number }
   slide_content?: string
+  allow_multiple_selection?: boolean
 }
 
 interface StudentResponse { questionId: string; answer: string; timeSpent?: number }
@@ -83,6 +85,7 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [sliderValue, setSliderValue] = useState(50)
   const [pinLocation, setPinLocation] = useState<{ x: number; y: number } | null>(null)
+  const [selectedMultiple, setSelectedMultiple] = useState<string[]>([])
 
   // ── Load quiz ──────────────────────────────────────────────────────────────
 
@@ -147,6 +150,7 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
     const q = questions[currentIdx]
     if (!q) return
     setSelectedOption("")
+    setSelectedMultiple([])
     setTextAnswer("")
     setPinLocation(null)
     setDragOverIdx(null)
@@ -169,7 +173,16 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
     let correct = false
     switch (q.question_type) {
       case "multiple_choice":
-        correct = answer.trim().toLowerCase() === q.correct_answer.trim().toLowerCase(); break
+        if (q.allow_multiple_selection) {
+          const correctArr = (q.correct_answer || "").split(",").sort();
+          const ansArr = answer.split(",").sort();
+          correct = correctArr.length === ansArr.length && correctArr.every((v, i) => v === ansArr[i]);
+        } else {
+          const isIndex = !isNaN(parseInt(q.correct_answer)) && String(parseInt(q.correct_answer)) === q.correct_answer;
+          const actualCorrectText = isIndex ? (q.options[parseInt(q.correct_answer)] || "") : q.correct_answer;
+          correct = answer.trim().toLowerCase() === actualCorrectText.trim().toLowerCase();
+        }
+        break
       case "true_false":
         correct = answer.trim().toLowerCase() === q.correct_answer.trim().toLowerCase(); break
       case "short_answer":
@@ -205,8 +218,8 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
       case "drop_pin": return pinLocation ? JSON.stringify(pinLocation) : ""
       case "short_answer":
       case "open_ended":
-      case "brainstorm":
       case "word_cloud": return textAnswer
+      case "multiple_choice": return q.allow_multiple_selection ? selectedMultiple.join(",") : selectedOption
       default: return selectedOption
     }
   }
@@ -375,6 +388,7 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
       case "puzzle": return puzzleOrder.length > 0
       case "drop_pin": return pinLocation !== null
       case "short_answer": case "open_ended": case "brainstorm": case "word_cloud": return textAnswer.trim().length > 0
+      case "multiple_choice": return q.allow_multiple_selection ? selectedMultiple.length > 0 : selectedOption !== ""
       default: return selectedOption !== ""
     }
   })()
@@ -442,14 +456,34 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
           <div className="grid grid-cols-1 gap-2">
             {q.options.map((opt, i) => {
               const colors = ["border-blue-400 bg-blue-50", "border-orange-400 bg-orange-50", "border-emerald-400 bg-emerald-50", "border-purple-400 bg-purple-50", "border-rose-400 bg-rose-50", "border-yellow-400 bg-yellow-50"]
-              const selected = selectedOption === opt
-              return (
-                <button key={i} onClick={() => { setSelectedOption(opt); handleAnswer(opt) }}
-                  className={`w-full p-3 rounded-xl border-2 text-left font-semibold text-sm transition-all ${selected ? colors[i % colors.length] + " scale-[0.98]" : "border-border hover:border-primary/40 hover:bg-slate-50"}`}>
-                  <span className="font-black text-muted-foreground mr-2">{["A", "B", "C", "D", "E", "F"][i]}.</span>
-                  {opt}
-                </button>
-              )
+              
+              if (q.allow_multiple_selection) {
+                const selected = selectedMultiple.includes(i.toString())
+                return (
+                  <button key={i} onClick={() => {
+                    const newArr = selected ? selectedMultiple.filter(x => x !== i.toString()) : [...selectedMultiple, i.toString()];
+                    setSelectedMultiple(newArr);
+                  }}
+                    className={`w-full p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center transition-all ${selected ? colors[i % colors.length] + " scale-[0.98]" : "border-border hover:border-primary/40 hover:bg-slate-50"}`}>
+                    <div className="mr-3 mt-0.5">
+                      <div className={`w-5 h-5 rounded border ${selected ? 'bg-emerald-500 border-emerald-500 flex items-center justify-center' : 'border-slate-300 bg-white'}`}>
+                        {selected && <CheckCircle2 className="w-4 h-4 text-white" />}
+                      </div>
+                    </div>
+                    <span className="font-black text-muted-foreground mr-2">{["A", "B", "C", "D", "E", "F"][i]}.</span>
+                    {opt}
+                  </button>
+                )
+              } else {
+                const selected = selectedOption === opt
+                return (
+                  <button key={i} onClick={() => { setSelectedOption(opt); handleAnswer(opt) }}
+                    className={`w-full p-3 rounded-xl border-2 text-left font-semibold text-sm transition-all ${selected ? colors[i % colors.length] + " scale-[0.98]" : "border-border hover:border-primary/40 hover:bg-slate-50"}`}>
+                    <span className="font-black text-muted-foreground mr-2">{["A", "B", "C", "D", "E", "F"][i]}.</span>
+                    {opt}
+                  </button>
+                )
+              }
             })}
           </div>
         )}
@@ -601,7 +635,7 @@ export function QuizDisplay({ quizId, supabase, profile, onComplete }: QuizDispl
               <ChevronLeft className="h-4 w-4" />
             </Button>
           )}
-          {!["multiple_choice", "true_false", "poll"].includes(q.question_type) && (
+          {(!["multiple_choice", "true_false", "poll"].includes(q.question_type) || (q.question_type === "multiple_choice" && q.allow_multiple_selection)) && (
             <Button onClick={() => handleAnswer()} disabled={!canSubmit || submitting}
               className="flex-1 h-11 font-bold">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> :

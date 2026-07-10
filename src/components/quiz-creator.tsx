@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import {
   Plus, Trash2, Loader2, AlertCircle, Image as ImageIcon,
   X, ChevronUp, ChevronDown, GripVertical, Pencil,
@@ -64,6 +65,8 @@ export interface Question {
   pinRegion?: { x: number; y: number; radius: number }
   // Slide
   slideContent?: string
+  // Multiple Choice Additions
+  allowMultipleSelection?: boolean
 }
 
 interface QuizCreatorProps {
@@ -127,6 +130,8 @@ export function QuizCreator({
   const [currentQ, setCurrentQ] = useState<Question | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [localQuizId, setLocalQuizId] = useState<string | undefined>(quizId)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // Game settings
   const [questionTimer, setQuestionTimer] = useState(30)
@@ -196,8 +201,13 @@ export function QuizCreator({
             // For multiple choice, we mapped options to text, but correctAnswer in DB was the text, we need the index.
             const mapped = loaded.map((q: any) => {
                if (q.type === "multiple_choice") {
-                  const idx = q.options.findIndex((o: any) => o.text === q.correctAnswer)
-                  return { ...q, correctAnswer: idx !== -1 ? idx.toString() : "0" }
+                  // Wait, earlier version stored it as string if it wasn't multi-select. But for multi-select it will just be indices already if we change it.
+                  // For backward compatibility, if it's text we try to find the index. If it contains commas, it's multi-select indices.
+                  if (q.correctAnswer && !q.correctAnswer.includes(",") && isNaN(parseInt(q.correctAnswer))) {
+                      const idx = q.options.findIndex((o: any) => o.text === q.correctAnswer)
+                      return { ...q, correctAnswer: idx !== -1 ? idx.toString() : "0" }
+                  }
+                  return q;
                }
                return q
             })
@@ -211,9 +221,25 @@ export function QuizCreator({
       } else {
         // Reset
         setTitle(""); setDescription(""); setCategory(""); setQuestions([])
+        setLocalQuizId(undefined)
       }
     }
   }, [open, familyId, supabase, quizId])
+
+  // Auto-save effect for drafts
+  useEffect(() => {
+    if (!open || (!title.trim() && questions.length === 0)) return
+
+    const timer = setTimeout(() => {
+      saveQuiz(true, true) // Silent draft save
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [
+    title, description, category, difficulty, questions, questionTimer,
+    showLeaderboard, timeBonusEnabled, shuffleQuestions, shuffleOptions,
+    showCorrectAnswer, showExplanation, theme, maxAttempts, assignedUsers, open
+  ])
 
   const handleTypeSelect = (type: QuestionType) => {
     setCurrentQ(makeQuestion(type, questions.length + 1))
@@ -244,10 +270,10 @@ export function QuizCreator({
   const deleteQuestion = (id: string) =>
     setQuestions(questions.filter(q => q.id !== id).map((q, i) => ({ ...q, number: i + 1 })))
 
-  const saveQuiz = async (isDraft: boolean = false) => {
-    if (!title.trim()) { setError("Quiz title is required"); return }
-    if (questions.length === 0) { setError("Add at least one question"); return }
-    setSaving(true); setError("")
+  const saveQuiz = async (isDraft: boolean = false, isSilent: boolean = false) => {
+    if (!title.trim()) { if (!isSilent) setError("Quiz title is required"); return }
+    if (questions.length === 0) { if (!isSilent) setError("Add at least one question"); return }
+    if (!isSilent) { setSaving(true); setError("") }
     try {
       const payload = {
         family_id: familyId, assignment_id: assignmentId,
@@ -263,15 +289,16 @@ export function QuizCreator({
       }
 
       let quizData: any
-      if (quizId) {
-        const { data, error: e } = await supabase.from("quizzes").update(payload).eq("id", quizId).select().single()
-        if (e) throw e
-        quizData = data
-        await supabase.from("quiz_questions").delete().eq("quiz_id", quizId)
+      if (localQuizId) {
+        const { data, error: e } = await supabase.from("quizzes").update(payload).eq("id", localQuizId).select().single()
+        if (e && e.code !== 'PGRST116') throw e // ignore if not found just in case
+        quizData = data || { id: localQuizId }
+        await supabase.from("quiz_questions").delete().eq("quiz_id", localQuizId)
       } else {
         const { data, error: e } = await supabase.from("quizzes").insert(payload).select().single()
         if (e) throw e
         quizData = data
+        if (isSilent) setLocalQuizId(data.id)
       }
 
       const toInsert = questions.map(q => ({
@@ -286,10 +313,11 @@ export function QuizCreator({
         options: ["multiple_choice", "true_false", "poll"].includes(q.type)
           ? q.options.map(o => o.text) : [],
         correct_answer:
-          q.type === "multiple_choice" ? (q.options[parseInt(q.correctAnswer)]?.text || "")
+          q.type === "multiple_choice" ? q.correctAnswer
           : q.type === "slider" ? String(q.correctValue ?? 50)
           : q.type === "puzzle" ? (q.items || []).filter(Boolean).join("|||")
           : q.correctAnswer || "",
+        allow_multiple_selection: q.allowMultipleSelection || false,
         explanation: q.explanation,
         points: q.points,
         items: q.items || [],
@@ -304,12 +332,18 @@ export function QuizCreator({
       const { error: qe } = await supabase.from("quiz_questions").insert(toInsert)
       if (qe) throw qe
 
-      setTitle(""); setDescription(""); setCategory(""); setQuestions([])
-      setCurrentQ(null); setView("overview"); setOpen(false)
-      quizId ? onQuizUpdated?.() : onQuizCreated?.(quizData.id)
+      setLastSaved(new Date())
+
+      if (!isDraft) {
+        setTitle(""); setDescription(""); setCategory(""); setQuestions([])
+        setCurrentQ(null); setView("overview"); setOpen(false); setLocalQuizId(undefined)
+        quizId ? onQuizUpdated?.() : onQuizCreated?.(quizData.id)
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to save quiz")
-    } finally { setSaving(false) }
+      if (!isSilent) setError(err.message || "Failed to save quiz")
+    } finally { 
+      if (!isSilent) setSaving(false) 
+    }
   }
 
   return (
@@ -324,10 +358,19 @@ export function QuizCreator({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            🎮 Create Interactive Game Quiz
-          </DialogTitle>
-          <DialogDescription>Build engaging questions for your family</DialogDescription>
+          <div className="flex items-center justify-between pr-8">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                🎮 {localQuizId && !quizId ? "Resume Draft" : "Create Interactive Game Quiz"}
+              </DialogTitle>
+              <DialogDescription>Build engaging questions for your family</DialogDescription>
+            </div>
+            {lastSaved && (
+              <span className="text-xs text-muted-foreground italic flex items-center">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Draft saved at {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
         </DialogHeader>
 
         {view === "type-picker" && (
@@ -709,25 +752,58 @@ function MCPanel({ q, onChange }: { q: Question; onChange: (q: Question) => void
   const updateOpt = (id: string, text: string) =>
     onChange({ ...q, options: q.options.map(o => o.id === id ? { ...o, text } : o) })
 
+  const toggleCorrect = (idx: string) => {
+    if (q.allowMultipleSelection) {
+      const current = q.correctAnswer ? q.correctAnswer.split(",") : [];
+      if (current.includes(idx)) {
+        onChange({ ...q, correctAnswer: current.filter(i => i !== idx).join(",") })
+      } else {
+        onChange({ ...q, correctAnswer: [...current, idx].join(",") })
+      }
+    } else {
+      onChange({ ...q, correctAnswer: idx })
+    }
+  }
+
   return (
     <div>
-      <Label className="text-xs font-bold mb-2 block">Answer Options (tick the correct one)</Label>
+      <div className="flex items-center justify-between mb-2 block">
+        <Label className="text-xs font-bold">Answer Options (tick the correct one{q.allowMultipleSelection ? "s" : ""})</Label>
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id={`multi-${q.id}`} 
+            checked={!!q.allowMultipleSelection} 
+            onCheckedChange={(c) => onChange({ ...q, allowMultipleSelection: c, correctAnswer: "" })} 
+          />
+          <Label htmlFor={`multi-${q.id}`} className="text-xs cursor-pointer">Allow Multiple</Label>
+        </div>
+      </div>
       <div className="space-y-2">
-        {q.options.map((opt, idx) => (
-          <div key={opt.id} className="flex items-center gap-2">
-            <input type="radio" name={`correct-${q.id}`} checked={q.correctAnswer === idx.toString()}
-              onChange={() => onChange({ ...q, correctAnswer: idx.toString() })}
-              className="w-4 h-4 accent-emerald-500" />
-            <Input placeholder={`Option ${idx + 1}`} value={opt.text}
-              onChange={e => updateOpt(opt.id, e.target.value)} className="flex-1 h-8" />
-            {q.options.length > 2 && (
-              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                onClick={() => removeOpt(opt.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        ))}
+        {q.options.map((opt, idx) => {
+          const isCorrect = q.allowMultipleSelection 
+            ? (q.correctAnswer ? q.correctAnswer.split(",").includes(idx.toString()) : false)
+            : q.correctAnswer === idx.toString();
+          
+          return (
+            <div key={opt.id} className="flex items-center gap-2">
+              <input 
+                type={q.allowMultipleSelection ? "checkbox" : "radio"} 
+                name={`correct-${q.id}`} 
+                checked={isCorrect}
+                onChange={() => toggleCorrect(idx.toString())}
+                className="w-4 h-4 accent-emerald-500" 
+              />
+              <Input placeholder={`Option ${idx + 1}`} value={opt.text}
+                onChange={e => updateOpt(opt.id, e.target.value)} className="flex-1 h-8" />
+              {q.options.length > 2 && (
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                  onClick={() => removeOpt(opt.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          )
+        })}
       </div>
       {q.options.length < 6 && (
         <Button variant="outline" size="sm" className="mt-2 w-full text-xs" onClick={addOpt}>
