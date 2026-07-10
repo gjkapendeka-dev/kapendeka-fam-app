@@ -56,7 +56,7 @@ export default function GamesHubPage() {
 
       if (error) throw error
 
-      router.push(`/games/host/${data.id}`)
+      window.open(`/games/host/${data.id}`, "_blank")
     } catch (e: any) {
       toast({ title: "Failed to host game", description: e.message, variant: "destructive" })
       setHostingState(prev => ({ ...prev, [quizId]: false }))

@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 import { useSupabase, useUser } from "@/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Zap, Users, Play, Trophy, CheckCircle, Lock, Unlock, X, ChevronRight } from "lucide-react"
+import { Loader2, Zap, Users, Play, Trophy, CheckCircle, Lock, Unlock, X, ChevronRight, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -295,7 +296,17 @@ export default function HostGamePage() {
       <div className={`min-h-screen ${themeBg} flex flex-col`}>
         {/* Top bar with host name + fullscreen */}
         <div className="flex items-center justify-between px-6 py-3 bg-black/30">
-          <span className="text-white/60 font-bold text-sm">{profile?.display_name || "Host"} — Kapendeka Live</span>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/games"
+              className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-bold transition-colors group"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              K-Games
+            </Link>
+            <span className="text-white/20">|</span>
+            <span className="text-white/60 font-bold text-sm">{profile?.display_name || "Host"} — Kapendeka Live</span>
+          </div>
           <button onClick={toggleFullscreen} className="text-white/40 hover:text-white text-sm font-medium transition-colors">
             {isFullscreen ? "Exit Fullscreen ✕" : "⛶ Fullscreen"}
           </button>
@@ -507,7 +518,10 @@ export default function HostGamePage() {
           </div>
         )}
         
-        <div className="mt-12 text-center">
+        <div className="mt-12 flex items-center justify-center gap-4">
+          <Link href="/games" className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm font-bold transition-colors">
+            <ArrowLeft className="h-4 w-4" /> K-Games
+          </Link>
           <Button size="lg" variant="outline" className="text-white border-white/20 bg-white/10 hover:bg-white/20" onClick={handleEndSession}>
             End Session
           </Button>
@@ -534,6 +548,9 @@ export default function HostGamePage() {
       {/* Header */}
       <header className="bg-white p-4 shadow-sm flex items-center justify-between z-10">
         <div className="flex items-center gap-4">
+          <Link href="/games" className="flex items-center gap-1.5 text-muted-foreground hover:text-primary text-sm font-bold transition-colors mr-2">
+            <ArrowLeft className="h-4 w-4" /> K-Games
+          </Link>
           <Badge variant="secondary" className="text-sm px-3 py-1">Q{session.current_question_index + 1} of {questions.length}</Badge>
           <span className="font-bold text-slate-700">{session.require_pin ? `PIN: ${session.join_pin}` : "Kapendeka Live"}</span>
         </div>
