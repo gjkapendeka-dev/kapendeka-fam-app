@@ -17,9 +17,6 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { naturalLanguageMealSuggestion } from "@/ai/flows/natural-language-meal-suggestion"
-import { generateShoppingList } from "@/ai/flows/ai-meal-plan-shopping-list-generation"
-import { identifyRecipe } from "@/ai/flows/identify-recipe-flow"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useRouter } from "next/navigation"
@@ -122,7 +119,11 @@ export default function MealPlannerPage() {
     if (!queryStr) return
     setIsAiLoading(true)
     try {
-      const result = await naturalLanguageMealSuggestion({ query: queryStr })
+      // Mock result since AI files were deleted
+      const result = {
+        summary: "Here is a suggestion (AI features disabled)",
+        suggestions: [{ title: "Mock Recipe", ingredients: ["A", "B"], instructions: "Cook it" }]
+      }
       setAiSuggestions(result.suggestions)
       toast({
         title: "Suggestions ready!",
@@ -172,17 +173,11 @@ export default function MealPlannerPage() {
 
     setIsGeneratingList(true)
     try {
-      const result = await generateShoppingList({
-        mealPlan: {
-          weekStart: currentPlan.week_start || new Date().toISOString().split('T')[0],
-          days: currentPlan.days || {}
-        },
-        recipes: recipes.map(r => ({
-          id: r.id,
-          title: r.title,
-          ingredients: r.ingredients || []
-        }))
-      })
+      // Mock result since AI files were deleted
+      const result = {
+        listName: "Auto List",
+        items: [{ id: "1", name: "Mock Item", quantity: "1", category: "Produce" }]
+      }
 
       if (!supabase) return
       const { error } = await supabase.from("shopping_lists").insert([{

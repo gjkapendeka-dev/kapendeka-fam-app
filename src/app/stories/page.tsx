@@ -7,9 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { generateFamilyStory, type StoryOutput } from "@/ai/flows/ai-story-studio-flow"
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
+
+export type StoryOutput = {
+  title: string;
+  story: string;
+  tags?: string[];
+  coverImageUrl?: string;
+}
 
 export default function StoryStudioPage() {
   const { profile } = useUser()
@@ -47,11 +53,13 @@ export default function StoryStudioPage() {
     if (!profile) return
     setIsGenerating(true)
     try {
-      const result = await generateFamilyStory({
-        characters: [profile.displayName || "George", "Gina", "Natalie", "Tinashe"],
-        genre,
-        theme
-      })
+      // Mock result since AI files were deleted
+      const result: StoryOutput = {
+        title: "Mock Story",
+        story: "Once upon a time... (AI features disabled)",
+        tags: ["Mock"],
+        coverImageUrl: ""
+      }
       setActiveStory(result)
       
       // Save to Supabase
