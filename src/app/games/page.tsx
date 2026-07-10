@@ -39,6 +39,30 @@ export default function GamesHubPage() {
   const publishedQuizzes = (quizzes || []).filter((q: any) => !q.is_draft)
   const draftQuizzes = (quizzes || []).filter((q: any) => q.is_draft)
 
+  const [soloAttempts, setSoloAttempts] = React.useState<any[]>([])
+  const [soloLoading, setSoloLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    async function loadSoloAttempts() {
+      if (!supabase || publishedQuizzes.length === 0) {
+        setSoloLoading(false)
+        return
+      }
+      setSoloLoading(true)
+      const quizIds = publishedQuizzes.map((q: any) => q.id)
+      const { data } = await supabase
+        .from("quiz_attempts")
+        .select("*, quizzes(title)")
+        .in("quiz_id", quizIds)
+        .is("session_id", null)
+        .order("started_at", { ascending: false })
+      
+      setSoloAttempts(data || [])
+      setSoloLoading(false)
+    }
+    loadSoloAttempts()
+  }, [supabase, publishedQuizzes])
+
   const handleHostGame = async (quizId: string) => {
     if (!profile) return
     setHostingState(prev => ({ ...prev, [quizId]: true }))
@@ -173,6 +197,7 @@ export default function GamesHubPage() {
         <TabsList className="bg-indigo-50/50 p-1 rounded-2xl mb-6">
           <TabsTrigger value="published" className="rounded-xl font-bold py-2">Published ({publishedQuizzes.length})</TabsTrigger>
           <TabsTrigger value="drafts" className="rounded-xl font-bold py-2">Drafts ({draftQuizzes.length})</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-xl font-bold py-2">All Quizzes</TabsTrigger>
           <TabsTrigger value="reports" className="rounded-xl font-bold py-2">Reports</TabsTrigger>
           <TabsTrigger value="tournaments" className="rounded-xl font-bold py-2">🏆 Tournaments</TabsTrigger>
         </TabsList>
@@ -289,34 +314,142 @@ export default function GamesHubPage() {
           </div>
         </TabsContent>
 
+            {draftQuizzes.length === 0 && (
+               <div className="col-span-full py-12 text-center text-muted-foreground font-medium">No drafts found.</div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="all">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quizzesLoading ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <span className="font-bold uppercase tracking-widest text-xs">Loading Quizzes...</span>
+              </div>
+            ) : quizzes && quizzes.length > 0 ? (
+              quizzes.map((quiz: any) => {
+                const isOwner = profile?.display_name === quiz.created_by
+                const canEdit = isOwner || quiz.allow_editing
+                const canClone = isOwner || quiz.allow_cloning
+
+                return (
+                  <Card key={quiz.id} className={`rounded-[2rem] border-none shadow-xl flex flex-col overflow-hidden transition-all ${quiz.is_draft ? 'bg-slate-50 opacity-80' : 'bg-white shadow-indigo-500/5 group hover:shadow-indigo-500/20'}`}>
+                    <CardHeader className={`pb-3 relative overflow-hidden ${quiz.is_draft ? '' : 'bg-indigo-500/5'}`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <Badge variant="outline" className={`font-black tracking-wider text-[10px] uppercase ${quiz.is_draft ? 'bg-slate-200 text-slate-500 border-none' : 'bg-white border-indigo-200 text-indigo-600'}`}>
+                          {quiz.is_draft ? 'Draft' : (quiz.category || "General")}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          {canClone && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-indigo-400 hover:text-indigo-600 z-10" onClick={() => handleDuplicate(quiz)}>
+                              {duplicatingId === quiz.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <CardTitle className="text-xl font-black leading-tight text-slate-800 line-clamp-2">
+                        {quiz.title}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-1 mt-1 font-medium text-xs">
+                        By {quiz.created_by}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-5 flex-1 flex flex-col justify-end">
+                      <div className="flex gap-2">
+                        {canEdit ? (
+                          <QuizCreator 
+                            supabase={supabase} 
+                            profile={profile} 
+                            familyId={profile?.familyId || ""} 
+                            onQuizCreated={() => refresh()} 
+                            quizId={quiz.id}
+                            customTrigger={
+                              <Button className="flex-1 h-12 rounded-xl font-black text-sm uppercase tracking-widest bg-slate-200 text-slate-700 hover:bg-slate-300 shadow-none">
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                              </Button>
+                            }
+                          />
+                        ) : (
+                           <Button disabled className="flex-1 h-12 rounded-xl font-black text-sm uppercase tracking-widest bg-slate-100 text-slate-400 shadow-none">
+                             Locked
+                           </Button>
+                        )}
+                        {!quiz.is_draft && (
+                          <Button 
+                            onClick={() => handleHostGame(quiz.id)}
+                            disabled={hostingState[quiz.id]}
+                            className="flex-1 h-12 rounded-xl font-black text-sm uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/20"
+                          >
+                            {hostingState[quiz.id] ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Play className="h-4 w-4 mr-1" /> Host</>}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            ) : (
+              <div className="col-span-full py-12 text-center text-muted-foreground font-medium border-2 border-dashed rounded-[3rem] bg-slate-50/50">
+                No quizzes found.
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="reports">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sessionsLoading ? (
+            {sessionsLoading || soloLoading ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
                 <span className="font-bold uppercase tracking-widest text-xs">Loading Reports...</span>
               </div>
-            ) : sessions && sessions.length > 0 ? (
-              sessions.map((session: any) => (
-                <Card key={session.id} className="rounded-[2rem] border-none shadow-xl shadow-slate-200 flex flex-col overflow-hidden bg-white hover:shadow-indigo-500/20 transition-all cursor-pointer" onClick={() => router.push(`/games/reports/${session.id}`)}>
-                  <CardHeader className="pb-3 bg-slate-50 relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-none font-black tracking-wider text-[10px] uppercase">
-                        Finished
-                      </Badge>
-                      <span className="text-xs font-bold text-slate-400">{new Date(session.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <CardTitle className="text-xl font-black leading-tight text-slate-800 line-clamp-2">
-                      {session.quizzes?.title || "Unknown Quiz"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-5 flex-1 flex flex-col justify-end">
-                    <Button variant="outline" className="w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest text-indigo-600 border-indigo-200 hover:bg-indigo-50">
-                      <FileText className="h-4 w-4 mr-2" /> View Report
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))
+            ) : (sessions && sessions.length > 0) || soloAttempts.length > 0 ? (
+              <>
+                {sessions?.map((session: any) => (
+                  <Card key={session.id} className="rounded-[2rem] border-none shadow-xl shadow-slate-200 flex flex-col overflow-hidden bg-white hover:shadow-indigo-500/20 transition-all cursor-pointer" onClick={() => router.push(`/games/reports/${session.id}`)}>
+                    <CardHeader className="pb-3 bg-slate-50 relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-2">
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-none font-black tracking-wider text-[10px] uppercase">
+                          Hosted Session
+                        </Badge>
+                        <span className="text-xs font-bold text-slate-400">{new Date(session.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <CardTitle className="text-xl font-black leading-tight text-slate-800 line-clamp-2">
+                        {session.quizzes?.title || "Unknown Quiz"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-5 flex-1 flex flex-col justify-end">
+                      <Button variant="outline" className="w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                        <FileText className="h-4 w-4 mr-2" /> View Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                {soloAttempts?.map((attempt: any) => (
+                  <Card key={attempt.id} className="rounded-[2rem] border-none shadow-xl shadow-slate-200 flex flex-col overflow-hidden bg-white hover:shadow-indigo-500/20 transition-all cursor-pointer" onClick={() => router.push(`/games/reports/${attempt.id}`)}>
+                    <CardHeader className="pb-3 bg-slate-50 relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-2">
+                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 border-none font-black tracking-wider text-[10px] uppercase">
+                          Solo Attempt
+                        </Badge>
+                        <span className="text-xs font-bold text-slate-400">{new Date(attempt.started_at).toLocaleDateString()}</span>
+                      </div>
+                      <CardTitle className="text-xl font-black leading-tight text-slate-800 line-clamp-2">
+                        {attempt.quizzes?.title || "Unknown Quiz"}
+                      </CardTitle>
+                      <CardDescription className="text-xs font-medium text-slate-500">
+                        By {attempt.student_name}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-5 flex-1 flex flex-col justify-end">
+                      <Button variant="outline" className="w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                        <FileText className="h-4 w-4 mr-2" /> View Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
             ) : (
               <div className="col-span-full py-12 text-center text-muted-foreground font-medium border-2 border-dashed rounded-[3rem] bg-slate-50/50">
                 No past sessions found.

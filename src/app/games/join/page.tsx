@@ -52,7 +52,7 @@ export default function JoinGamePage() {
     try {
       const { data, error } = await supabase
         .from("quiz_sessions")
-        .select("id, status, is_locked, team_mode")
+        .select("id, status, is_locked, team_mode, quiz_id")
         .eq("join_pin", pin)
         .in("status", ["waiting", "active"])
         .single()

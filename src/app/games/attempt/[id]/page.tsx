@@ -23,6 +23,8 @@ export default function AttemptQuizPage() {
   const [completed, setCompleted] = React.useState(false)
   const [finalScore, setFinalScore] = React.useState(0)
   const [maxScore, setMaxScore] = React.useState(0)
+  const [enteredPin, setEnteredPin] = React.useState("")
+  const [pinError, setPinError] = React.useState(false)
 
   React.useEffect(() => {
     if (!supabase || !quizId) return
@@ -176,9 +178,32 @@ export default function AttemptQuizPage() {
             </p>
           </div>
 
+          {quiz.solo_pin && (
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">Quiz PIN Required</label>
+              <input
+                type="text"
+                placeholder="Enter PIN"
+                className="w-full h-12 rounded-xl border-2 border-slate-200 px-4 font-bold text-center tracking-[0.2em] text-lg"
+                value={enteredPin}
+                onChange={e => {
+                  setEnteredPin(e.target.value)
+                  setPinError(false)
+                }}
+              />
+              {pinError && <p className="text-red-500 text-xs font-bold mt-2 text-center">Incorrect PIN</p>}
+            </div>
+          )}
+
           <Button
             className="w-full h-14 rounded-2xl font-black text-base uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/25"
-            onClick={() => setStarted(true)}
+            onClick={() => {
+              if (quiz.solo_pin && enteredPin.trim() !== quiz.solo_pin) {
+                setPinError(true)
+                return
+              }
+              setStarted(true)
+            }}
           >
             <BookOpen className="h-5 w-5 mr-2" />
             Start Attempt

@@ -259,20 +259,12 @@ export default function HostGamePage() {
     }
   }
 
-  const handleToggleLock = async () => {
-    try {
-      await supabase.from("quiz_sessions").update({ is_locked: !session.is_locked }).eq("id", sessionId)
-    } catch (e: any) {
-      toast({ title: "Failed to update lock", description: e.message, variant: "destructive" })
-    }
+  const handleToggleLock = () => {
+    updateSessionState({ is_locked: !session.is_locked })
   }
 
-  const handleToggleTeamMode = async () => {
-    try {
-      await supabase.from("quiz_sessions").update({ team_mode: !session.team_mode }).eq("id", sessionId)
-    } catch (e: any) {
-      toast({ title: "Failed to update team mode", description: e.message, variant: "destructive" })
-    }
+  const handleToggleTeamMode = () => {
+    updateSessionState({ team_mode: !session.team_mode })
   }
 
   // ─── RENDERERS ────────────────────────────────────────────────────────────

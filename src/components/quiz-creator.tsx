@@ -148,6 +148,9 @@ export function QuizCreator({
   const [assignedUsers, setAssignedUsers] = useState<string[]>([])
   const [familyMembers, setFamilyMembers] = useState<any[]>([])
   const [guestMode, setGuestMode] = useState(false)
+  const [soloPin, setSoloPin] = useState("")
+  const [allowCloning, setAllowCloning] = useState(false)
+  const [allowEditing, setAllowEditing] = useState(false)
 
   useEffect(() => {
     if (open && familyId && supabase) {
@@ -176,6 +179,9 @@ export function QuizCreator({
             setMaxAttempts(q.max_attempts ?? "")
             setAssignedUsers(q.assigned_to || [])
             setGuestMode(q.guest_mode ?? false)
+            setSoloPin(q.solo_pin || "")
+            setAllowCloning(q.allow_cloning ?? false)
+            setAllowEditing(q.allow_editing ?? false)
             setTheme(q.theme || "indigo")
           }
           if (questionsRes.data) {
@@ -284,11 +290,15 @@ export function QuizCreator({
         time_bonus_enabled: timeBonusEnabled, shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions, show_correct_answer: showCorrectAnswer,
         show_explanation: showExplanation, created_by: profile?.display_name || "Parent",
-        max_attempts: maxAttempts === "" ? null : maxAttempts,
+        max_attempts: maxAttempts === "" ? null : parseInt(maxAttempts.toString()),
         assigned_to: guestMode ? [] : (assignedUsers.length === 0 ? [] : assignedUsers),
         guest_mode: guestMode,
+        solo_pin: soloPin.trim() || null,
+        allow_cloning: allowCloning,
+        allow_editing: allowEditing,
+        theme: theme,
         is_draft: isDraft,
-        theme,
+        updated_at: new Date().toISOString()
       }
 
       let quizData: any
@@ -446,6 +456,28 @@ export function QuizCreator({
                       if (c) setAssignedUsers([])
                     }}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-bold block mb-1.5">Require PIN for Solo Attempts</Label>
+                    <Input 
+                      placeholder="e.g. 1234 (blank = no PIN)" 
+                      value={soloPin} 
+                      onChange={e => setSoloPin(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div className="flex items-center justify-between p-2 border rounded-lg bg-white">
+                    <label className="text-xs font-medium cursor-pointer" htmlFor="allow-cloning">Allow others to duplicate</label>
+                    <Switch id="allow-cloning" checked={allowCloning} onCheckedChange={(c: any) => setAllowCloning(c)} />
+                  </div>
+                  <div className="flex items-center justify-between p-2 border rounded-lg bg-white">
+                    <label className="text-xs font-medium cursor-pointer" htmlFor="allow-editing">Allow others to edit</label>
+                    <Switch id="allow-editing" checked={allowEditing} onCheckedChange={(c: any) => setAllowEditing(c)} />
+                  </div>
                 </div>
 
                 {/* Family member selector */}

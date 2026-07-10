@@ -23,19 +23,55 @@ export default function GameReportPage() {
       if (!supabase || !sessionId) return
       try {
         setLoading(true)
+        let sessionDataToSet = null
         const { data: session, error: err } = await supabase
           .from("quiz_sessions")
           .select(`
             *,
             quizzes (title, description),
-            quiz_session_players (*),
-            quiz_responses (*)
+            quiz_session_players (*)
           `)
           .eq("id", sessionId)
-          .single()
+          .maybeSingle()
 
-        if (err) throw err
-        setSessionData(session)
+        if (session) {
+          // Fetch quiz_attempts for this session to get all responses
+          const { data: attempts } = await supabase
+            .from("quiz_attempts")
+            .select("*, quiz_responses(*)")
+            .eq("session_id", sessionId)
+            
+          const responses = attempts?.flatMap((a: any) => a.quiz_responses || []) || []
+          
+          sessionDataToSet = {
+            ...session,
+            quiz_responses: responses
+          }
+        } else {
+          // Might be a solo attempt
+          const { data: attempt } = await supabase
+            .from("quiz_attempts")
+            .select("*, quizzes(title, description), quiz_responses(*)")
+            .eq("id", sessionId)
+            .maybeSingle()
+
+          if (attempt) {
+            sessionDataToSet = {
+              id: attempt.id,
+              created_at: attempt.started_at,
+              quizzes: attempt.quizzes,
+              quiz_session_players: [{ 
+                student_id: attempt.student_id, 
+                student_name: attempt.student_name, 
+                score: attempt.total_points || 0
+              }],
+              quiz_responses: attempt.quiz_responses || []
+            }
+          }
+        }
+
+        if (!sessionDataToSet) throw new Error("Report not found")
+        setSessionData(sessionDataToSet)
       } catch (e: any) {
         setError(e.message)
       } finally {

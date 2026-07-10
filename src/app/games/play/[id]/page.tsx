@@ -97,14 +97,14 @@ export default function PlayerRemotePage() {
 
       // Upsert attempt row for permanent record (only for real profiles, not guests)
       if (profile?.id) {
-        const { data: attemptData } = await supabase.from("quiz_attempts").upsert({
+        const { data: attemptData } = await supabase.from("quiz_attempts").insert({
           quiz_id: sessionData.quiz_id,
           session_id: sessionId,
           student_id: id,
           student_name: name,
           max_points: (qData || []).reduce((s: number, q: any) => s + (q.points || 0), 0),
           started_at: new Date().toISOString()
-        }, { onConflict: 'quiz_id, student_id', ignoreDuplicates: false }).select().single()
+        }).select().single()
         if (attemptData) setQuizAttempt(attemptData)
       }
 
