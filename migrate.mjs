@@ -5,11 +5,17 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const supabaseUrl = 'https://xmyaeantpmvdgdvuvjlz.supabase.co';
-const serviceRoleKey = 'sbp_096ed82210a477ba92af2ef333429da15d25f7e3';
+// Use environment variables — never hardcode secrets!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xmyaeantpmvdgdvuvjlz.supabase.co';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+if (!serviceRoleKey) {
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY env var is required.');
+  process.exit(1);
+}
 
 console.log('\n🚀 Starting Quiz System Migration...\n');
-console.log('📍 Project: xmyaeantpmvdgdvuvjlz');
+console.log('📍 Project:', supabaseUrl);
 console.log('🔐 Using service role key for admin access\n');
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -20,10 +26,10 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 async function runMigration() {
   try {
     // Read migration file
-    const migrationPath = path.join(__dirname, 'supabase/migrations/20260709000001_add_quiz_tables.sql');
+    const migrationPath = path.join(__dirname, 'supabase/migrations/20260710000002_add_attempt_id_to_responses.sql');
     const sqlContent = fs.readFileSync(migrationPath, 'utf-8');
     
-    console.log('📂 Migration file loaded: 20260709000001_add_quiz_tables.sql');
+    console.log('📂 Migration file loaded: 20260709000004_fix_quiz_attempts_update_rls.sql');
     console.log(`📊 File size: ${sqlContent.length} bytes\n`);
     
     // Split into individual statements (ignoring comments and empty lines)

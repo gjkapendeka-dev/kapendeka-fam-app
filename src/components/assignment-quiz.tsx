@@ -37,6 +37,7 @@ export function AssignmentQuiz({
   const [quizzes, setQuizzes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null)
+  const [quizAction, setQuizAction] = useState<"take" | "results" | null>(null)
   const [studentHasAttempted, setStudentHasAttempted] = useState(false)
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function AssignmentQuiz({
         const { data: attempts } = await supabase
           .from("quiz_attempts")
           .select("*")
-          .in("quiz_id", data.map((q) => q.id))
+          .in("quiz_id", data.map((q: any) => q.id))
           .eq("student_id", profile?.id)
 
         setStudentHasAttempted((attempts?.length || 0) > 0)
@@ -145,12 +146,15 @@ export function AssignmentQuiz({
             </TabsList>
 
             <TabsContent value="quizzes" className="space-y-4">
-              {selectedQuiz && !isParent ? (
+              {selectedQuiz && quizAction === "take" && !isParent ? (
                 <div className="space-y-4">
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setSelectedQuiz(null)}
+                    onClick={() => {
+                      setSelectedQuiz(null)
+                      setQuizAction(null)
+                    }}
                   >
                     ← Back to Quizzes
                   </Button>
@@ -160,16 +164,20 @@ export function AssignmentQuiz({
                     profile={profile}
                     onComplete={() => {
                       setSelectedQuiz(null)
+                      setQuizAction(null)
                       fetchQuizzes()
                     }}
                   />
                 </div>
-              ) : selectedQuiz && isParent ? (
+              ) : selectedQuiz && (quizAction === "results" || isParent) ? (
                 <div className="space-y-4">
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setSelectedQuiz(null)}
+                    onClick={() => {
+                      setSelectedQuiz(null)
+                      setQuizAction(null)
+                    }}
                   >
                     ← Back to Quizzes
                   </Button>
@@ -203,27 +211,57 @@ export function AssignmentQuiz({
                               <span className="text-xs text-muted-foreground">
                                 {new Date(quiz.created_at).toLocaleDateString()}
                               </span>
+                              {quiz.max_attempts && (
+                                <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                                  Max {quiz.max_attempts} attempt{quiz.max_attempts !== 1 ? "s" : ""}
+                                </Badge>
+                              )}
+                              {quiz.assigned_to && quiz.assigned_to.length > 0 && (
+                                <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+                                  Assigned only
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           {isParent ? (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setSelectedQuiz(quiz)}
+                              onClick={() => {
+                                setSelectedQuiz(quiz)
+                                setQuizAction("results")
+                              }}
                               className="gap-2"
                             >
                               <BarChart3 className="h-4 w-4" />
                               Results
                             </Button>
                           ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => setSelectedQuiz(quiz)}
-                              className="bg-emerald-500 hover:bg-emerald-600 gap-2"
-                            >
-                              <Zap className="h-4 w-4" />
-                              Take Quiz
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedQuiz(quiz)
+                                  setQuizAction("results")
+                                }}
+                                className="gap-2"
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                                Results
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedQuiz(quiz)
+                                  setQuizAction("take")
+                                }}
+                                className="bg-emerald-500 hover:bg-emerald-600 gap-2"
+                              >
+                                <Zap className="h-4 w-4" />
+                                Take Quiz
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </CardContent>

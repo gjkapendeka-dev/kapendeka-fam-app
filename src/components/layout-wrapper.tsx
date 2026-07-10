@@ -10,6 +10,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { loading, user, profile } = useUser()
   const isAuthPage = pathname === '/login' || pathname === '/select-profile'
+  const isGamePage = pathname.startsWith('/games/host/') || pathname.startsWith('/games/play/') || pathname.startsWith('/games/join')
 
   if (loading) {
     return (
@@ -19,17 +20,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
+  // Game pages and auth pages render bare (no sidebar, no auth guard for guests on play/join)
+  if (isAuthPage || isGamePage) {
+    return <main className="flex-1 w-full min-h-screen">{children}</main>
+  }
+
   // True auth guard: block rendering protected content while redirects happen
-  if (!isAuthPage && (!user || !profile)) {
+  if (!user || !profile) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
-  }
-
-  if (isAuthPage) {
-    return <main className="flex-1 w-full min-h-screen">{children}</main>
   }
 
   return (

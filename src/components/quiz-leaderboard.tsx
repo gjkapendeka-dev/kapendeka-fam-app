@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, TrendingUp } from "lucide-react"
+import { Trophy } from "lucide-react"
 
 interface LeaderboardEntry {
   rank: number
+  student_id: string
   student_name: string
   percentage_score: number
   total_points: number
@@ -29,9 +30,9 @@ export function QuizLeaderboard({
 
   useEffect(() => {
     fetchLeaderboard()
-    
+
     if (showLive) {
-      const interval = setInterval(fetchLeaderboard, 2000)
+      const interval = setInterval(fetchLeaderboard, 3000)
       return () => clearInterval(interval)
     }
   }, [quizId])
@@ -40,19 +41,50 @@ export function QuizLeaderboard({
     try {
       const { data, error } = await supabase
         .from("quiz_attempts")
-        .select("*")
+        .select("student_id, student_name, percentage_score, total_points, max_points, completed_at, started_at")
         .eq("quiz_id", quizId)
-        .eq("is_completed", true)
         .order("percentage_score", { ascending: false })
-        .order("time_taken_seconds", { ascending: true })
 
-      if (error) throw error
+      if (error) {
+        console.error("Failed to load leaderboard:", error?.message || error?.code || JSON.stringify(error))
+        setLoading(false)
+        return
+      }
 
-      const entries: LeaderboardEntry[] = data.map((entry: any, index: number) => ({
+      const attemptCounts: Record<string, number> = {}
+      const processedData = (data || []).map((entry: any) => {
+        attemptCounts[entry.student_id] = (attemptCounts[entry.student_id] || 0) + 1
+        const timeTaken = entry.completed_at && entry.started_at
+          ? Math.round((new Date(entry.completed_at).getTime() - new Date(entry.started_at).getTime()) / 1000)
+          : 0
+        return {
+          ...entry,
+          time_taken_seconds: timeTaken,
+          attempt_number: attemptCounts[entry.student_id],
+        }
+      })
+
+      // Mark multi-attempt students
+      processedData.forEach((entry: any) => {
+        entry.has_multiple = (attemptCounts[entry.student_id] || 0) > 1
+      })
+
+      // Sort by score desc, then time asc (faster = better)
+      processedData.sort((a: any, b: any) => {
+        if (b.percentage_score !== a.percentage_score) {
+          return b.percentage_score - a.percentage_score
+        }
+        return (a.time_taken_seconds || 0) - (b.time_taken_seconds || 0)
+      })
+
+      const entries: LeaderboardEntry[] = processedData.map((entry: any, index: number) => ({
         rank: index + 1,
-        student_name: entry.student_name,
-        percentage_score: entry.percentage_score,
-        total_points: entry.total_points,
+        student_id: entry.student_id,
+        student_name: entry.has_multiple
+          ? `${entry.student_name} (Attempt ${entry.attempt_number})`
+          : entry.student_name,
+        percentage_score: entry.percentage_score || 0,
+        total_points: entry.total_points || 0,
         time_taken_seconds: entry.time_taken_seconds || 0,
       }))
 
@@ -65,16 +97,10 @@ export function QuizLeaderboard({
   }
 
   const getMedalIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return "🥇"
-      case 2:
-        return "🥈"
-      case 3:
-        return "🥉"
-      default:
-        return null
-    }
+    if (rank === 1) return "🥇"
+    if (rank === 2) return "🥈"
+    if (rank === 3) return "🥉"
+    return null
   }
 
   if (loading) {
@@ -97,46 +123,65 @@ export function QuizLeaderboard({
     )
   }
 
+  const myEntries = leaderboard.filter((e) => e.student_id === currentStudentId)
+  const isSolo = leaderboard.length > 0 && new Set(leaderboard.map((e) => e.student_id)).size === 1 && myEntries.length > 0
+
   return (
     <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Trophy className="h-4 w-4 text-yellow-500" />
           🏆 Leaderboard
+          {isSolo && (
+            <Badge className="bg-emerald-100 text-emerald-800 text-[10px] ml-auto">
+              You're in the lead!
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {leaderboard.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-4">
-            No scores yet
+            No scores yet — be the first!
           </p>
         ) : (
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {leaderboard.slice(0, 10).map((entry) => (
-              <div
-                key={`${entry.rank}-${entry.student_name}`}
-                className={`flex items-center justify-between p-2 rounded-lg text-xs ${
-                  entry.student_name === currentStudentId
-                    ? "bg-blue-100 border-2 border-blue-400"
-                    : "bg-white border border-yellow-100"
-                }`}
-              >
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="font-bold w-6 text-center">
-                    {getMedalIcon(entry.rank) || `#${entry.rank}`}
-                  </span>
-                  <span className="font-medium truncate">{entry.student_name}</span>
+          <div className="space-y-2 max-h-56 overflow-y-auto">
+            {leaderboard.slice(0, 10).map((entry) => {
+              const isMe = entry.student_id === currentStudentId
+              return (
+                <div
+                  key={`${entry.rank}-${entry.student_name}`}
+                  className={`flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
+                    isMe
+                      ? "bg-blue-100 border-2 border-blue-400 font-semibold"
+                      : "bg-white border border-yellow-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="font-bold w-6 text-center shrink-0">
+                      {getMedalIcon(entry.rank) || `#${entry.rank}`}
+                    </span>
+                    <span className={`truncate ${isMe ? "text-blue-800" : ""}`}>
+                      {entry.student_name}
+                      {isMe && <span className="ml-1 text-blue-600">(you)</span>}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] ${isMe ? "bg-blue-200 text-blue-800" : ""}`}
+                    >
+                      {Math.round(entry.percentage_score)}%
+                    </Badge>
+                    {entry.time_taken_seconds > 0 && (
+                      <span className="text-muted-foreground text-[10px]">
+                        {Math.round(entry.time_taken_seconds)}s
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">
-                    {Math.round(entry.percentage_score)}%
-                  </Badge>
-                  <span className="text-muted-foreground">
-                    {Math.round(entry.time_taken_seconds)}s
-                  </span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </CardContent>

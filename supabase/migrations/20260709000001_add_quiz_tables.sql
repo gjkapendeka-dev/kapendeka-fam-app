@@ -67,25 +67,30 @@ ALTER TABLE public.quiz_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quiz_attempts ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for quizzes
+DROP POLICY IF EXISTS "Enable read access for authenticated users in same family" ON public.quizzes;
 CREATE POLICY "Enable read access for authenticated users in same family" ON public.quizzes
   FOR SELECT USING (
     family_id = (SELECT family_id::text FROM public.profiles WHERE id = auth.uid() LIMIT 1)
   );
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.quizzes;
 CREATE POLICY "Enable insert for authenticated users" ON public.quizzes
   FOR INSERT WITH CHECK (
     family_id = (SELECT family_id::text FROM public.profiles WHERE id = auth.uid() LIMIT 1)
   );
 
+DROP POLICY IF EXISTS "Enable update for quiz creator" ON public.quizzes;
 CREATE POLICY "Enable update for quiz creator" ON public.quizzes
   FOR UPDATE USING (
     family_id = (SELECT family_id::text FROM public.profiles WHERE id = auth.uid() LIMIT 1)
   );
 
 -- Create policies for quiz_questions
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.quiz_questions;
 CREATE POLICY "Enable read access for authenticated users" ON public.quiz_questions
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.quiz_questions;
 CREATE POLICY "Enable insert for authenticated users" ON public.quiz_questions
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -96,15 +101,19 @@ CREATE POLICY "Enable insert for authenticated users" ON public.quiz_questions
   );
 
 -- Create policies for quiz_responses
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.quiz_responses;
 CREATE POLICY "Enable insert for authenticated users" ON public.quiz_responses
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Enable read for authenticated users" ON public.quiz_responses;
 CREATE POLICY "Enable read for authenticated users" ON public.quiz_responses
   FOR SELECT USING (true);
 
 -- Create policies for quiz_attempts
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.quiz_attempts;
 CREATE POLICY "Enable insert for authenticated users" ON public.quiz_attempts
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Enable read for authenticated users" ON public.quiz_attempts;
 CREATE POLICY "Enable read for authenticated users" ON public.quiz_attempts
   FOR SELECT USING (true);

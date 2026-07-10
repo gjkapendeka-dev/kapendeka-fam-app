@@ -26,8 +26,8 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { AIQuickAdd } from "@/components/ai-quick-add"
-import { FamilyAIBrief } from "@/components/family-ai-brief"
+
+
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import {
   Sheet,
@@ -166,7 +166,6 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 md:gap-4">
             {/* Main Feed */}
             <div className="xl:col-span-8 space-y-4 md:space-y-5">
-              <FamilyAIBrief />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
             <Card className="rounded-[1.5rem] md:rounded-[2rem] border-none shadow-xl shadow-primary/5 bg-white p-4 md:p-5 group hover:shadow-primary/10 transition-all cursor-default relative overflow-hidden">
@@ -200,6 +199,21 @@ export default function DashboardPage() {
               </div>
               <p className="text-[10px] font-bold text-muted-foreground/60 mt-2 uppercase">Priority</p>
             </Card>
+          </div>
+
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2rem] p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => window.location.href='/games'}>
+            <div className="flex items-center gap-6">
+              <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md">
+                <span className="text-4xl">🎮</span>
+              </div>
+              <div className="text-left text-white">
+                <h2 className="text-2xl md:text-3xl font-black tracking-tight drop-shadow-sm">Kapendeka Games</h2>
+                <p className="text-indigo-100 font-medium text-sm mt-1">Host live quizzes or join a session</p>
+              </div>
+            </div>
+            <Button size="lg" className="rounded-2xl h-14 px-8 text-lg font-black bg-white text-indigo-600 hover:bg-slate-50 shadow-xl self-stretch md:self-center">
+              Play Now <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
           </div>
 
           <div className="space-y-4 md:space-y-4">
@@ -304,8 +318,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-4 md:space-y-4">
-             <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase">Quick Portal</h2>
-             <AIQuickAdd />
+             {/* AIQuickAdd removed */}
           </div>
 
           <Card className="rounded-[1.5rem] md:rounded-[2rem] bg-gradient-to-br from-indigo-900 to-black p-4 md:p-5 text-white relative overflow-hidden shadow-2xl">

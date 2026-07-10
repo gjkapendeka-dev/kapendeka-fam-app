@@ -32,7 +32,7 @@ const portals = [
   { name: "Games", href: "/arcade", icon: Zap },
   { name: "Stories", href: "/stories", icon: Book },
   { name: "Trivia", href: "/trivia", icon: HelpCircle },
-  { name: "Rewards", href: "/games", icon: Trophy },
+  { name: "Rewards", href: "/rewards", icon: Trophy },
   { name: "Quests", href: "/quest", icon: Compass },
   { name: "Hobbies", href: "/hobbies", icon: Gamepad2 },
   { name: "Languages", href: "/languages", icon: Languages },
