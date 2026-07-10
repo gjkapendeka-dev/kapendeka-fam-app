@@ -314,12 +314,6 @@ export default function GamesHubPage() {
           </div>
         </TabsContent>
 
-            {draftQuizzes.length === 0 && (
-               <div className="col-span-full py-12 text-center text-muted-foreground font-medium">No drafts found.</div>
-            )}
-          </div>
-        </TabsContent>
-
         <TabsContent value="all">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quizzesLoading ? (
