@@ -19,8 +19,7 @@ export default function JoinGamePage() {
   const [teamName, setTeamName] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [activeSessions, setActiveSessions] = React.useState<any[]>([])
-  
-  // Temporary state for team selection
+  const [isGuestModeSession, setIsGuestModeSession] = React.useState(false)
   const [pendingSession, setPendingSession] = React.useState<any>(null)
 
   // Determine if user has a profile already
@@ -64,6 +63,12 @@ export default function JoinGamePage() {
         return
       }
 
+      // Check if the quiz is in guest mode
+      if (data.quiz_id) {
+        const { data: quizData } = await supabase.from("quizzes").select("guest_mode").eq("id", data.quiz_id).single()
+        setIsGuestModeSession(quizData?.guest_mode ?? false)
+      }
+
       if (data.is_locked) {
         toast({ title: "Game Locked", description: "The host has locked this game. No new players can join.", variant: "destructive" })
         setLoading(false)
@@ -76,9 +81,10 @@ export default function JoinGamePage() {
         return
       }
 
-      // Save guest name to sessionStorage so the play page can use it
-      if (!hasProfile && guestName.trim()) {
-        sessionStorage.setItem("kapendeka_guest_name", guestName.trim())
+      // Save guest name to sessionStorage
+      const effectiveName = isGuestModeSession ? guestName.trim() : (!hasProfile ? guestName.trim() : "")
+      if (effectiveName) {
+        sessionStorage.setItem("kapendeka_guest_name", effectiveName)
       }
       if (data.team_mode && teamName) {
         sessionStorage.setItem("kapendeka_team_name", teamName)
@@ -140,27 +146,32 @@ export default function JoinGamePage() {
                   autoFocus
                 />
 
-                {/* Guest name field — shown if no profile OR always shown as override */}
-                {!hasProfile && (
-                  <Input
-                    type="text"
-                    placeholder="Your nickname"
-                    value={guestName}
-                    onChange={e => setGuestName(e.target.value.slice(0, 20))}
-                    className="h-12 text-center text-lg font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus-visible:ring-0 focus-visible:border-indigo-500"
-                  />
+                {/* Guest name field — shown for guests always, or for everyone in guest mode */}
+                {(!hasProfile || isGuestModeSession) && (
+                  <div className="space-y-1">
+                    <Input
+                      type="text"
+                      placeholder={isGuestModeSession && hasProfile ? "Play as guest (enter a nickname)" : "Your nickname"}
+                      value={guestName}
+                      onChange={e => setGuestName(e.target.value.slice(0, 20))}
+                      className="h-12 text-center text-lg font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus-visible:ring-0 focus-visible:border-indigo-500"
+                    />
+                    {isGuestModeSession && (
+                      <p className="text-[11px] text-center text-amber-600 font-bold">🎮 Guest Mode — enter any name to play!</p>
+                    )}
+                  </div>
                 )}
 
                 <Button
                   type="submit"
                   className="w-full h-14 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-lg transition-all active:scale-[0.98]"
-                  disabled={pin.length < 6 || loading || (!hasProfile && !guestName.trim())}
+                  disabled={pin.length < 6 || loading || ((!hasProfile || isGuestModeSession) && !guestName.trim())}
                 >
                   {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Join Game"}
                 </Button>
               </form>
 
-              {hasProfile && (
+              {hasProfile && !isGuestModeSession && (
                 <p className="text-xs text-center text-slate-400 font-medium">
                   Joining as <strong className="text-slate-600">{profile?.display_name}</strong>
                 </p>

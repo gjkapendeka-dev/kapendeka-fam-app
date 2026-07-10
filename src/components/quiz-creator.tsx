@@ -147,6 +147,7 @@ export function QuizCreator({
   const [maxAttempts, setMaxAttempts] = useState<number | "">("")
   const [assignedUsers, setAssignedUsers] = useState<string[]>([])
   const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [guestMode, setGuestMode] = useState(false)
 
   useEffect(() => {
     if (open && familyId && supabase) {
@@ -174,6 +175,7 @@ export function QuizCreator({
             setShowExplanation(q.show_explanation ?? true)
             setMaxAttempts(q.max_attempts ?? "")
             setAssignedUsers(q.assigned_to || [])
+            setGuestMode(q.guest_mode ?? false)
             setTheme(q.theme || "indigo")
           }
           if (questionsRes.data) {
@@ -238,7 +240,7 @@ export function QuizCreator({
   }, [
     title, description, category, difficulty, questions, questionTimer,
     showLeaderboard, timeBonusEnabled, shuffleQuestions, shuffleOptions,
-    showCorrectAnswer, showExplanation, theme, maxAttempts, assignedUsers, open
+    showCorrectAnswer, showExplanation, theme, maxAttempts, assignedUsers, guestMode, open
   ])
 
   const handleTypeSelect = (type: QuestionType) => {
@@ -283,7 +285,8 @@ export function QuizCreator({
         shuffle_options: shuffleOptions, show_correct_answer: showCorrectAnswer,
         show_explanation: showExplanation, created_by: profile?.display_name || "Parent",
         max_attempts: maxAttempts === "" ? null : maxAttempts,
-        assigned_to: assignedUsers.length === 0 ? [] : assignedUsers,
+        assigned_to: guestMode ? [] : (assignedUsers.length === 0 ? [] : assignedUsers),
+        guest_mode: guestMode,
         is_draft: isDraft,
         theme,
       }
@@ -424,22 +427,46 @@ export function QuizCreator({
                     value={maxAttempts} className="mt-1"
                     onChange={e => setMaxAttempts(e.target.value === "" ? "" : parseInt(e.target.value))} />
                 </div>
-                <div>
-                  <Label className="text-xs font-bold block mb-1.5">Assign to specific members (empty = everyone)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {familyMembers.map(m => {
-                      const sel = assignedUsers.includes(m.id)
-                      return (
-                        <div key={m.id} onClick={() => setAssignedUsers(sel
-                          ? assignedUsers.filter(id => id !== m.id)
-                          : [...assignedUsers, m.id])}
-                          className={`px-3 py-1 text-xs rounded-full border cursor-pointer transition-colors select-none ${sel ? "bg-primary text-primary-foreground border-primary" : "bg-white hover:bg-slate-100 border-border"}`}>
-                          {m.display_name}
-                        </div>
-                      )
-                    })}
+
+                {/* Guest Mode Toggle */}
+                <div className={`flex items-center justify-between rounded-xl border-2 p-3 transition-all ${guestMode ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white"}`}>
+                  <div>
+                    <p className="text-xs font-black text-slate-800">🎮 Guest Mode</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {guestMode
+                        ? "Anyone can join — guests type their own name. Family assignment is disabled."
+                        : "Only family members can attempt this quiz."}
+                    </p>
                   </div>
+                  <Switch
+                    id="guest-mode"
+                    checked={guestMode}
+                    onCheckedChange={(c) => {
+                      setGuestMode(c)
+                      if (c) setAssignedUsers([])
+                    }}
+                  />
                 </div>
+
+                {/* Family member selector */}
+                {!guestMode && (
+                  <div>
+                    <Label className="text-xs font-bold block mb-1.5">Assign to specific members (empty = everyone)</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {familyMembers.map(m => {
+                        const sel = assignedUsers.includes(m.id)
+                        return (
+                          <div key={m.id} onClick={() => setAssignedUsers(sel
+                            ? assignedUsers.filter(id => id !== m.id)
+                            : [...assignedUsers, m.id])}
+                            className={`px-3 py-1 text-xs rounded-full border cursor-pointer transition-colors select-none ${sel ? "bg-primary text-primary-foreground border-primary" : "bg-white hover:bg-slate-100 border-border"}`}>
+                            {m.display_name}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
