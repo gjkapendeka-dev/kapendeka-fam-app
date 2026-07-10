@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Zap, Play, Plus, Clock, Users, Trophy, Copy, Edit, FileText, Download, Upload, BarChart2 } from "lucide-react"
+import { Loader2, Zap, Play, Plus, Clock, Users, Trophy, Copy, Edit, FileText, Download, Upload, BarChart2, BookOpen } from "lucide-react"
 import { QuizCreator } from "@/components/quiz-creator"
 import { useToast } from "@/hooks/use-toast"
 
@@ -159,15 +159,13 @@ export default function GamesHubPage() {
           <Button size="lg" variant="secondary" className="rounded-xl font-bold border-2 border-indigo-100 text-indigo-700 hover:bg-indigo-50" onClick={() => router.push("/games/join")}>
             Join a Game
           </Button>
-          {profile?.role === "parent" && (
-            <QuizCreator 
-              supabase={supabase} 
-              profile={profile} 
-              familyId={profile?.familyId || ""} 
-              onQuizCreated={() => refresh()} 
-              quizId={editingQuizId || undefined}
-            />
-          )}
+          <QuizCreator 
+            supabase={supabase} 
+            profile={profile} 
+            familyId={profile?.familyId || ""} 
+            onQuizCreated={() => refresh()} 
+            quizId={editingQuizId || undefined}
+          />
         </div>
       </header>
 
@@ -217,13 +215,23 @@ export default function GamesHubPage() {
                       <span className="flex items-center gap-1.5"><Zap className="h-4 w-4" /> {quiz.quiz_questions?.length || 0} Qs</span>
                     </div>
                     
-                    <Button 
-                      onClick={() => handleHostGame(quiz.id)}
-                      disabled={hostingState[quiz.id]}
-                      className="w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/20"
-                    >
-                      {hostingState[quiz.id] ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Play className="h-4 w-4 mr-2" /> Host Game</>}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => handleHostGame(quiz.id)}
+                        disabled={hostingState[quiz.id]}
+                        className="flex-1 h-12 rounded-xl font-black text-sm uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/20"
+                      >
+                        {hostingState[quiz.id] ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Play className="h-4 w-4 mr-2" />Host Game</>}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push(`/games/attempt/${quiz.id}`)}
+                        className="h-12 px-4 rounded-xl font-black text-sm border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                        title="Attempt Solo — play like an assignment"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
