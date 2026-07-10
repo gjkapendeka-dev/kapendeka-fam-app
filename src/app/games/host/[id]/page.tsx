@@ -517,6 +517,14 @@ export default function HostGamePage() {
 
   // ACTIVE QUESTION
   const currentQ = questions[session.current_question_index]
+  
+  if (!currentQ) {
+    return <div className="flex h-screen items-center justify-center flex-col gap-4">
+      <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
+      <p className="text-slate-500 font-bold">Loading Question...</p>
+    </div>
+  }
+
   const timeLimit = currentQ.time_limit || quiz?.question_timer || 30
   const timePct = timeLimit > 0 && timeRemaining !== null ? (timeRemaining / timeLimit) * 100 : 100
 
