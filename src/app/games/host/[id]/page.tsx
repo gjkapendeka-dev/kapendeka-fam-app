@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
 import confetti from "canvas-confetti"
 
 export default function HostGamePage() {
