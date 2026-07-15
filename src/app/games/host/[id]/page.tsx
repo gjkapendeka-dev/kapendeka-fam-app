@@ -284,7 +284,14 @@ export default function HostGamePage() {
 
     answersRef.current.forEach(async (ans) => {
       let isCorrect = false
-      if (currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") {
+      if (currentQ.question_type === "multiple_choice") {
+        const selectedIndex = (currentQ.options || []).findIndex((o: any) => o === ans.answer);
+        if (selectedIndex !== -1) {
+          isCorrect = currentQ.correct_answer === String(selectedIndex) || currentQ.correct_answer?.split(",").includes(String(selectedIndex));
+        } else {
+          isCorrect = ans.answer?.trim().toLowerCase() === currentQ.correct_answer?.trim().toLowerCase()
+        }
+      } else if (currentQ.question_type === "true_false") {
         isCorrect = ans.answer?.trim().toLowerCase() === currentQ.correct_answer?.trim().toLowerCase()
       } else if (currentQ.question_type === "puzzle") {
         const correctOrder = currentQ.correct_answer || (currentQ.items || []).join("|||")
@@ -620,7 +627,7 @@ export default function HostGamePage() {
                  // Determine if this is the correct answer
                  let isCorrect = false;
                  if (isMC && currentQ.question_type !== "poll") {
-                    isCorrect = currentQ.correct_answer?.split(",").includes(opt.id) || currentQ.correct_answer === String(i);
+                    isCorrect = currentQ.correct_answer?.split(",").includes(String(i)) || currentQ.correct_answer === String(i);
                  } else if (isTF) {
                     isCorrect = currentQ.correct_answer === opt.id;
                  }
@@ -628,7 +635,7 @@ export default function HostGamePage() {
                  // Count how many people picked this answer
                  const answerCount = answersThisRound.filter(a => {
                      if (isTF) return a.answer === opt.id;
-                     return a.answer === opt.text;
+                     return a.answer === opt;
                  }).length;
 
                  // Logic for Answer Reveal styling
@@ -650,7 +657,7 @@ export default function HostGamePage() {
                      {/* Answer Text */}
                      <div className="flex-1 px-4 text-left">
                        <span className="text-white font-bold text-2xl md:text-3xl break-words leading-tight drop-shadow-sm">
-                         {opt.text}
+                         {isTF ? opt.text : opt}
                        </span>
                      </div>
                      
