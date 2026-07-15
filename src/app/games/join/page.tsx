@@ -42,7 +42,7 @@ export default function JoinGamePage() {
 
   const handleJoinWithPin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!pin || pin.length < 6) return
+    if (!pin) return
     if (!hasProfile && !guestName.trim()) {
       toast({ title: "Enter your name", description: "Guests need a nickname to join.", variant: "destructive" })
       return
@@ -171,8 +171,8 @@ export default function JoinGamePage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-14 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-lg transition-all active:scale-[0.98]"
-                  disabled={pin.length < 6 || loading}
+                  className="w-full h-14 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-lg transition-all disabled:opacity-50 active:scale-[0.98]"
+                  disabled={!pin || loading}
                 >
                   {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Join Game"}
                 </Button>
