@@ -2,6 +2,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { useAuth } from "@/supabase"
 import { supabase } from "@/supabase"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Home, LogIn, Mail, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
@@ -62,8 +62,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
       <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-xl">
         <CardHeader className="text-center pb-2 pt-6">
-          <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-3xl flex items-center justify-center shadow-lg mb-4">
-            <Home className="h-8 w-8" />
+          <div className="mx-auto h-24 w-24 overflow-hidden rounded-3xl bg-black shadow-lg mb-4">
+            <Image
+              src="/kapendeka-logo.png"
+              alt="Kapendeka Family"
+              width={96}
+              height={96}
+              className="h-full w-full object-cover"
+              priority
+            />
           </div>
           <CardTitle className="text-3xl font-headline font-bold tracking-tight">
             Kapendeka Hub

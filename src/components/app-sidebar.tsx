@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import {
-  Home, LayoutDashboard, Calendar, CheckSquare, Utensils, ShoppingCart, HeartPulse, Church, PartyPopper, MessageSquare, Wallet, Dog, Plane, ShieldAlert, Gamepad2, BookOpen, Settings, StickyNote, Moon, MapPin, Trophy, History, Gift, Languages, Newspaper, Gamepad, LogOut, User, Target, Sparkles, BarChart4, Library, Lightbulb, Compass, Leaf, Wind, HelpCircle, Fingerprint, Archive, Zap, Book, GraduationCap, Heart, Edit3, Activity, Coffee
+  LayoutDashboard, Calendar, CheckSquare, Utensils, ShoppingCart, HeartPulse, Church, PartyPopper, MessageSquare, Wallet, Dog, Plane, ShieldAlert, Gamepad2, BookOpen, Settings, StickyNote, Moon, MapPin, Trophy, History, Gift, Languages, Newspaper, Gamepad, LogOut, User, Target, Sparkles, BarChart4, Library, Lightbulb, Compass, Leaf, Wind, HelpCircle, Fingerprint, Archive, Zap, Book, GraduationCap, Heart, Edit3, Activity, Coffee
 } from "lucide-react"
 
 import {
@@ -21,6 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useUser } from "@/supabase"
 import { supabase } from "@/supabase"
@@ -68,8 +69,15 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-none bg-[#fafafa] dark:bg-background">
       <SidebarHeader className="h-14 flex items-center px-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[1rem] bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Home className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[1rem] bg-black shadow-lg shadow-primary/20">
+            <Image
+              src="/kapendeka-logo.png"
+              alt="Kapendeka Family"
+              width={36}
+              height={36}
+              className="h-full w-full object-cover"
+              priority
+            />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-headline font-black text-base leading-none tracking-tighter uppercase italic">Kapendeka</span>

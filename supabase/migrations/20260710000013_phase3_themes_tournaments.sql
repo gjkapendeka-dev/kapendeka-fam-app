@@ -27,11 +27,13 @@ CREATE TABLE IF NOT EXISTS public.tournament_scores (
 ALTER TABLE public.tournaments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tournament_scores ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Family members can manage tournaments" ON public.tournaments;
 CREATE POLICY "Family members can manage tournaments"
   ON public.tournaments FOR ALL
   USING (family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid()))
   WITH CHECK (family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Family members can manage tournament scores" ON public.tournament_scores;
 CREATE POLICY "Family members can manage tournament scores"
   ON public.tournament_scores FOR ALL
   USING (tournament_id IN (SELECT id FROM public.tournaments WHERE family_id IN (SELECT family_id FROM public.profiles WHERE id = auth.uid())))

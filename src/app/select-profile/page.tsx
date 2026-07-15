@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { useUser, useSupabase } from "@/supabase"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -297,9 +298,21 @@ export default function SelectProfilePage() {
       ) : !selectedForPin ? (
         /* ── Profile Picker ── */
         <div className="w-full max-w-4xl mx-auto space-y-12 animate-in fade-in zoom-in duration-500">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tight">Who's playing?</h1>
-            <p className="text-muted-foreground text-sm md:text-base font-medium">Select your profile to enter the Universe</p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="h-20 w-20 overflow-hidden rounded-2xl bg-black shadow-xl md:h-24 md:w-24">
+              <Image
+                src="/kapendeka-logo.png"
+                alt="Kapendeka Family"
+                width={96}
+                height={96}
+                className="h-full w-full object-cover"
+                priority
+              />
+            </div>
+            <div className="text-center sm:text-left space-y-2">
+              <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tight">Who's playing?</h1>
+              <p className="text-muted-foreground text-sm md:text-base font-medium">Select your profile to enter the Universe</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 md:gap-10">
