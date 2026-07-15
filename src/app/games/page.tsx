@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Zap, Play, Plus, Clock, Users, Trophy, Copy, Edit, FileText, Download, Upload, BarChart2, BookOpen } from "lucide-react"
+import { Loader2, Zap, Play, Plus, Clock, Users, Trophy, Copy, Edit, FileText, Download, Upload, BarChart2, BookOpen, Archive } from "lucide-react"
 import { QuizCreator } from "@/components/quiz-creator"
 import { useToast } from "@/hooks/use-toast"
 
@@ -140,6 +140,17 @@ export default function GamesHubPage() {
     }
   }
 
+  const handleTogglePublish = async (quiz: any) => {
+    try {
+      const { error } = await supabase.from("quizzes").update({ is_draft: !quiz.is_draft }).eq("id", quiz.id)
+      if (error) throw error
+      toast({ title: quiz.is_draft ? "Quiz Published!" : "Quiz Unpublished!", description: "It has been moved to the appropriate tab." })
+      refresh()
+    } catch (e: any) {
+      toast({ title: "Update failed", description: e.message, variant: "destructive" })
+    }
+  }
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !profile) return
@@ -196,7 +207,7 @@ export default function GamesHubPage() {
       <Tabs defaultValue="published" className="w-full">
         <TabsList className="bg-indigo-50/50 p-1 rounded-2xl mb-6">
           <TabsTrigger value="published" className="rounded-xl font-bold py-2">Published ({publishedQuizzes.length})</TabsTrigger>
-          <TabsTrigger value="drafts" className="rounded-xl font-bold py-2">Drafts ({draftQuizzes.length})</TabsTrigger>
+          <TabsTrigger value="drafts" className="rounded-xl font-bold py-2">Historical & Drafts ({draftQuizzes.length})</TabsTrigger>
           <TabsTrigger value="all" className="rounded-xl font-bold py-2">All Quizzes</TabsTrigger>
           <TabsTrigger value="reports" className="rounded-xl font-bold py-2">Reports</TabsTrigger>
           <TabsTrigger value="tournaments" className="rounded-xl font-bold py-2">🏆 Tournaments</TabsTrigger>
@@ -219,6 +230,9 @@ export default function GamesHubPage() {
                         {quiz.category || "General"}
                       </Badge>
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-indigo-400 hover:text-orange-600 z-10" onClick={() => handleTogglePublish(quiz)} title="Unpublish to Historical">
+                          <Archive className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-indigo-400 hover:text-indigo-600 z-10" onClick={() => handleExport(quiz)} title="Export as JSON">
                           <Download className="h-3 w-3" />
                         </Button>
@@ -281,8 +295,16 @@ export default function GamesHubPage() {
                 <CardHeader className="pb-3 relative overflow-hidden opacity-70 hover:opacity-100 transition-opacity">
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="outline" className="bg-slate-200 text-slate-500 border-none font-black tracking-wider text-[10px] uppercase">
-                      Draft
+                      Draft / Historical
                     </Badge>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-emerald-600 z-10" onClick={() => handleTogglePublish(quiz)} title="Publish Quiz">
+                        <Upload className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 z-10" onClick={() => handleDuplicate(quiz)} title="Duplicate">
+                        {duplicatingId === quiz.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />}
+                      </Button>
+                    </div>
                   </div>
                   <CardTitle className="text-xl font-black leading-tight text-slate-700 line-clamp-2">
                     {quiz.title}

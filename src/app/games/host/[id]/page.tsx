@@ -384,20 +384,40 @@ export default function HostGamePage() {
                 </div>
               )}
               
-              <div className="pt-8 border-t border-white/10">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Users className="h-6 w-6" /> Players ({players.length})
-                  </h2>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center space-x-2">
-                      <Switch id="device-q" checked={session.show_questions_on_devices} onCheckedChange={handleToggleDeviceQuestions} />
-                      <Label htmlFor="device-q" className="text-white font-bold cursor-pointer flex items-center gap-1">
-                        <MonitorSmartphone className="h-4 w-4" /> Show Q&A on devices
-                      </Label>
+                <div className="pt-8 border-t border-white/10">
+                  <div className="flex flex-col gap-6 mb-8">
+                    <div className="flex items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/10">
+                      <Input
+                        placeholder="Paste YouTube Link for Lobby Music..."
+                        value={session.lobby_music_url || ""}
+                        onChange={(e) => updateSessionState({ lobby_music_url: e.target.value })}
+                        className="bg-white/10 border-none text-white placeholder:text-white/50 focus-visible:ring-1 focus-visible:ring-white/20"
+                      />
+                      <Button variant="secondary" className="bg-white text-black hover:bg-white/90 rounded-xl px-8 font-bold">Play</Button>
+                    </div>
+
+                    <div className="flex items-center justify-between px-2">
+                      <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <Users className="h-6 w-6" /> Players ({players.length})
+                      </h2>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center space-x-2">
+                          <Switch id="team-mode" checked={session.team_mode || false} onCheckedChange={(c) => updateSessionState({ team_mode: c })} />
+                          <Label htmlFor="team-mode" className="text-white font-bold cursor-pointer text-sm">Team Mode</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch id="open-mode" checked={!session.is_locked} onCheckedChange={(c) => updateSessionState({ is_locked: !c })} />
+                          <Label htmlFor="open-mode" className="text-white font-bold cursor-pointer text-sm">{session.is_locked ? 'Locked' : 'Open'}</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch id="device-q" checked={session.show_questions_on_devices} onCheckedChange={handleToggleDeviceQuestions} />
+                          <Label htmlFor="device-q" className="text-white font-bold cursor-pointer flex items-center gap-1 text-sm">
+                            <MonitorSmartphone className="h-4 w-4" /> Show Q&A
+                          </Label>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
                 
                 {players.length === 0 ? (
                   <div className="py-12 text-white/40 font-medium text-lg animate-pulse">Waiting for players...</div>
