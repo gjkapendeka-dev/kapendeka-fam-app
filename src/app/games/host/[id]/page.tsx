@@ -30,6 +30,10 @@ export default function HostGamePage() {
   
   // Live answers
   const [answersThisRound, setAnswersThisRound] = React.useState<any[]>([])
+  const answersRef = React.useRef(answersThisRound)
+  React.useEffect(() => {
+    answersRef.current = answersThisRound
+  }, [answersThisRound])
   
   // Lobby YouTube Player
   const [youtubeUrl, setYoutubeUrl] = React.useState("")
@@ -278,7 +282,7 @@ export default function HostGamePage() {
 
     let firstCorrectAns: any = null;
 
-    answersThisRound.forEach(async (ans) => {
+    answersRef.current.forEach(async (ans) => {
       let isCorrect = false
       if (currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") {
         isCorrect = ans.answer?.trim().toLowerCase() === currentQ.correct_answer?.trim().toLowerCase()
@@ -302,13 +306,14 @@ export default function HostGamePage() {
         const timeLeft = Math.max(0, timeLimit - (ans.timeSpent || timeLimit))
         
         let earned = 0;
+        const basePoints = currentQ.points ?? 1000;
+        const maxPoints = basePoints * (currentQ.is_double_points ? 2 : 1);
+        
         if (quiz?.time_bonus_enabled !== false) {
            const timeRatio = timeLeft / timeLimit;
-           // Max points = base * 2 if double points
-           const maxPoints = currentQ.points * (currentQ.is_double_points ? 2 : 1)
            earned = Math.round((maxPoints / 2) + ((maxPoints / 2) * timeRatio));
         } else {
-           earned = currentQ.points * (currentQ.is_double_points ? 2 : 1);
+           earned = maxPoints;
         }
 
         const player = players.find(p => p.student_id === ans.student_id)

@@ -37,6 +37,10 @@ export default function PlayerRemotePage() {
   const [textAnswer, setTextAnswer] = React.useState("")
   const [sliderValue, setSliderValue] = React.useState(50)
   const [questionStartTime, setQuestionStartTime] = React.useState<number>(Date.now())
+  const [timeRemaining, setTimeRemaining] = React.useState<number | null>(null)
+  
+  // Quiz config
+  const [quizConfig, setQuizConfig] = React.useState<any>(null)
 
   // ─── INITIALIZATION ─────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -78,6 +82,9 @@ export default function PlayerRemotePage() {
       const { data: qData } = await supabase
         .from("quiz_questions").select("*").eq("quiz_id", sessionData.quiz_id).order("question_number")
       setQuestions(qData || [])
+
+      const { data: qzData } = await supabase.from("quizzes").select("question_timer").eq("id", sessionData.quiz_id).single()
+      setQuizConfig(qzData)
 
       const avatar = profile?.avatar_url || `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${name}`
       setPlayerAvatar(avatar)
@@ -140,6 +147,41 @@ export default function PlayerRemotePage() {
     channel.subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [supabase, sessionId, joined, session, questions])
+
+  // ─── LOCAL TIMER ──────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!session || session.status !== "active" || hasAnswered) {
+       setTimeRemaining(null)
+       return
+    }
+    
+    const currentQ = questions[session.current_question_index]
+    if (!currentQ || currentQ.question_type === "slide") {
+       setTimeRemaining(null)
+       return
+    }
+
+    const limit = currentQ.time_limit || quizConfig?.question_timer || 30
+    
+    // Calculate elapsed based on real time
+    const elapsed = Math.floor((Date.now() - questionStartTime) / 1000)
+    let left = limit - elapsed
+    if (left < 0) left = 0
+    setTimeRemaining(left)
+
+    const iv = setInterval(() => {
+       const nowElapsed = Math.floor((Date.now() - questionStartTime) / 1000)
+       const nowLeft = limit - nowElapsed
+       if (nowLeft <= 0) {
+         setTimeRemaining(0)
+         clearInterval(iv)
+       } else {
+         setTimeRemaining(nowLeft)
+       }
+    }, 1000)
+
+    return () => clearInterval(iv)
+  }, [session?.current_question_index, session?.status, hasAnswered, questions, quizConfig, questionStartTime])
 
   // ─── POLLING FALLBACK ──────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -338,6 +380,14 @@ export default function PlayerRemotePage() {
       </header>
 
       <main className="flex-1 flex flex-col p-4 justify-center max-w-lg mx-auto w-full gap-4">
+
+        {timeRemaining !== null && currentQ.question_type !== "slide" && (
+          <div className="flex justify-center w-full mb-2">
+            <div className={`px-6 py-2 rounded-full border-4 shadow-sm font-black text-3xl tabular-nums ${timeRemaining <= 5 ? "border-red-500 text-red-600 bg-red-50" : "border-slate-300 text-slate-700 bg-white"}`}>
+              {timeRemaining}
+            </div>
+          </div>
+        )}
 
         {session.show_questions_on_devices && currentQ.question_type !== "slide" && (
            <div className="bg-white rounded-2xl p-4 shadow-md text-center">
