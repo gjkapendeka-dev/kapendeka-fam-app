@@ -41,6 +41,16 @@ export default function HostGamePage() {
   // Fast answers tracking (for "1st to answer")
   const [fastestPlayerId, setFastestPlayerId] = React.useState<string | null>(null)
 
+  React.useEffect(() => {
+    if (session?.lobby_music_url) {
+      const match = session.lobby_music_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+      if (match) setYoutubeId(match[1]);
+      else setYoutubeId("");
+    } else {
+      setYoutubeId("");
+    }
+  }, [session?.lobby_music_url])
+
   // ─── INITIAL FETCH ────────────────────────────────────────────────────────
   React.useEffect(() => {
     if (!supabase || !sessionId) return
@@ -383,17 +393,35 @@ export default function HostGamePage() {
                   <p className="text-2xl font-medium text-white/80">Join from your Dashboard!</p>
                 </div>
               )}
+
+              {youtubeId && (
+                <div className="w-full max-w-2xl mx-auto aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&controls=1&loop=1&playlist=${youtubeId}`}
+                    title="Lobby Music"
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                </div>
+              )}
               
                 <div className="pt-8 border-t border-white/10">
                   <div className="flex flex-col gap-6 mb-8">
                     <div className="flex items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/10">
                       <Input
                         placeholder="Paste YouTube Link for Lobby Music..."
-                        value={session.lobby_music_url || ""}
-                        onChange={(e) => updateSessionState({ lobby_music_url: e.target.value })}
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
                         className="bg-white/10 border-none text-white placeholder:text-white/50 focus-visible:ring-1 focus-visible:ring-white/20"
                       />
-                      <Button variant="secondary" className="bg-white text-black hover:bg-white/90 rounded-xl px-8 font-bold">Play</Button>
+                      <Button 
+                        variant="secondary" 
+                        className="bg-white text-black hover:bg-white/90 rounded-xl px-8 font-bold"
+                        onClick={() => updateSessionState({ lobby_music_url: youtubeUrl })}
+                      >Play</Button>
                     </div>
 
                     <div className="flex items-center justify-between px-2">

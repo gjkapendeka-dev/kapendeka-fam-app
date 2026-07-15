@@ -63,10 +63,17 @@ export default function JoinGamePage() {
         return
       }
 
-      // Check if the quiz is in guest mode
+      let isGuest = false
       if (data.quiz_id) {
         const { data: quizData } = await supabase.from("quizzes").select("guest_mode").eq("id", data.quiz_id).single()
-        setIsGuestModeSession(quizData?.guest_mode ?? false)
+        isGuest = quizData?.guest_mode ?? false
+        setIsGuestModeSession(isGuest)
+      }
+
+      if (isGuest && hasProfile && !guestName.trim()) {
+        toast({ title: "Nickname required", description: "This game is in Guest Mode. Please enter a nickname to play.", variant: "default" })
+        setLoading(false)
+        return
       }
 
       if (data.is_locked) {
@@ -82,7 +89,7 @@ export default function JoinGamePage() {
       }
 
       // Save guest name to sessionStorage
-      const effectiveName = isGuestModeSession ? guestName.trim() : (!hasProfile ? guestName.trim() : "")
+      const effectiveName = isGuest ? guestName.trim() : (!hasProfile ? guestName.trim() : "")
       if (effectiveName) {
         sessionStorage.setItem("kapendeka_guest_name", effectiveName)
       }
@@ -165,7 +172,7 @@ export default function JoinGamePage() {
                 <Button
                   type="submit"
                   className="w-full h-14 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-lg transition-all active:scale-[0.98]"
-                  disabled={pin.length < 6 || loading || ((!hasProfile || isGuestModeSession) && !guestName.trim())}
+                  disabled={pin.length < 6 || loading}
                 >
                   {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Join Game"}
                 </Button>
