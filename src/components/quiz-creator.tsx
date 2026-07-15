@@ -89,7 +89,7 @@ function uid() { return Math.random().toString(36).substr(2, 9) }
 function makeQuestion(type: QuestionType, number: number): Question {
   const base: Question = {
     id: uid(), number, text: "", type, options: [], correctAnswer: "",
-    explanation: "", points: 1, difficulty: "medium", timeLimit: 30,
+    explanation: "", points: 100, difficulty: "medium", timeLimit: 30,
   }
   switch (type) {
     case "multiple_choice":
