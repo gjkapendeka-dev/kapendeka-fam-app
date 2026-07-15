@@ -103,12 +103,10 @@ export default function GamesHubPage() {
       if (err1) throw err1
 
       // Duplicate questions
-      const questionsToInsert = (quiz.quiz_questions || []).map((q: any) => ({
-        ...q,
-        id: undefined,
-        quiz_id: newQuiz.id,
-        created_at: undefined
-      }))
+      const questionsToInsert = (quiz.quiz_questions || []).map((q: any) => {
+        const { id, created_at, ...rest } = q;
+        return { ...rest, quiz_id: newQuiz.id };
+      })
 
       if (questionsToInsert.length > 0) {
         const { error: err2 } = await supabase.from("quiz_questions").insert(questionsToInsert)
@@ -163,7 +161,10 @@ export default function GamesHubPage() {
       }).select().single()
       if (err1) throw err1
       if (questions?.length > 0) {
-        const toInsert = questions.map((q: any) => ({ ...q, id: undefined, quiz_id: newQuiz.id, created_at: undefined }))
+        const toInsert = questions.map((q: any) => {
+           const { id, created_at, ...rest } = q;
+           return { ...rest, quiz_id: newQuiz.id };
+        })
         const { error: err2 } = await supabase.from("quiz_questions").insert(toInsert)
         if (err2) throw err2
       }
