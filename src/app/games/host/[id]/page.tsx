@@ -7,11 +7,10 @@ import { useSupabase, useUser } from "@/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Zap, Users, Play, Trophy, CheckCircle, Lock, Unlock, X, ChevronRight, ArrowLeft } from "lucide-react"
+import { Loader2, Users, Play, Lock, Unlock, X, ChevronRight, ArrowLeft, MonitorSmartphone } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import confetti from "canvas-confetti"
 
@@ -37,6 +36,10 @@ export default function HostGamePage() {
   const [youtubeId, setYoutubeId] = React.useState("")
   const [timeRemaining, setTimeRemaining] = React.useState<number | null>(null)
   const [showAnswer, setShowAnswer] = React.useState(false)
+  const [showScoreboard, setShowScoreboard] = React.useState(false)
+
+  // Fast answers tracking (for "1st to answer")
+  const [fastestPlayerId, setFastestPlayerId] = React.useState<string | null>(null)
 
   // ─── INITIAL FETCH ────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -53,8 +56,6 @@ export default function HostGamePage() {
         .single()
       
       if (sErr) throw sErr
-      // Allow host access — just verify the session belongs to this family
-      // (don't block by profile?.id since profiles are PIN-based, not auth-based)
 
       setSession(sessionData)
 
@@ -91,22 +92,27 @@ export default function HostGamePage() {
 
     const channel = supabase.channel(`quiz_session_${sessionId}`)
 
-    // Listen for new players joining
     channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quiz_session_players', filter: `session_id=eq.${sessionId}` }, (payload) => {
-      setPlayers(prev => [...prev, payload.new])
+      setPlayers(prev => {
+         if (prev.find(p => p.id === payload.new.id)) return prev
+         return [...prev, payload.new]
+      })
     })
 
-    // Listen for players updating scores
     channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quiz_session_players', filter: `session_id=eq.${sessionId}` }, (payload) => {
       setPlayers(prev => prev.map(p => p.id === payload.new.id ? payload.new : p))
     })
 
-    // Listen for answers submitted (broadcast from players)
+    channel.on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'quiz_session_players', filter: `session_id=eq.${sessionId}` }, (payload) => {
+      setPlayers(prev => prev.filter(p => p.id !== payload.old.id))
+    })
+
     channel.on('broadcast', { event: 'submit_answer' }, (payload) => {
       setAnswersThisRound(prev => {
-        // Prevent duplicate answers from same student for this round
         if (prev.find(a => a.student_id === payload.payload.student_id)) return prev
-        return [...prev, payload.payload]
+        const updated = [...prev, payload.payload]
+        // If this is the very first correct answer in this round, mark them
+        return updated
       })
     })
 
@@ -115,15 +121,19 @@ export default function HostGamePage() {
   }, [supabase, sessionId, session])
 
   // ─── LOBBY POLLING FALLBACK ─────────────────────────────────────────────────
-  // Supabase Realtime postgres_changes may miss upserts. Poll every 2s in lobby.
   React.useEffect(() => {
     if (!supabase || !sessionId || !session || session.status !== 'waiting') return
     const iv = setInterval(async () => {
       const { data } = await supabase.from('quiz_session_players').select('*').eq('session_id', sessionId)
-      if (data) setPlayers(data)
+      if (data) {
+        // Quick diff check to avoid unnecessary re-renders
+        if (JSON.stringify(data.map(p => p.id).sort()) !== JSON.stringify(players.map(p => p.id).sort())) {
+            setPlayers(data)
+        }
+      }
     }, 2000)
     return () => clearInterval(iv)
-  }, [supabase, sessionId, session?.status])
+  }, [supabase, sessionId, session?.status, players])
 
   // ─── FULLSCREEN ─────────────────────────────────────────────────────────────
   const toggleFullscreen = () => {
@@ -136,7 +146,7 @@ export default function HostGamePage() {
 
   // ─── TIMER LOGIC ──────────────────────────────────────────────────────────
   React.useEffect(() => {
-    if (session?.status !== "active" || session?.current_question_index < 0 || showAnswer) {
+    if (session?.status !== "active" || session?.current_question_index < 0 || showAnswer || showScoreboard) {
       setTimeRemaining(null)
       return
     }
@@ -163,14 +173,13 @@ export default function HostGamePage() {
     }, 1000)
 
     return () => clearInterval(iv)
-  }, [session?.current_question_index, session?.status, showAnswer, questions])
+  }, [session?.current_question_index, session?.status, showAnswer, showScoreboard, questions])
 
-  // Automatically end round if all players answered
   React.useEffect(() => {
-    if (session?.status === "active" && !showAnswer && players.length > 0 && answersThisRound.length >= players.length) {
+    if (session?.status === "active" && !showAnswer && !showScoreboard && players.length > 0 && answersThisRound.length >= players.length) {
       handleTimeUp()
     }
-  }, [answersThisRound.length, players.length, session?.status, showAnswer])
+  }, [answersThisRound.length, players.length, session?.status, showAnswer, showScoreboard])
 
   // ─── ACTIONS ──────────────────────────────────────────────────────────────
   const updateSessionState = async (updates: any) => {
@@ -178,7 +187,6 @@ export default function HostGamePage() {
       await supabase.from("quiz_sessions").update(updates).eq("id", sessionId)
       setSession({ ...session, ...updates })
       
-      // Also broadcast the state change to force fast client sync
       supabase.channel(`quiz_session_${sessionId}`).send({
         type: 'broadcast',
         event: 'host_state_update',
@@ -193,25 +201,72 @@ export default function HostGamePage() {
     updateSessionState({ status: "active", current_question_index: 0 })
     setAnswersThisRound([])
     setShowAnswer(false)
+    setShowScoreboard(false)
   }
 
-  const handleNextQuestion = () => {
-    const nextIdx = session.current_question_index + 1
-    if (nextIdx >= questions.length) {
-      updateSessionState({ status: "finished" })
-      confetti({ particleCount: 300, spread: 160 })
-    } else {
-      updateSessionState({ current_question_index: nextIdx })
-      setAnswersThisRound([])
+  const handleNextAction = () => {
+    if (showAnswer) {
+      // Transition to scoreboard
+      setShowScoreboard(true)
       setShowAnswer(false)
+    } else if (showScoreboard) {
+      // Transition to next question
+      const nextIdx = session.current_question_index + 1
+      if (nextIdx >= questions.length) {
+        updateSessionState({ status: "finished" })
+        triggerFinalConfetti()
+      } else {
+        updateSessionState({ current_question_index: nextIdx })
+        setAnswersThisRound([])
+        setShowScoreboard(false)
+        setFastestPlayerId(null)
+      }
+    } else if (questions[session.current_question_index]?.question_type === "slide") {
+        // From slide, go directly to next question
+        const nextIdx = session.current_question_index + 1
+        if (nextIdx >= questions.length) {
+            updateSessionState({ status: "finished" })
+            triggerFinalConfetti()
+        } else {
+            updateSessionState({ current_question_index: nextIdx })
+            setAnswersThisRound([])
+        }
     }
+  }
+
+  const triggerFinalConfetti = () => {
+    const end = Date.now() + 3 * 1000;
+    const colors = ['#bb0000', '#ffffff'];
+
+    (function frame() {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
   }
 
   const handleTimeUp = () => {
     setShowAnswer(true)
-    // Grade everyone's answers instantly
+    
     const currentQ = questions[session.current_question_index]
     if (!currentQ || ["poll", "word_cloud", "open_ended", "brainstorm", "slide"].includes(currentQ.question_type)) return
+
+    let firstCorrectAns: any = null;
 
     answersThisRound.forEach(async (ans) => {
       let isCorrect = false
@@ -226,20 +281,38 @@ export default function HostGamePage() {
       }
       
       if (isCorrect) {
-        // Calculate speed bonus
+        // Track the fastest correct answer
+        if (!firstCorrectAns || ans.timeSpent < firstCorrectAns.timeSpent) {
+          firstCorrectAns = ans;
+        }
+
+        // Calculate speed bonus (Kahoot style)
+        // 50% base points for correct, up to 50% more based on speed
         const timeLimit = currentQ.time_limit || quiz?.question_timer || 30
         const timeLeft = Math.max(0, timeLimit - (ans.timeSpent || timeLimit))
-        const speedBonus = Math.round((timeLeft / timeLimit) * (currentQ.points * 0.5))
-        const earned = currentQ.points + speedBonus
+        
+        let earned = 0;
+        if (quiz?.time_bonus_enabled !== false) {
+           const timeRatio = timeLeft / timeLimit;
+           // Max points = base * 2 if double points
+           const maxPoints = currentQ.points * (currentQ.is_double_points ? 2 : 1)
+           earned = Math.round((maxPoints / 2) + ((maxPoints / 2) * timeRatio));
+        } else {
+           earned = currentQ.points * (currentQ.is_double_points ? 2 : 1);
+        }
 
-        // Update player score
         const player = players.find(p => p.student_id === ans.student_id)
         if (player) {
           const newScore = player.score + earned
+          // Also track streak logic in a real app, omitted for brevity here
           await supabase.from("quiz_session_players").update({ score: newScore }).eq("id", player.id)
         }
       }
     })
+
+    if (firstCorrectAns) {
+       setFastestPlayerId(firstCorrectAns.student_id);
+    }
   }
 
   const handleEndSession = async () => {
@@ -259,12 +332,8 @@ export default function HostGamePage() {
     }
   }
 
-  const handleToggleLock = () => {
-    updateSessionState({ is_locked: !session.is_locked })
-  }
-
-  const handleToggleTeamMode = () => {
-    updateSessionState({ team_mode: !session.team_mode })
+  const handleToggleDeviceQuestions = () => {
+    updateSessionState({ show_questions_on_devices: !session.show_questions_on_devices })
   }
 
   // ─── RENDERERS ────────────────────────────────────────────────────────────
@@ -286,18 +355,11 @@ export default function HostGamePage() {
   if (session.status === "waiting") {
     return (
       <div className={`min-h-screen ${themeBg} flex flex-col`}>
-        {/* Top bar with host name + fullscreen */}
         <div className="flex items-center justify-between px-6 py-3 bg-black/30">
           <div className="flex items-center gap-4">
-            <Link
-              href="/games"
-              className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-bold transition-colors group"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              K-Games
+            <Link href="/games" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-bold transition-colors group">
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" /> K-Games
             </Link>
-            <span className="text-white/20">|</span>
-            <span className="text-white/60 font-bold text-sm">{profile?.display_name || "Host"} — Kapendeka Live</span>
           </div>
           <button onClick={toggleFullscreen} className="text-white/40 hover:text-white text-sm font-medium transition-colors">
             {isFullscreen ? "Exit Fullscreen ✕" : "⛶ Fullscreen"}
@@ -319,43 +381,9 @@ export default function HostGamePage() {
               ) : (
                 <div className="space-y-4">
                   <p className="text-2xl font-medium text-white/80">Join from your Dashboard!</p>
-                  <p className="text-lg text-white/60">Or go to <strong className="text-white">kapendeka.co.za/games/join</strong></p>
                 </div>
               )}
               
-              {/* YouTube Player */}
-              <div className="pt-6 border-t border-white/10">
-                {!youtubeId ? (
-                  <div className="flex gap-2 max-w-sm mx-auto">
-                    <Input 
-                      placeholder="Paste YouTube Link for Lobby Music..." 
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-                      value={youtubeUrl}
-                      onChange={e => setYoutubeUrl(e.target.value)}
-                    />
-                    <Button onClick={() => {
-                      const match = youtubeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
-                      if (match && match[1]) setYoutubeId(match[1])
-                    }} variant="secondary">Play</Button>
-                  </div>
-                ) : (
-                  <div className="rounded-xl overflow-hidden shadow-2xl relative aspect-video w-full max-w-md mx-auto">
-                    <iframe 
-                      src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=0`} 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen 
-                      className="absolute inset-0 w-full h-full"
-                    />
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      className="absolute top-2 right-2 rounded-full h-8 w-8 p-0" 
-                      onClick={() => setYoutubeId("")}
-                    >✕</Button>
-                  </div>
-                )}
-              </div>
-
               <div className="pt-8 border-t border-white/10">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -363,13 +391,9 @@ export default function HostGamePage() {
                   </h2>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <Switch id="team-mode" checked={session.team_mode} onCheckedChange={handleToggleTeamMode} />
-                      <Label htmlFor="team-mode" className="text-white font-bold cursor-pointer">Team Mode</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch id="lock-game" checked={session.is_locked} onCheckedChange={handleToggleLock} />
-                      <Label htmlFor="lock-game" className="text-white font-bold cursor-pointer">
-                        {session.is_locked ? <><Lock className="inline h-4 w-4 mr-1" /> Locked</> : <><Unlock className="inline h-4 w-4 mr-1" /> Open</>}
+                      <Switch id="device-q" checked={session.show_questions_on_devices} onCheckedChange={handleToggleDeviceQuestions} />
+                      <Label htmlFor="device-q" className="text-white font-bold cursor-pointer flex items-center gap-1">
+                        <MonitorSmartphone className="h-4 w-4" /> Show Q&A on devices
                       </Label>
                     </div>
                   </div>
@@ -379,43 +403,26 @@ export default function HostGamePage() {
                   <div className="py-12 text-white/40 font-medium text-lg animate-pulse">Waiting for players...</div>
                 ) : (
                   <div className="flex flex-wrap gap-4 justify-center">
-                    {players.map(p => {
-                      const teamColors: Record<string, string> = {
-                        "Red": "bg-red-100 text-red-900 border-red-500",
-                        "Blue": "bg-blue-100 text-blue-900 border-blue-500",
-                        "Green": "bg-green-100 text-green-900 border-green-500",
-                        "Yellow": "bg-yellow-100 text-yellow-900 border-yellow-500"
-                      }
-                      const teamClass = p.team_name ? teamColors[p.team_name] || "bg-white text-slate-900" : "bg-white text-slate-900"
-                      
-                      return (
-                        <div key={p.id} className={`${teamClass} border-2 font-bold pr-2 pl-2 py-2 rounded-full text-xl shadow-lg animate-in zoom-in flex items-center gap-3 relative group`}>
-                          {p.avatar_url ? (
-                            <img src={p.avatar_url} alt={p.student_name} className="w-10 h-10 rounded-full bg-slate-100" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
-                              {p.student_name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="pr-4">{p.student_name}</span>
-                          <button onClick={() => handleKickPlayer(p.id)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )
-                    })}
+                    {players.map(p => (
+                      <div key={p.id} className={`bg-white text-slate-900 border-2 font-bold pr-2 pl-2 py-2 rounded-full text-xl shadow-lg animate-in zoom-in flex items-center gap-3 relative group`}>
+                        {p.avatar_url ? (
+                          <img src={p.avatar_url} alt={p.student_name} className="w-10 h-10 rounded-full bg-slate-100" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm">{p.student_name.charAt(0).toUpperCase()}</div>
+                        )}
+                        <span className="pr-4">{p.student_name}</span>
+                        <button onClick={() => handleKickPlayer(p.id)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Button 
-            size="lg" 
-            className="h-16 px-12 text-2xl font-black bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow-xl"
-            disabled={players.length === 0}
-            onClick={handleStartGame}
-          >
+          <Button size="lg" className="h-16 px-12 text-2xl font-black bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow-xl" disabled={players.length === 0} onClick={handleStartGame}>
             Start Game <Play className="ml-2 h-6 w-6" />
           </Button>
         </div>
@@ -423,97 +430,35 @@ export default function HostGamePage() {
     )
   }
 
-  // LEADERBOARD / FINISHED
+  // FINAL SCOREBOARD (FINISHED)
   if (session.status === "finished") {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score)
-
-    // If team mode: aggregate by team
-    const isTeamMode = session.team_mode
-    const teamColors: Record<string, string> = {
-      "Red": "bg-red-500",
-      "Blue": "bg-blue-500",
-      "Green": "bg-green-500",
-      "Yellow": "bg-yellow-400",
-    }
-    const teamScores = isTeamMode ? Object.entries(
-      players.reduce((acc: Record<string, number>, p: any) => {
-        const t = p.team_name || "Unknown"
-        acc[t] = (acc[t] || 0) + p.score
-        return acc
-      }, {})
-    ).sort(([, a], [, b]) => b - a) : []
-
     const podiumHeights = ["h-full", "h-3/4", "h-2/4"]
     const podiumColors = ["bg-yellow-400", "bg-slate-300", "bg-amber-600"]
 
     return (
-      <div className="min-h-screen bg-slate-900 p-8 flex flex-col items-center">
-        <h1 className="text-5xl font-black text-white mb-12">
-          {isTeamMode ? "🏆 Team Podium" : "Final Podium"}
-        </h1>
+      <div className={`min-h-screen ${themeBg} p-8 flex flex-col items-center justify-center`}>
+        <h1 className="text-5xl font-black text-white mb-12 drop-shadow-lg">Final Podium</h1>
 
-        {isTeamMode ? (
-          <div className="flex items-end justify-center gap-6 h-96 w-full max-w-4xl">
-            {teamScores.slice(0, 3).map(([team, score], i) => {
-              const displayOrder = i === 0 ? 1 : i === 1 ? 0 : 2
-              const barColor = teamColors[team] || "bg-purple-500"
-              return (
-                <div key={team} className={`flex flex-col items-center justify-end w-1/3 order-${displayOrder}`}>
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-black text-white">{team}</div>
-                    <Badge variant="outline" className="text-white border-white/20 mt-2 bg-black/40">{score} pts total</Badge>
-                  </div>
-                  <div className={`w-full ${podiumHeights[i]} ${barColor} rounded-t-xl shadow-2xl flex items-start justify-center pt-6 relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-white/20"></div>
-                    <span className="text-6xl font-black text-black/40">{i + 1}</span>
-                  </div>
+        <div className="flex items-end justify-center gap-4 h-96 w-full max-w-4xl animate-in slide-in-from-bottom-32 duration-1000">
+          {sortedPlayers.slice(0, 3).map((p, i) => {
+            const orderIndex = i === 0 ? 1 : i === 1 ? 0 : 2
+            return (
+              <div key={p.id} className={`flex flex-col items-center justify-end w-1/3 order-${orderIndex}`}>
+                <div className="text-center mb-4 animate-in fade-in zoom-in duration-1000 delay-500">
+                  <div className="text-2xl font-black text-white truncate w-48 drop-shadow-md">{p.student_name}</div>
+                  <Badge variant="outline" className="text-white border-white/20 mt-2 bg-black/40 text-lg">{p.score} pts</Badge>
                 </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex items-end justify-center gap-4 h-96 w-full max-w-4xl">
-            {sortedPlayers.slice(0, 3).map((p, i) => {
-              const orderIndex = i === 0 ? 1 : i === 1 ? 0 : 2
-              return (
-                <div key={p.id} className={`flex flex-col items-center justify-end w-1/3 order-${orderIndex}`}>
-                  <div className="text-center mb-4">
-                    <div className="text-2xl font-black text-white truncate w-48">{p.student_name}</div>
-                    <Badge variant="outline" className="text-white border-white/20 mt-2 bg-black/40">{p.score} pts</Badge>
-                  </div>
-                  <div className={`w-full ${podiumHeights[i]} ${podiumColors[i]} rounded-t-xl shadow-2xl flex items-start justify-center pt-6 relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-white/20"></div>
-                    <span className="text-6xl font-black text-black/40">{i + 1}</span>
-                  </div>
+                <div className={`w-full ${podiumHeights[i]} ${podiumColors[i]} rounded-t-xl shadow-2xl flex items-start justify-center pt-6 relative overflow-hidden transition-all duration-1000 transform origin-bottom hover:scale-105`}>
+                  <div className="absolute inset-0 bg-white/20"></div>
+                  <span className="text-6xl font-black text-black/40 drop-shadow-sm">{i + 1}</span>
                 </div>
-              )
-            })}
-          </div>
-        )}
+              </div>
+            )
+          })}
+        </div>
 
-        {isTeamMode && (
-          <div className="mt-12 w-full max-w-2xl bg-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-white/60 uppercase tracking-widest text-center mb-4">Individual Players</h3>
-            <div className="space-y-2">
-              {sortedPlayers.map((p: any, i: number) => {
-                const barC = teamColors[p.team_name] || "bg-purple-500"
-                return (
-                  <div key={p.id} className="flex items-center gap-3 text-white">
-                    <span className="font-black text-slate-400 w-5">#{i+1}</span>
-                    <div className={`w-3 h-3 rounded-full ${barC}`}></div>
-                    <span className="font-bold flex-1">{p.student_name}</span>
-                    <span className="font-black">{p.score} pts</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-        
         <div className="mt-12 flex items-center justify-center gap-4">
-          <Link href="/games" className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm font-bold transition-colors">
-            <ArrowLeft className="h-4 w-4" /> K-Games
-          </Link>
           <Button size="lg" variant="outline" className="text-white border-white/20 bg-white/10 hover:bg-white/20" onClick={handleEndSession}>
             End Session
           </Button>
@@ -522,203 +467,190 @@ export default function HostGamePage() {
     )
   }
 
-  // ACTIVE QUESTION
-  const currentQ = questions[session.current_question_index]
-  
-  if (!currentQ) {
-    return <div className="flex h-screen items-center justify-center flex-col gap-4">
-      <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
-      <p className="text-slate-500 font-bold">Loading Question...</p>
-    </div>
+  // INTERMEDIATE SCOREBOARD
+  if (showScoreboard) {
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score).slice(0, 5)
+    return (
+      <div className={`min-h-screen ${themeBg} p-8 flex flex-col items-center justify-center`}>
+        <div className="w-full max-w-3xl flex flex-col items-center">
+          <h2 className="text-5xl font-black text-white mb-12 drop-shadow-lg">Scoreboard</h2>
+          
+          <div className="w-full space-y-4">
+            {sortedPlayers.map((p, i) => (
+              <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center shadow-xl animate-in slide-in-from-right" style={{ animationDelay: `${i * 100}ms` }}>
+                <span className="text-3xl font-black text-slate-400 w-16 text-center">{i + 1}</span>
+                <span className="text-2xl font-bold text-slate-800 flex-1 truncate">{p.student_name}</span>
+                {fastestPlayerId === p.student_id && (
+                   <span className="bg-amber-100 text-amber-600 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mr-4">
+                     🔥 Fastest
+                   </span>
+                )}
+                <span className="text-2xl font-black text-indigo-600">{p.score}</span>
+              </div>
+            ))}
+          </div>
+
+          <Button size="lg" onClick={handleNextAction} className="mt-12 bg-white text-slate-900 hover:bg-slate-100 font-bold px-12 h-14 rounded-full text-xl shadow-2xl">
+            Next <ChevronRight className="ml-2 h-6 w-6" />
+          </Button>
+        </div>
+      </div>
+    )
   }
 
-  const timeLimit = currentQ.time_limit || quiz?.question_timer || 30
-  const timePct = timeLimit > 0 && timeRemaining !== null ? (timeRemaining / timeLimit) * 100 : 100
+  // ACTIVE QUESTION OR ANSWER REVEAL
+  const currentQ = questions[session.current_question_index]
+  if (!currentQ) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
+
+  const isMC = currentQ.question_type === "multiple_choice" || currentQ.question_type === "poll"
+  const isTF = currentQ.question_type === "true_false"
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Header */}
-      <header className="bg-white p-4 shadow-sm flex items-center justify-between z-10">
+      <header className="bg-white p-4 shadow-sm flex items-center justify-between z-10 shrink-0">
         <div className="flex items-center gap-4">
-          <Link href="/games" className="flex items-center gap-1.5 text-muted-foreground hover:text-primary text-sm font-bold transition-colors mr-2">
-            <ArrowLeft className="h-4 w-4" /> K-Games
-          </Link>
-          <Badge variant="secondary" className="text-sm px-3 py-1">Q{session.current_question_index + 1} of {questions.length}</Badge>
-          <span className="font-bold text-slate-700">{session.require_pin ? `PIN: ${session.join_pin}` : "Kapendeka Live"}</span>
+          <span className="font-black text-slate-800 text-xl tracking-tight">K-Games</span>
+          <Badge variant="secondary" className="text-sm px-3 py-1 font-bold">Question {session.current_question_index + 1} of {questions.length}</Badge>
+          {currentQ.is_double_points && (
+             <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-black uppercase tracking-widest">Double Points</Badge>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <span className="font-bold">{answersThisRound.length} / {players.length} Answers</span>
+        <div className="flex items-center gap-6">
+           <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-slate-400" />
+            <span className="font-bold text-slate-600 text-lg">{answersThisRound.length} Answers</span>
+          </div>
+          {timeRemaining !== null && !showAnswer && (
+             <div className={`font-black text-3xl tabular-nums ${timeRemaining <= 5 ? "text-red-600" : "text-slate-800"}`}>
+               {timeRemaining}
+             </div>
+          )}
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 flex flex-col">
-        {/* Question Area */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center mb-8 max-w-5xl mx-auto w-full">
-          {currentQ.question_type !== "slide" && (
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">
-              {currentQ.question_text}
-            </h2>
-          )}
-          
-          {currentQ.youtube_video_id ? (
-            <div className="w-full max-w-2xl aspect-video mb-8 rounded-2xl shadow-xl border-4 border-white overflow-hidden bg-black">
-              <iframe 
+      {/* Main Content Area (Question + Image) */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 w-full max-w-6xl mx-auto text-center gap-6">
+        <div className="bg-white p-6 md:p-10 rounded-2xl shadow-md w-full border-t-8 border-indigo-600">
+           <h2 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
+             {currentQ.question_text}
+           </h2>
+        </div>
+
+        {currentQ.youtube_video_id ? (
+          <div className="w-full max-w-3xl aspect-video rounded-xl shadow-xl overflow-hidden bg-black shrink-0 relative">
+            {!showAnswer ? (
+                <iframe 
                 width="100%" 
                 height="100%" 
                 src={`https://www.youtube.com/embed/${currentQ.youtube_video_id}?autoplay=1&controls=0`} 
-                title="YouTube video player" 
+                title="YouTube video" 
                 frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allow="autoplay; encrypted-media" 
                 allowFullScreen
-              ></iframe>
-            </div>
-          ) : currentQ.question_image_url ? (
-            <img src={currentQ.question_image_url} alt="Question" className="max-h-80 w-auto rounded-2xl shadow-xl border-4 border-white mb-8" />
-          ) : null}
-
-          {currentQ.question_type === "slide" && (
-             <div className="bg-white p-12 rounded-3xl shadow-xl border-4 border-blue-100 min-w-full text-center">
-               <span className="text-6xl mb-6 block">📋</span>
-               <p className="text-3xl font-medium leading-relaxed whitespace-pre-wrap">{currentQ.slide_content || currentQ.question_text}</p>
-             </div>
-          )}
-
-          {/* Time & Answers indicator */}
-          {!showAnswer && currentQ.question_type !== "slide" && (
-            <div className="flex items-center gap-8 mt-4">
-              {timeRemaining !== null && (
-                <div className="flex flex-col items-center">
-                  <div className={`h-24 w-24 rounded-full border-8 flex items-center justify-center ${timeRemaining <= 5 ? "border-red-500 text-red-500 bg-red-50 animate-pulse" : "border-slate-800 text-slate-800 bg-white"}`}>
-                    <span className="text-4xl font-black">{timeRemaining}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Live Word Cloud - visible during question */}
-        {!showAnswer && currentQ.question_type === "word_cloud" && answersThisRound.length > 0 && (
-          <div className="w-full max-w-5xl mx-auto bg-white/80 backdrop-blur rounded-3xl shadow-xl p-6 mb-6 animate-in fade-in">
-            <div className="flex flex-wrap gap-3 justify-center items-center min-h-[80px]">
-              {(() => {
-                const freq: Record<string, number> = {}
-                answersThisRound.forEach(a => {
-                  const w = (a.answer || "").trim().toLowerCase()
-                  if (w) freq[w] = (freq[w] || 0) + 1
-                })
-                const max = Math.max(...Object.values(freq), 1)
-                const colors = ["text-indigo-600", "text-purple-600", "text-blue-600", "text-violet-600", "text-sky-600"]
-                return Object.entries(freq).map(([word, count]) => {
-                  const size = Math.round(18 + (count / max) * 40)
-                  const color = colors[word.charCodeAt(0) % colors.length]
-                  return (
-                    <span key={word} className={`font-black ${color} transition-all animate-in zoom-in`} style={{ fontSize: `${size}px` }}>
-                      {word}
-                    </span>
-                  )
-                })
-              })()}
-            </div>
+                ></iframe>
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white/50 font-bold">Video Hidden</div>
+            )}
           </div>
+        ) : currentQ.question_image_url ? (
+          <img src={currentQ.question_image_url} alt="Question" className="max-h-64 object-contain rounded-xl shadow-lg shrink-0" />
+        ) : null}
+        
+        {/* KAHOOT STYLE ANSWER GRID */}
+        {(isMC || isTF) && (
+           <div className={`w-full grid gap-4 mt-auto pb-4 ${isTF ? 'grid-cols-2 max-w-4xl mx-auto' : 'grid-cols-2 md:grid-cols-2'}`}>
+              {(currentQ.options || (isTF ? [{text:"True", id:"true"}, {text:"False", id:"false"}] : [])).map((opt: any, i: number) => {
+                 const bgColors = ["bg-red-600", "bg-blue-600", "bg-amber-500", "bg-emerald-600", "bg-purple-600", "bg-cyan-600"]
+                 const shapes = ["▲", "◆", "●", "■", "★", "♥"]
+                 
+                 // Determine if this is the correct answer
+                 let isCorrect = false;
+                 if (isMC && currentQ.question_type !== "poll") {
+                    isCorrect = currentQ.correct_answer?.split(",").includes(opt.id) || currentQ.correct_answer === String(i);
+                 } else if (isTF) {
+                    isCorrect = currentQ.correct_answer === opt.id;
+                 }
+                 
+                 // Count how many people picked this answer
+                 const answerCount = answersThisRound.filter(a => {
+                     if (isTF) return a.answer === opt.id;
+                     return a.answer === opt.text;
+                 }).length;
+
+                 // Logic for Answer Reveal styling
+                 const isDimmed = showAnswer && !isCorrect && currentQ.question_type !== "poll";
+                 const isRevealedCorrect = showAnswer && isCorrect;
+
+                 return (
+                   <div 
+                     key={opt.id || i}
+                     className={`relative flex items-center p-4 rounded-xl shadow-[0_4px_0_0_rgba(0,0,0,0.2)] min-h-[100px] transition-all duration-500
+                       ${bgColors[i % bgColors.length]} 
+                       ${isDimmed ? 'opacity-30 grayscale saturate-0' : 'opacity-100'}
+                     `}
+                   >
+                     {/* Shape Icon */}
+                     <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                       <span className="text-white text-5xl opacity-90 drop-shadow-md">{shapes[i % shapes.length]}</span>
+                     </div>
+                     {/* Answer Text */}
+                     <div className="flex-1 px-4 text-left">
+                       <span className="text-white font-bold text-2xl md:text-3xl break-words leading-tight drop-shadow-sm">
+                         {opt.text}
+                       </span>
+                     </div>
+                     
+                     {/* Reveal States */}
+                     {isRevealedCorrect && (
+                        <div className="absolute top-2 right-2 bg-white/20 rounded-full p-1 animate-in zoom-in bounce">
+                           <CheckCircle className="text-white w-8 h-8 drop-shadow-md" />
+                        </div>
+                     )}
+                     
+                     {showAnswer && (
+                         <div className="absolute bottom-2 right-4 text-white/90 font-black text-2xl drop-shadow-md">
+                           {answerCount} <Users className="inline h-5 w-5 opacity-70 ml-1" />
+                         </div>
+                     )}
+                   </div>
+                 )
+              })}
+           </div>
         )}
-
-        {/* Answers Area */}
-        {showAnswer && currentQ.question_type !== "slide" && (
-          <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-8 animate-in slide-in-from-bottom-8">
-            <h3 className="text-2xl font-bold mb-6 text-center">Correct Answer</h3>
-            
-            {["multiple_choice", "true_false", "short_answer"].includes(currentQ.question_type) && (
-              <div className="bg-emerald-50 border-4 border-emerald-500 rounded-2xl p-8 text-center text-emerald-700">
-                <span className="text-4xl font-black">{currentQ.correct_answer}</span>
+        
+        {/* NON-MC QUESTIONS REVEAL */}
+        {showAnswer && !isMC && !isTF && currentQ.question_type !== "slide" && (
+           <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 animate-in slide-in-from-bottom-8">
+              <h3 className="text-xl font-bold text-slate-400 uppercase tracking-widest mb-4">Correct Answer</h3>
+              <div className="text-4xl font-black text-emerald-600">{currentQ.correct_answer || currentQ.correct_value}</div>
+              
+              <div className="mt-8 flex flex-wrap gap-2 justify-center">
+                 {answersThisRound.map((a, i) => (
+                    <span key={i} className="bg-slate-100 border text-slate-800 font-bold px-4 py-2 rounded-lg text-lg">
+                      {a.answer}
+                    </span>
+                 ))}
               </div>
-            )}
-
-            {currentQ.question_type === "puzzle" && (
-              <div className="space-y-3">
-                {currentQ.correct_answer?.split("|||").map((item: string, i: number) => (
-                  <div key={i} className="bg-slate-50 border-2 rounded-xl p-4 flex items-center gap-4 font-bold text-lg">
-                    <span className="bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center">{i+1}</span>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {currentQ.question_type === "slider" && (
-              <div className="text-center space-y-4">
-                <div className="text-6xl font-black text-primary">{currentQ.correct_value ?? currentQ.correct_answer}</div>
-                <div className="flex justify-between text-muted-foreground font-bold px-12">
-                  <span>{currentQ.min_value ?? 0}</span>
-                  <span>{currentQ.max_value ?? 100}</span>
-                </div>
-              </div>
-            )}
-
-            {["poll", "brainstorm", "open_ended"].includes(currentQ.question_type) && (
-              <div className="text-center p-8 bg-blue-50 border-4 border-blue-200 rounded-2xl">
-                <p className="text-xl font-bold text-blue-800">Check the reports for aggregate student answers!</p>
-                <div className="mt-4 flex flex-wrap gap-3 justify-center">
-                  {answersThisRound.map((a, i) => (
-                    <span key={i} className="bg-white border-2 border-blue-200 text-blue-900 font-bold px-4 py-2 rounded-full text-sm">{a.answer}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {currentQ.question_type === "word_cloud" && (
-              <div className="p-6 bg-indigo-50 border-4 border-indigo-200 rounded-2xl">
-                <h4 className="text-lg font-bold text-indigo-800 mb-4 text-center">Word Cloud</h4>
-                <div className="flex flex-wrap gap-3 justify-center items-center">
-                  {(() => {
-                    const freq: Record<string, number> = {}
-                    answersThisRound.forEach(a => {
-                      const w = (a.answer || "").trim().toLowerCase()
-                      if (w) freq[w] = (freq[w] || 0) + 1
-                    })
-                    const max = Math.max(...Object.values(freq), 1)
-                    return Object.entries(freq).map(([word, count]) => {
-                      const size = Math.round(14 + (count / max) * 36)
-                      const colors = ["text-indigo-700", "text-purple-700", "text-blue-700", "text-violet-700"]
-                      const color = colors[word.charCodeAt(0) % colors.length]
-                      return (
-                        <span key={word} className={`font-black ${color}`} style={{ fontSize: `${size}px` }}>
-                          {word}
-                        </span>
-                      )
-                    })
-                  })()}
-                </div>
-              </div>
-            )}
-            
-            {currentQ.explanation && (
-              <div className="mt-6 bg-slate-50 p-4 rounded-xl border">
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Explanation</p>
-                <p className="text-lg">{currentQ.explanation}</p>
-              </div>
-            )}
-          </div>
+           </div>
         )}
       </main>
 
       {/* Footer Controls */}
-      <footer className="bg-slate-900 p-6 flex justify-between items-center shadow-t-xl z-10">
-        <div className="text-white/60 font-bold tracking-widest uppercase text-sm">
+      <footer className="bg-white border-t p-4 flex justify-between items-center z-10 shrink-0">
+        <div className="text-slate-400 font-bold tracking-widest uppercase text-xs">
           Kapendeka Live
         </div>
         <div className="flex gap-4">
           {!showAnswer && currentQ.question_type !== "slide" && (
-            <Button size="lg" variant="destructive" onClick={handleTimeUp} className="font-bold px-8">
+            <Button size="lg" variant="secondary" onClick={handleTimeUp} className="font-bold">
               Skip Timer
             </Button>
           )}
           
           {(showAnswer || currentQ.question_type === "slide") && (
-            <Button size="lg" onClick={handleNextQuestion} className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-8">
-              {session.current_question_index >= questions.length - 1 ? "Show Podium" : "Next Question"} <ChevronRight className="ml-2 h-5 w-5" />
+            <Button size="lg" onClick={handleNextAction} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-12 rounded-full shadow-lg hover:shadow-xl transition-all">
+              Next <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           )}
         </div>

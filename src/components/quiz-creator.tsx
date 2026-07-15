@@ -67,6 +67,8 @@ export interface Question {
   slideContent?: string
   // Multiple Choice Additions
   allowMultipleSelection?: boolean
+  // Scoring Enhancements
+  isDoublePoints?: boolean
 }
 
 interface QuizCreatorProps {
@@ -205,6 +207,7 @@ export function QuizCreator({
               pinImageUrl: q.pin_image_url || "",
               pinRegion: q.pin_region || null,
               slideContent: q.slide_content || "",
+              isDoublePoints: q.is_double_points || false,
             }))
             // For multiple choice, we mapped options to text, but correctAnswer in DB was the text, we need the index.
             const mapped = loaded.map((q: any) => {
@@ -340,6 +343,7 @@ export function QuizCreator({
         pin_image_url: q.pinImageUrl || "",
         pin_region: q.pinRegion || null,
         slide_content: q.slideContent || "",
+        is_double_points: q.isDoublePoints || false,
       }))
 
       const { error: qe } = await supabase.from("quiz_questions").insert(toInsert)
@@ -697,13 +701,25 @@ function QuestionEditor({
       <CardContent className="px-4 pb-4 space-y-4">
 
         {/* Settings row */}
-        <div className={`grid gap-2 ${question.type === "slide" ? "grid-cols-2" : "grid-cols-3"}`}>
+        <div className={`grid gap-2 ${question.type === "slide" ? "grid-cols-2" : "grid-cols-4"}`}>
           {question.type !== "slide" && question.type !== "poll" && question.type !== "word_cloud" && (
             <div>
               <Label className="text-xs font-bold">Points</Label>
               <Input type="number" min="0" value={question.points}
                 onChange={e => onChange({ ...question, points: parseInt(e.target.value) || 0 })}
                 className="mt-1 h-8" />
+            </div>
+          )}
+          {question.type !== "slide" && question.type !== "poll" && question.type !== "word_cloud" && (
+            <div className="flex flex-col justify-end pb-1">
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id={`double-pts-${question.id}`} 
+                  checked={!!question.isDoublePoints} 
+                  onCheckedChange={(c) => onChange({ ...question, isDoublePoints: c })} 
+                />
+                <Label htmlFor={`double-pts-${question.id}`} className="text-xs cursor-pointer">Double Points</Label>
+              </div>
             </div>
           )}
           <div>

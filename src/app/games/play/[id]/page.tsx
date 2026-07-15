@@ -339,6 +339,15 @@ export default function PlayerRemotePage() {
 
       <main className="flex-1 flex flex-col p-4 justify-center max-w-lg mx-auto w-full gap-4">
 
+        {session.show_questions_on_devices && currentQ.question_type !== "slide" && (
+           <div className="bg-white rounded-2xl p-4 shadow-md text-center">
+             <h3 className="text-xl font-bold text-slate-800">{currentQ.question_text}</h3>
+             {currentQ.question_image_url && (
+                <img src={currentQ.question_image_url} alt="Question" className="mt-3 max-h-32 mx-auto rounded-lg object-contain" />
+             )}
+           </div>
+        )}
+
         {qType === "slide" && (
           <div className="flex-1 flex flex-col items-center justify-center text-center bg-blue-50 rounded-3xl border-4 border-blue-200">
             <span className="text-6xl mb-4">👀</span>
@@ -356,10 +365,10 @@ export default function PlayerRemotePage() {
                 <button
                   key={i}
                   onClick={() => submitAnswer(opt)}
-                  className={`${bgColors[i % bgColors.length]} rounded-2xl shadow-[0_8px_0_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-2 transition-all flex flex-col items-center justify-center text-white h-full max-h-[280px]`}
+                  className={`${bgColors[i % bgColors.length]} rounded-2xl shadow-[0_8px_0_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-2 transition-all flex flex-col items-center justify-center text-white h-full min-h-[140px] max-h-[280px] p-2`}
                 >
-                  <span className="text-6xl opacity-80 drop-shadow-md mb-2">{shapes[i % shapes.length]}</span>
-                  {qType === "poll" && <span className="text-base font-bold px-3 text-center break-words leading-tight">{opt}</span>}
+                  <span className={`${session.show_questions_on_devices ? "text-4xl" : "text-6xl"} opacity-80 drop-shadow-md mb-2`}>{shapes[i % shapes.length]}</span>
+                  {(qType === "poll" || session.show_questions_on_devices) && <span className="text-sm sm:text-base font-bold px-1 text-center break-words leading-tight">{opt}</span>}
                 </button>
               )
             })}
