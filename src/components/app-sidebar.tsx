@@ -41,6 +41,7 @@ const portals = [
   { name: "Chores", href: "/household", icon: CheckSquare },
   { name: "Homework", href: "/school", icon: GraduationCap },
   { name: "Faith", href: "/faith", icon: Heart },
+  { name: "Bible", href: "https://bible.kapendeka.co.za", icon: BookOpen },
   { name: "Notes", href: "/notes", icon: Edit3 },
   { name: "Health", href: "/health", icon: Activity },
   { name: "Meals", href: "/meals", icon: Coffee },
