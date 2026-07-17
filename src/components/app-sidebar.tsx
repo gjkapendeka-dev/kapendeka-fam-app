@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import {
-  LayoutDashboard, Calendar, CheckSquare, Utensils, ShoppingCart, HeartPulse, Church, PartyPopper, MessageSquare, Wallet, Dog, Plane, ShieldAlert, Gamepad2, BookOpen, Settings, StickyNote, Moon, MapPin, Trophy, History, Gift, Languages, Newspaper, Gamepad, LogOut, User, Target, Sparkles, BarChart4, Library, Lightbulb, Compass, Leaf, Wind, HelpCircle, Fingerprint, Archive, Zap, Book, GraduationCap, Heart, Edit3, Activity, Coffee
+  LayoutDashboard, Calendar, CheckSquare, Utensils, ShoppingCart, HeartPulse, Church, PartyPopper, MessageSquare, Wallet, Dog, Plane, ShieldAlert, Gamepad2, BookOpen, Settings, StickyNote, Moon, MapPin, Trophy, History, Gift, Languages, Newspaper, Gamepad, LogOut, User, Target, Sparkles, BarChart4, Library, Lightbulb, Compass, Leaf, Wind, HelpCircle, Fingerprint, Archive, Zap, Book, GraduationCap, Heart, Edit3, Activity, Coffee, Hourglass
 } from "lucide-react"
 
 import {
@@ -29,7 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "My Stuff", href: "/vault", icon: Archive },
+  { name: "Legacy", href: "/legacy", icon: Hourglass },
   { name: "Arcade", href: "/arcade", icon: Zap },
   { name: "K-Games", href: "/games", icon: Gamepad2 },
   { name: "Stories", href: "/stories", icon: Book },
@@ -42,7 +42,7 @@ const portals = [
   { name: "Homework", href: "/school", icon: GraduationCap },
   { name: "Faith", href: "/faith", icon: Heart },
   { name: "Bible", href: "https://bible.kapendeka.co.za", icon: BookOpen },
-  { name: "Notes", href: "/notes", icon: Edit3 },
+  { name: "Wiki & Notes", href: "/notes", icon: Edit3 },
   { name: "Health", href: "/health", icon: Activity },
   { name: "Meals", href: "/meals", icon: Coffee },
   { name: "Wishlist", href: "/wishlist", icon: Gift },
