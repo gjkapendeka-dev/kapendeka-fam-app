@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const portals = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Family Vote", href: "/polls", icon: BarChart4 },
   { name: "Legacy", href: "/legacy", icon: Hourglass },
   { name: "Arcade", href: "/arcade", icon: Zap },
   { name: "K-Games", href: "/games", icon: Gamepad2 },

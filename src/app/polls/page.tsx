@@ -33,7 +33,7 @@ export default function PollsPage() {
 
   const pollsQuery = React.useMemo(() => {
     if (!supabase || !profile?.familyId) return null
-    return supabase.from("polls").select("*").eq("familyId", profile.familyId).order("createdAt", { ascending: false })
+    return supabase.from("polls").select("*").eq("family_id", profile.familyId).order("created_at", { ascending: false })
   }, [supabase, profile?.familyId])
 
   const { data: polls, loading } = useCollection(pollsQuery)
@@ -42,13 +42,13 @@ export default function PollsPage() {
     if (!supabase || !profile?.familyId || !question) return
     setIsSubmitting(true)
     const data = {
-      familyId: profile.familyId,
+      family_id: profile.familyId,
       question,
       options: [option1 || "Yes", option2 || "No"],
       votes: {},
       status: "open",
-      createdBy: profile.displayName,
-      createdAt: new Date().toISOString()
+      created_by: profile.displayName,
+      created_at: new Date().toISOString()
     }
     supabase.from("polls").insert([data])
       .then(() => {
@@ -119,7 +119,7 @@ export default function PollsPage() {
                 <CardHeader className="p-4 pb-4">
                   <div className="flex justify-between items-start">
                     <Badge className="bg-primary/5 text-primary border-none font-black text-[8px] uppercase">{poll.status}</Badge>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">By {poll.createdBy}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">By {poll.created_by}</span>
                   </div>
                   <CardTitle className="text-2xl font-black tracking-tight mt-4">{poll.question}</CardTitle>
                 </CardHeader>

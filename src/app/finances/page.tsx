@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Wallet, TrendingUp, TrendingDown, Plus, Download, Filter, Landmark, Loader2, PieChart as PieIcon } from "lucide-react"
+import { Wallet, TrendingUp, TrendingDown, Plus, Download, Filter, Landmark, Loader2, PieChart as PieIcon, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -62,6 +62,60 @@ export default function FinancesPage() {
   }, [supabase, profile?.family_id])
 
   const { data: transactions, loading: txLoading } = useCollection(transactionsQuery)
+
+  const savingsQuery = React.useMemo(() => {
+    if (!supabase || !profile?.family_id) return null
+    return supabase.from("savings_goals")
+      .select("*")
+      .eq("family_id", profile.family_id).order("created_at", { ascending: false })
+  }, [supabase, profile?.family_id])
+  const { data: savingsGoals } = useCollection(savingsQuery)
+
+  const [isGoalDialogOpen, setIsGoalDialogOpen] = React.useState(false)
+  const [goalName, setGoalName] = React.useState("")
+  const [goalTarget, setGoalTarget] = React.useState("")
+  const [goalLoading, setGoalLoading] = React.useState(false)
+
+  const handleAddGoal = async () => {
+    if (!supabase || !profile?.family_id || !goalName || !goalTarget) return
+    setGoalLoading(true)
+    const { error } = await supabase.from("savings_goals").insert([{
+      family_id: profile.family_id,
+      name: goalName,
+      target_amount: parseFloat(goalTarget),
+      current_amount: 0,
+      created_by: profile.first_name || profile.display_name
+    }])
+    setGoalLoading(false)
+    if (!error) {
+      setIsGoalDialogOpen(false)
+      setGoalName("")
+      setGoalTarget("")
+      toast({ title: "Savings Goal Created" })
+    }
+  }
+
+  const handleContributeClick = async (goalId: string, current: number, goalNameStr: string) => {
+    const amtStr = window.prompt("Enter contribution amount (ZAR):");
+    if (!amtStr) return;
+    const amt = parseFloat(amtStr);
+    if (isNaN(amt) || amt <= 0) return;
+    
+    if (!supabase || !profile?.family_id) return;
+    await supabase.from("savings_goals").update({ current_amount: current + amt }).eq("id", goalId);
+    
+    await supabase.from("family_transactions").insert([{
+      family_id: profile.family_id,
+      user_id: profile.id,
+      user_name: profile.first_name || profile.display_name || "Family Member",
+      amount: amt,
+      type: "savings",
+      category: "Other",
+      description: `Contribution to ${goalNameStr}`,
+      date: new Date().toISOString()
+    }]);
+    toast({ title: "Contribution Added!" });
+  }
 
   const stats = React.useMemo(() => {
     if (!transactions) return { balance: 0, expenses: 0, categoryData: [] }
@@ -254,6 +308,67 @@ export default function FinancesPage() {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* SAVINGS GOALS */}
+      <div className="mb-4 space-y-4">
+        <div className="flex items-center justify-between">
+           <h2 className="text-xl font-bold flex items-center gap-2"><Target className="h-5 w-5 text-primary" /> Savings Challenges</h2>
+           <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
+             <DialogTrigger asChild>
+               <Button variant="outline" size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-2" /> New Goal</Button>
+             </DialogTrigger>
+             <DialogContent className="rounded-2xl">
+                <DialogHeader><DialogTitle>Create Savings Goal</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Goal Name (e.g. Disneyland Fund)</Label>
+                    <Input value={goalName} onChange={e => setGoalName(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Target Amount (ZAR)</Label>
+                    <Input type="number" value={goalTarget} onChange={e => setGoalTarget(e.target.value)} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleAddGoal} disabled={!goalName || !goalTarget || goalLoading}>Create Goal</Button>
+                </DialogFooter>
+             </DialogContent>
+           </Dialog>
+        </div>
+        
+        {savingsGoals && savingsGoals.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {savingsGoals.map(goal => {
+               const pct = Math.min(100, Math.round(((goal.current_amount || 0) / goal.target_amount) * 100));
+               return (
+                 <Card key={goal.id} className="rounded-2xl border-none shadow-sm overflow-hidden">
+                   <div className="h-2 w-full bg-muted overflow-hidden">
+                     <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                   </div>
+                   <CardContent className="p-5">
+                     <div className="flex justify-between items-start mb-4">
+                       <div>
+                         <h3 className="font-black text-lg">{goal.name}</h3>
+                         <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Target: R {goal.target_amount}</p>
+                       </div>
+                       <Badge className="bg-primary/10 text-primary border-none">{pct}%</Badge>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span className="font-bold text-lg text-emerald-500">R {goal.current_amount || 0} saved</span>
+                       <Button size="sm" variant="outline" className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={() => handleContributeClick(goal.id, goal.current_amount || 0, goal.name)}>Contribute</Button>
+                     </div>
+                   </CardContent>
+                 </Card>
+               )
+            })}
+          </div>
+        ) : (
+           <div className="text-center py-8 bg-muted/20 rounded-2xl border border-dashed">
+             <Target className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+             <p className="text-sm font-bold text-muted-foreground">No active savings goals</p>
+           </div>
+        )}
       </div>
 
       <Card className="rounded-3xl border-none shadow-sm">

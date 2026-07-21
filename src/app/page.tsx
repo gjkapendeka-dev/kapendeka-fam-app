@@ -21,7 +21,11 @@ import {
   Coffee,
   CloudRain,
   Snowflake,
-  Edit3
+  Edit3,
+  BarChart4,
+  Heart,
+  Smile,
+  Frown
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -64,6 +68,11 @@ export default function DashboardPage() {
   const [weather, setWeather] = React.useState<any>(null)
   const [isVerseModalOpen, setIsVerseModalOpen] = React.useState(false)
   const [tempVerse, setTempVerse] = React.useState("")
+
+  // Mood State
+  const [selectedMood, setSelectedMood] = React.useState<string | null>(null)
+  const [gratitude, setGratitude] = React.useState("")
+  const [isMoodSubmitting, setIsMoodSubmitting] = React.useState(false)
 
   React.useEffect(() => {
     const hours = new Date().getHours()
@@ -124,6 +133,24 @@ export default function DashboardPage() {
   const { data: settingsData, mutate: mutateSettings } = useCollection(settingsQuery);
   const settings = settingsData?.[0] || null;
 
+  const pollsQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null;
+    return supabase.from("polls").select("*").eq("family_id", profile.familyId).eq("status", "open").order("created_at", { ascending: false }).limit(1);
+  }, [supabase, profile?.familyId]);
+  const { data: activePolls } = useCollection(pollsQuery);
+  const activePoll = activePolls?.[0];
+
+  const moodLogsQuery = React.useMemo(() => {
+    if (!supabase || !profile?.familyId) return null;
+    const today = new Date(new Date().setHours(0,0,0,0)).toISOString();
+    return supabase.from("mood_logs").select("*").eq("family_id", profile.familyId).gte("created_at", today).order("created_at", { ascending: false });
+  }, [supabase, profile?.familyId]);
+  const { data: moodLogs } = useCollection(moodLogsQuery);
+
+  const hasLoggedMoodToday = React.useMemo(() => {
+    return moodLogs?.some(log => log.user_id === profile?.id);
+  }, [moodLogs, profile?.id]);
+
   const notifications = broadcasts?.map(b => ({
     title: b.message,
     time: formatDistanceToNow(new Date(b.created_at), { addSuffix: true }),
@@ -132,6 +159,21 @@ export default function DashboardPage() {
 
   // Filter today's items for briefing
   const todaysEvents = events?.filter(e => e.startTime && isToday(new Date(e.startTime))) || [];
+  
+  const handleMoodSubmit = async () => {
+    if (!supabase || !profile?.familyId || !selectedMood) return;
+    setIsMoodSubmitting(true);
+    await supabase.from("mood_logs").insert([{
+      family_id: profile.familyId,
+      user_id: profile.id,
+      user_name: profile.display_name || "Family Member",
+      mood: selectedMood,
+      gratitude: gratitude
+    }]);
+    setIsMoodSubmitting(false);
+    setSelectedMood(null);
+    setGratitude("");
+  };
   
   const handleSaveVerse = async () => {
     if (!supabase || !profile?.familyId) return
@@ -366,6 +408,29 @@ export default function DashboardPage() {
                 </Button>
               </div>
 
+              {/* ACTIVE POLL WIDGET */}
+              {activePoll && (
+                <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-muted/50 mb-4 cursor-pointer hover:border-primary/50 transition-all" onClick={() => window.location.href='/polls'}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <BarChart4 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-black uppercase tracking-tight text-lg">Active Family Decision</h3>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Cast your vote</p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/20 p-4 rounded-2xl border">
+                    <div className="font-bold text-lg mb-2">{activePoll.question}</div>
+                    <div className="flex items-center gap-2">
+                       {activePoll.options?.map((opt: string, i: number) => (
+                         <Badge key={i} variant="outline" className="text-[10px] uppercase bg-white">{opt}</Badge>
+                       ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4 md:space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase">Universe Timeline</h2>
@@ -466,6 +531,49 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* MOOD WEATHER MAP */}
+              <Card className="rounded-[2rem] bg-white border-none shadow-xl mt-4">
+                <CardHeader className="p-5 pb-2">
+                  <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-rose-500" />
+                    Family Weather Map
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 space-y-4">
+                  {!hasLoggedMoodToday ? (
+                    <div className="bg-rose-50 rounded-2xl p-4 border border-rose-100">
+                      <h4 className="font-bold text-rose-900 mb-3 text-sm">How are you feeling today?</h4>
+                      <div className="flex gap-2 mb-4">
+                        {['Happy', 'Calm', 'Stressed', 'Tired'].map(m => (
+                          <Button key={m} variant={selectedMood === m ? 'default' : 'outline'} size="sm" onClick={() => setSelectedMood(m)} className={`rounded-xl flex-1 h-9 text-xs ${selectedMood === m ? 'bg-rose-500 hover:bg-rose-600 text-white border-none' : 'bg-white border-rose-200 text-rose-700 hover:bg-rose-100'}`}>
+                            {m}
+                          </Button>
+                        ))}
+                      </div>
+                      <Textarea placeholder="I'm grateful for..." value={gratitude} onChange={(e) => setGratitude(e.target.value)} className="text-xs rounded-xl min-h-[60px] mb-3 bg-white border-rose-100 focus-visible:ring-rose-500" />
+                      <Button className="w-full rounded-xl h-9 text-xs bg-rose-500 hover:bg-rose-600 text-white" disabled={!selectedMood || isMoodSubmitting} onClick={handleMoodSubmit}>Check In</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {moodLogs?.map(log => (
+                        <div key={log.id} className="flex items-start gap-3 bg-muted/20 p-3 rounded-2xl border">
+                          <div className="h-8 w-8 bg-white rounded-xl shadow-sm flex items-center justify-center shrink-0 text-xs font-black text-rose-500">
+                            {log.user_name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold">{log.user_name} <span className="text-muted-foreground font-medium">is feeling {log.mood}</span></div>
+                            {log.gratitude && <div className="text-[10px] text-muted-foreground mt-1 italic">"{log.gratitude}"</div>}
+                          </div>
+                        </div>
+                      ))}
+                      {(!moodLogs || moodLogs.length === 0) && (
+                        <div className="text-center text-xs text-muted-foreground py-4">No check-ins yet today.</div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <Card className="rounded-[1.5rem] md:rounded-[2rem] bg-gradient-to-br from-indigo-900 to-black p-4 md:p-5 text-white relative overflow-hidden shadow-2xl mt-4">
                 <div className="absolute top-0 right-0 p-4">

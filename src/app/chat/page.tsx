@@ -53,6 +53,27 @@ export default function ChatPage() {
     }
   }
 
+  const profilesQuery = React.useMemo(() => {
+    if (!supabase || !profile?.family_id) return null;
+    return supabase.from("profiles").select("*").eq("family_id", profile.family_id);
+  }, [supabase, profile?.family_id]);
+  const { data: profiles } = useCollection(profilesQuery);
+
+  const dmChannels = React.useMemo(() => {
+    if (!profiles || !profile) return [];
+    return profiles.filter((p: any) => p.id !== profile.id).map((p: any) => {
+      const sortedIds = [profile.id, p.id].sort();
+      return {
+        id: `dm_${sortedIds[0]}_${sortedIds[1]}`,
+        name: p.display_name || p.first_name || "Family Member",
+        description: "Between Us (Private)",
+        isDm: true
+      }
+    });
+  }, [profiles, profile]);
+
+  const allChannels = [...CHANNELS, ...dmChannels];
+
   const messagesQuery = React.useMemo(() => {
     if (!supabase || !profile?.family_id) return null
     return supabase.from("messages")
@@ -90,7 +111,7 @@ export default function ChatPage() {
     }
   }
 
-  const currentChannel = CHANNELS.find(c => c.id === activeChannel)
+  const currentChannel = allChannels.find(c => c.id === activeChannel)
 
   return (
     <div className="flex h-[calc(100vh-1rem)] overflow-hidden bg-background relative selection:bg-primary/10">
@@ -125,6 +146,28 @@ export default function ChatPage() {
                 </div>
               </button>
             ))}
+
+            {dmChannels.length > 0 && (
+              <>
+                <div className="mt-6 mb-2 px-4 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Between Us</div>
+                {dmChannels.map((channel) => (
+                  <button
+                    key={channel.id}
+                    onClick={() => handleChannelSelect(channel.id)}
+                    className={`w-full flex items-center gap-3 p-4 rounded-[1.25rem] transition-all active:scale-[0.98] ${
+                      activeChannel === channel.id
+                        ? "bg-accent text-white shadow-xl shadow-accent/20"
+                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Users className="h-4 w-4 shrink-0 opacity-50" />
+                    <div className="text-left">
+                      <div className="text-sm font-black uppercase tracking-tight">{channel.name}</div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </ScrollArea>
       </div>
