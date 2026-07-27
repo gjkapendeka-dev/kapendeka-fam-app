@@ -127,7 +127,7 @@ export default function GameReportPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-black text-indigo-900">{sessionData.quizzes?.title || "Unknown Quiz"} - Report</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">{sessionData.quizzes?.title || "Unknown Quiz"} - Report</h1>
           <p className="text-muted-foreground font-medium">Played on {new Date(sessionData.created_at).toLocaleDateString()}</p>
         </div>
       </div>

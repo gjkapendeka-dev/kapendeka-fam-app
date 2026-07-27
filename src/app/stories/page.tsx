@@ -87,7 +87,7 @@ export default function StoryStudioPage() {
               <Library className="h-6 w-6" />
            </div>
            <div>
-              <h1 className="text-3xl font-black uppercase italic text-primary">Story Studio</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Story Studio</h1>
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Co-create family legends with AI</p>
            </div>
         </div>

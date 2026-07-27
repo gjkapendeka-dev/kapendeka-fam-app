@@ -37,7 +37,7 @@ export default function SelectProfilePage() {
   const [showAddProfile, setShowAddProfile] = React.useState(false)
   const [newName, setNewName] = React.useState("")
   const [newPin, setNewPin] = React.useState("")
-  const [newRole, setNewRole] = React.useState<"child" | "parent">("child")
+  const [newRole, setNewRole] = React.useState<"child" | "parent" | "visitor">("child")
   const [selectedSeed, setSelectedSeed] = React.useState(EMOJI_SEEDS[0])
   const [saving, setSaving] = React.useState(false)
 
@@ -234,7 +234,7 @@ export default function SelectProfilePage() {
                 <div className="space-y-1.5">
                   <Label className="font-semibold text-sm">Role</Label>
                   <div className="flex gap-2">
-                    {(["child", "parent"] as const).map((r) => (
+                    {(["child", "parent", "visitor"] as const).map((r) => (
                       <button
                         key={r}
                         type="button"
@@ -310,7 +310,7 @@ export default function SelectProfilePage() {
               />
             </div>
             <div className="text-center sm:text-left space-y-2">
-              <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tight">Who's playing?</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Who's playing?</h1>
               <p className="text-muted-foreground text-sm md:text-base font-medium">Select your profile to enter the Universe</p>
             </div>
           </div>

@@ -154,7 +154,7 @@ export default function LegacyPage() {
             <Archive className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">Family Legacy</h1>
+            <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Family Legacy</h1>
             <p className="text-muted-foreground font-medium">Secure vault and time capsules for the future.</p>
           </div>
         </div>

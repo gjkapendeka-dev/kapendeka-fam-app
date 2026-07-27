@@ -287,7 +287,7 @@ export default function PlayerRemotePage() {
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 space-y-8">
           {session.status === "waiting" ? (
             <>
-              <h1 className="text-4xl font-black text-white drop-shadow-lg">You're in!</h1>
+              <h1 className="text-4xl md:text-5xl font-headline font-black uppercase tracking-tight text-white drop-shadow-lg">You're in!</h1>
               <p className="text-xl text-emerald-100 font-medium">See your nickname on screen</p>
               
               {isEditingProfile ? (
@@ -323,7 +323,7 @@ export default function PlayerRemotePage() {
             </>
           ) : (
             <>
-              <h1 className="text-4xl font-black text-white">Game Over!</h1>
+              <h1 className="text-4xl md:text-5xl font-headline font-black uppercase tracking-tight text-white drop-shadow-lg">Game Over!</h1>
               <p className="text-xl text-emerald-100 font-medium">Check the big screen for results 🏆</p>
               <div className="bg-white px-10 py-5 rounded-full shadow-2xl">
                 <span className="text-3xl font-black text-emerald-700">{playerName}</span>

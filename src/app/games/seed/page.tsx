@@ -117,7 +117,7 @@ export default function SeedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-8">
       <div className="bg-white p-12 rounded-3xl shadow-xl max-w-lg w-full text-center space-y-6">
-        <h1 className="text-3xl font-black text-slate-800">Ready to Host?</h1>
+        <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Ready to Host?</h1>
         <p className="text-slate-600">Click the button below to instantly generate the 25-question Kids Ultimate Fun Quiz and start hosting it!</p>
         
         <Button onClick={handleSeed} disabled={loading} size="lg" className="w-full h-16 text-xl rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-bold shadow-lg">

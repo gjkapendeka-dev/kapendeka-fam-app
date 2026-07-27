@@ -82,7 +82,7 @@ export default function LanguageLessonPage() {
      return (
         <div className="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center">
            <Trophy className="w-32 h-32 text-amber-500 mb-6 animate-bounce" />
-           <h1 className="text-4xl font-black text-primary uppercase tracking-tighter mb-4">Lesson Complete!</h1>
+           <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Lesson Complete!</h1>
            <p className="text-xl font-bold text-muted-foreground mb-8">You learned {words.length} words in {language.charAt(0).toUpperCase() + language.slice(1)}!</p>
            <Link href="/languages">
               <Button className="h-16 px-12 rounded-[2rem] font-black text-lg bg-emerald-500 hover:bg-emerald-600 shadow-xl text-white transition-all active:scale-95">
@@ -100,7 +100,7 @@ export default function LanguageLessonPage() {
            <Button variant="ghost" size="icon" className="rounded-xl"><ArrowLeft className="h-5 w-5" /></Button>
         </Link>
         <div>
-           <h1 className="text-3xl font-black uppercase tracking-tight text-primary capitalize">{language} Lesson</h1>
+           <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">{language} Lesson</h1>
            <p className="text-muted-foreground font-bold text-sm">Word {currentIndex + 1} of {words.length}</p>
         </div>
       </header>

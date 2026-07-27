@@ -39,6 +39,7 @@ const portals = [
   { name: "Quests", href: "/quest", icon: Compass },
   { name: "Hobbies", href: "/hobbies", icon: Gamepad2 },
   { name: "Languages", href: "/languages", icon: Languages },
+  { name: "French App", href: "https://www.tongues.kapendeka.co.za", icon: Languages },
   { name: "Chores", href: "/household", icon: CheckSquare },
   { name: "Homework", href: "/school", icon: GraduationCap },
   { name: "Faith", href: "/faith", icon: Heart },

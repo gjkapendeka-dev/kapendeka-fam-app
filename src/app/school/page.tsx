@@ -59,6 +59,13 @@ import {
 import { useUser, useCollection, useSupabase } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { format, formatDistanceToNowStrict } from "date-fns"
+
+const formatBytes = (bytes: number) => {
+  if (!bytes) return "0 MB"
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1024) return (mb / 1024).toFixed(2) + " GB"
+  return mb.toFixed(2) + " MB"
+}
 import { AssignmentQuiz } from "@/components/assignment-quiz"
 
 
@@ -550,6 +557,10 @@ function CommentSection({ assignment, supabase, profile, refresh, canEdit }: { a
                    <Upload className="h-4 w-4" />
                    <Input type="file" multiple className="hidden" onChange={(e) => setCommentFiles(e.target.files)} />
                  </Label>
+                 <Label className="cursor-pointer h-7 w-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-muted-foreground transition-colors">
+                   <Camera className="h-4 w-4" />
+                   <Input type="file" accept="image/*,video/*" capture="environment" className="hidden" onChange={(e) => setCommentFiles(e.target.files)} />
+                 </Label>
                  {!isRecording ? (
                    <Button size="icon" variant="ghost" type="button" className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-red-500 transition-colors" onClick={startRecording}>
                      <Mic className="h-4 w-4" />
@@ -862,8 +873,31 @@ export default function SchoolPage() {
   }
 
   const uploadFilesToSupabase = async (files: FileList | null, audio: Blob | null, folder: string) => {
-    if (!supabase || !profile?.family_id) return []
+    if (!supabase || !profile?.family_id || !profile?.id) return []
+    
+    // Calculate total size
+    let totalSize = 0
+    if (files) {
+      for (let i = 0; i < files.length; i++) totalSize += files[i].size
+    }
+    if (audio) {
+      totalSize += audio.size
+    }
+
+    if (totalSize > 0) {
+      // Check storage limits
+      const { data: pData } = await supabase.from('profiles').select('storage_limit_bytes, storage_used_bytes').eq('id', profile.id).single()
+      if (pData) {
+         const used = pData.storage_used_bytes || 0
+         const limit = pData.storage_limit_bytes || 0
+         if (used + totalSize > limit) {
+           throw new Error(`Storage limit exceeded. You need ${formatBytes(used + totalSize - limit)} more space.`)
+         }
+      }
+    }
+
     const uploadedUrls: string[] = []
+    let successfullyUploadedBytes = 0
 
     if (files && files.length > 0) {
       for (let i = 0; i < files.length; i++) {
@@ -876,6 +910,7 @@ export default function SchoolPage() {
         if (!uploadError) {
           const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
           uploadedUrls.push(data.publicUrl)
+          successfullyUploadedBytes += file.size
         }
       }
     }
@@ -887,10 +922,21 @@ export default function SchoolPage() {
       if (!uploadError) {
         const { data } = supabase.storage.from('homework_files').getPublicUrl(filePath)
         uploadedUrls.push(data.publicUrl)
+        successfullyUploadedBytes += audio.size
       }
     }
 
-    return uploadedUrls;
+    // Update storage usage
+    if (successfullyUploadedBytes > 0) {
+       const { data: pData } = await supabase.from('profiles').select('storage_used_bytes').eq('id', profile.id).single()
+       if (pData) {
+         await supabase.from('profiles').update({
+            storage_used_bytes: (pData.storage_used_bytes || 0) + successfullyUploadedBytes
+         }).eq('id', profile.id)
+       }
+    }
+
+    return uploadedUrls
   }
 
   const handleAddAssignment = async () => {
@@ -1026,11 +1072,11 @@ export default function SchoolPage() {
               <div className="h-10 w-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg">
                  <GraduationCap className="h-6 w-6" />
               </div>
-              <h1 className="text-3xl font-black uppercase tracking-tight text-primary">School & Homework</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">School & Homework</h1>
            </div>
           <p className="text-muted-foreground font-bold text-sm">Keep track of all your assignments and turn them in!</p>
         </div>
-        {isParent && (
+
            <Dialog open={isDialogOpen} onOpenChange={(open) => {
              setIsDialogOpen(open)
              if (!open) {
@@ -1102,13 +1148,25 @@ export default function SchoolPage() {
                    </div>
                  </div>
                  <div className="grid gap-2">
-                   <Label>Attachments (Documents, Photos)</Label>
-                   <Input 
-                     type="file"
-                     multiple
-                     onChange={(e) => setNewFiles(e.target.files)} 
-                   />
-                 </div>
+                    <Label>Attachments (Documents, Photos)</Label>
+                    <div className="flex flex-col gap-2">
+                      <Input 
+                        type="file"
+                        multiple
+                        onChange={(e) => setNewFiles(e.target.files)} 
+                      />
+                      <Label className="cursor-pointer flex items-center justify-center h-10 rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium">
+                        <Camera className="mr-2 h-4 w-4" /> Take Photo/Video
+                        <Input 
+                          type="file"
+                          accept="image/*,video/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => setNewFiles(e.target.files)} 
+                        />
+                      </Label>
+                    </div>
+                  </div>
                  <div className="grid gap-2">
                    <Label>Voice Note (Instructions)</Label>
                    <div className="flex items-center gap-3">
@@ -1141,7 +1199,6 @@ export default function SchoolPage() {
                </DialogFooter>
              </DialogContent>
            </Dialog>
-        )}
       </header>
 
       {/* Edit Dialog */}
@@ -1500,13 +1557,25 @@ export default function SchoolPage() {
                                   </div>
                                   <div className="grid gap-2">
                                     <Label>Photos / Documents</Label>
-                                    <Input 
-                                      type="file" 
-                                      multiple
-                                      accept="image/*,application/pdf"
-                                      className="rounded-xl"
-                                      onChange={(e) => setSubmitFiles(e.target.files)}
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                      <Input 
+                                        type="file" 
+                                        multiple
+                                        accept="image/*,application/pdf"
+                                        className="rounded-xl"
+                                        onChange={(e) => setSubmitFiles(e.target.files)}
+                                      />
+                                      <Label className="cursor-pointer flex items-center justify-center h-10 rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium">
+                                        <Camera className="mr-2 h-4 w-4" /> Take Photo/Video
+                                        <Input 
+                                          type="file"
+                                          accept="image/*,video/*"
+                                          capture="environment"
+                                          className="hidden"
+                                          onChange={(e) => setSubmitFiles(e.target.files)} 
+                                        />
+                                      </Label>
+                                    </div>
                                   </div>
                                   <div className="grid gap-2">
                                     <Label>Voice Note (Optional)</Label>
@@ -1607,13 +1676,25 @@ export default function SchoolPage() {
                                   </div>
                                   <div className="grid gap-2">
                                     <Label>Photos / Documents</Label>
-                                    <Input 
-                                      type="file" 
-                                      multiple
-                                      accept="image/*,application/pdf"
-                                      className="rounded-xl"
-                                      onChange={(e) => setSubmitFiles(e.target.files)}
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                      <Input 
+                                        type="file" 
+                                        multiple
+                                        accept="image/*,application/pdf"
+                                        className="rounded-xl"
+                                        onChange={(e) => setSubmitFiles(e.target.files)}
+                                      />
+                                      <Label className="cursor-pointer flex items-center justify-center h-10 rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium">
+                                        <Camera className="mr-2 h-4 w-4" /> Take Photo/Video
+                                        <Input 
+                                          type="file"
+                                          accept="image/*,video/*"
+                                          capture="environment"
+                                          className="hidden"
+                                          onChange={(e) => setSubmitFiles(e.target.files)} 
+                                        />
+                                      </Label>
+                                    </div>
                                   </div>
                                   <div className="grid gap-2">
                                     <Label>Voice Note (Optional)</Label>

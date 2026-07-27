@@ -62,7 +62,7 @@ export default function StudentProgressPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-black text-indigo-900">My Progress</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">My Progress</h1>
           <p className="text-muted-foreground font-medium">
             {profile?.display_name}&apos;s quiz history
           </p>

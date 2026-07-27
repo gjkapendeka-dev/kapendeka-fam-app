@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Globe, Bell, Shield, MapPin, Loader2, Save, Sparkles } from "lucide-react"
+import { Globe, Bell, Shield, MapPin, Loader2, Save, Sparkles, Database } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -11,6 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useUser, useSupabase, useDoc } from "@/supabase"
 import { useToast } from "@/hooks/use-toast"
+
+function formatBytes(bytes: number) {
+  if (!bytes) return "0 MB"
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1024) return (mb / 1024).toFixed(2) + " GB"
+  return mb.toFixed(2) + " MB"
+}
 
 export default function SettingsPage() {
   const { profile } = useUser()
@@ -25,6 +31,16 @@ export default function SettingsPage() {
   }, [supabase, profile?.familyId])
   
   const { data: family, loading } = useDoc(familyRef)
+
+  // Fetch Profiles for Storage Allocation
+  const [profiles, setProfiles] = React.useState<any[]>([])
+  React.useEffect(() => {
+    if (profile?.role === 'parent' && supabase && profile?.familyId) {
+      supabase.from("profiles").select("*").eq("family_id", profile.familyId).order("created_at").then(({ data }) => {
+        if (data) setProfiles(data)
+      })
+    }
+  }, [profile, supabase])
 
   // Form State
   const [timezone, setTimezone] = React.useState("")
@@ -41,21 +57,14 @@ export default function SettingsPage() {
     }
   }, [family])
 
-  
   const handleSimulateMidnight = async () => {
     if (!supabase || !profile?.familyId) return
-    
-    // Reset all chores where recurrence is daily or done_at is not null
     await supabase.from("chores").update({
       done_at: null,
       done_by: null
     }).eq("family_id", profile.familyId).neq("done_at", null)
-
-    // Reset quests logic: we can just leave quests as they are or reset their steps
-    
     toast({ title: "Midnight Simulated", description: "All daily chores have been reset for the new day!" })
   }
-
 
   const handleSave = async () => {
     if (!supabase || !profile?.familyId) return
@@ -71,6 +80,16 @@ export default function SettingsPage() {
         },
         updatedAt: new Date().toISOString()
       }).eq("id", profile.familyId)
+      
+      // Save storage limits for profiles
+      if (profile.role === 'parent' && profiles.length > 0) {
+        for (const p of profiles) {
+           await supabase.from("profiles").update({
+             storage_limit_bytes: p.storage_limit_bytes
+           }).eq("id", p.id)
+        }
+      }
+
       toast({ title: "Settings Saved", description: "Universe configurations updated." })
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to save settings." })
@@ -85,7 +104,7 @@ export default function SettingsPage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">Family Settings</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Family Settings</h1>
           <p className="text-muted-foreground font-medium">Manage the Kapendeka World configurations</p>
         </div>
         {profile?.role === 'parent' && (
@@ -115,6 +134,54 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {profile?.role === 'parent' && (
+          <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-1">
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Database className="h-5 w-5 text-purple-500" />
+                <h2 className="text-xl font-bold">Storage Allocation</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">Set file storage limits for each family member to prevent abuse.</p>
+              <div className="grid gap-4">
+                {profiles.map(p => {
+                  const usedStr = formatBytes(p.storage_used_bytes || 0);
+                  const limitMb = p.storage_limit_bytes ? Math.floor(p.storage_limit_bytes / (1024 * 1024)) : 0;
+                  const percent = p.storage_limit_bytes ? Math.min(100, ((p.storage_used_bytes || 0) / p.storage_limit_bytes) * 100) : 0;
+                  
+                  return (
+                    <div key={p.id} className="p-4 border rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 w-full md:w-1/3">
+                        <img src={p.avatar_url || "https://api.dicebear.com/9.x/fun-emoji/svg"} className="w-10 h-10 rounded-xl" />
+                        <div>
+                          <p className="font-bold">{p.display_name} <span className="text-xs text-muted-foreground capitalize">({p.role})</span></p>
+                          <p className="text-xs text-muted-foreground font-medium">Used: {usedStr}</p>
+                        </div>
+                      </div>
+                      <div className="w-full md:w-1/3">
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                           <div className="h-full bg-primary" style={{ width: \`\${percent}%\` }} />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        <Input 
+                          type="number" 
+                          min={0}
+                          value={limitMb} 
+                          onChange={(e) => {
+                             const newLimit = parseInt(e.target.value) || 0;
+                             setProfiles(profiles.map(x => x.id === p.id ? { ...x, storage_limit_bytes: newLimit * 1024 * 1024 } : x))
+                          }}
+                          className="w-24 font-bold" 
+                        />
+                        <span className="text-sm font-bold text-muted-foreground">MB</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {profile?.role === 'parent' && (
           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-1">
@@ -132,7 +199,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         )}
-
 
         <Card className="rounded-2xl border-none shadow-sm">
           <CardHeader>

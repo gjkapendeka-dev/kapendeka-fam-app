@@ -77,7 +77,7 @@ export default function VisionBoardPage() {
               <Lightbulb className="h-6 w-6" />
            </div>
            <div>
-              <h1 className="text-3xl font-black uppercase italic text-primary">Vision Board</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Vision Board</h1>
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Designing the Family Future</p>
            </div>
         </div>

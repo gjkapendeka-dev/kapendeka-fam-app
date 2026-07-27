@@ -113,7 +113,7 @@ export default function ShoppingPage() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="text-2xl md:text-3xl font-headline font-bold text-primary">Shopping</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Shopping</h1>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>

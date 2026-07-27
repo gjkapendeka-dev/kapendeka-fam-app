@@ -46,7 +46,7 @@ export default function EcoUniversePage() {
            <Leaf className="h-6 w-6" />
         </div>
         <div>
-           <h1 className="text-3xl font-black uppercase italic text-primary">Eco-Universe</h1>
+           <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Eco-Universe</h1>
            <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Tracking Family Impact on the Planet</p>
         </div>
       </header>

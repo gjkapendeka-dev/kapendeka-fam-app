@@ -276,7 +276,7 @@ export default function MealPlannerPage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto pb-20 overflow-x-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-14 md:pr-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-headline font-bold tracking-tight text-primary uppercase italic">Meal Planner</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Meal Planner</h1>
           <p className="text-muted-foreground font-medium text-xs md:text-sm uppercase tracking-widest">Kapendeka World Recipes</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

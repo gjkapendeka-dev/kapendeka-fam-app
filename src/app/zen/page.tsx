@@ -57,7 +57,7 @@ export default function ZenSpacePage() {
            <Wind className="h-6 w-6" />
         </div>
         <div>
-           <h1 className="text-3xl font-black uppercase italic text-primary">Zen Space</h1>
+           <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Zen Space</h1>
            <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Family Mindfulness & Calm</p>
         </div>
       </header>

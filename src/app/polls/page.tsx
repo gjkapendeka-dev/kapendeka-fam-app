@@ -27,8 +27,7 @@ export default function PollsPage() {
 
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [question, setQuestion] = React.useState("")
-  const [option1, setOption1] = React.useState("")
-  const [option2, setOption2] = React.useState("")
+  const [options, setOptions] = React.useState(["", ""])
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const pollsQuery = React.useMemo(() => {
@@ -38,65 +37,97 @@ export default function PollsPage() {
 
   const { data: polls, loading } = useCollection(pollsQuery)
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!supabase || !profile?.familyId || !question) return
     setIsSubmitting(true)
+    const validOptions = options.map(o => o.trim()).filter(Boolean)
+    if (validOptions.length < 2) validOptions.push("Yes", "No")
     const data = {
       family_id: profile.familyId,
       question,
-      options: [option1 || "Yes", option2 || "No"],
+      options: validOptions,
       votes: {},
       status: "open",
-      created_by: profile.displayName,
+      created_by: profile.displayName || profile.display_name,
       created_at: new Date().toISOString()
     }
+    
+    // Fix: Ensure the families table has this family ID so RLS policies pass
+    await supabase.from("families").insert([{ id: profile.familyId, name: "Family" }])
+    
     supabase.from("polls").insert([data])
-      .then(() => {
-        setIsAddOpen(false)
-        setQuestion(""); setOption1(""); setOption2("")
-        toast({ title: "Poll Launched" })
+      .then(({ error }) => {
+        if (error) {
+          console.error("Poll insert error:", error)
+          toast({ title: "Error", description: error.message, variant: "destructive" })
+        } else {
+          setIsAddOpen(false)
+          setQuestion(""); setOptions(["", ""])
+          toast({ title: "Poll Launched" })
+        }
       })
       .then(() => setIsSubmitting(false))
   }
 
-  const handleVote = (pollId: string, optionIndex: number) => {
+  const handleVote = async (pollId: string, optionIndex: number) => {
     if (!supabase || !profile) return
-    supabase.from("polls").update({
-      [`votes.${profile.id}`]: optionIndex
-    }).eq("id", pollId)
+    const poll = polls?.find((p: any) => p.id === pollId)
+    if (!poll) return
+    
+    const newVotes = { ...poll.votes, [profile.id]: optionIndex }
+    const { error } = await supabase.from("polls").update({ votes: newVotes }).eq("id", pollId)
+    if (error) {
+      toast({ title: "Error", description: "Failed to record vote", variant: "destructive" })
+    }
   }
 
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-4xl mx-auto pb-20 pr-14">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black uppercase italic text-primary tracking-tighter">Family Polls</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Family Polls</h1>
           <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest">Settle Universe Decisions Quickly</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-2xl h-12 px-6 font-black uppercase tracking-widest text-[10px] bg-primary shadow-xl">
+            <Button className="rounded-2xl h-12 px-6 font-headline font-black uppercase tracking-widest text-[10px] bg-primary shadow-xl">
               <Plus className="h-4 w-4 mr-2" /> New Decision
             </Button>
           </DialogTrigger>
           <DialogContent className="rounded-[2rem]">
             <DialogHeader>
-              <DialogTitle className="text-xl font-black uppercase">Start a Vote</DialogTitle>
+              <DialogTitle className="text-xl font-headline font-black uppercase tracking-tighter">Start a Vote</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label className="font-bold text-[10px] uppercase opacity-50">Question</Label>
-                <Input placeholder="What are we watching?" value={question} onChange={(e) => setQuestion(e.target.value)} className="rounded-xl" />
+                <Input placeholder="What are we watching?" value={question} onChange={(e) => setQuestion(e.target.value)} className="rounded-xl font-medium" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input placeholder="Option 1" value={option1} onChange={(e) => setOption1(e.target.value)} className="rounded-xl" />
-                <Input placeholder="Option 2" value={option2} onChange={(e) => setOption2(e.target.value)} className="rounded-xl" />
+              <div className="grid gap-3">
+                <Label className="font-bold text-[10px] uppercase opacity-50">Options</Label>
+                {options.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input placeholder={`Option ${i + 1}`} value={opt} onChange={(e) => {
+                      const newOpts = [...options]
+                      newOpts[i] = e.target.value
+                      setOptions(newOpts)
+                    }} className="rounded-xl font-medium" />
+                    {options.length > 2 && (
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        const newOpts = options.filter((_, idx) => idx !== i)
+                        setOptions(newOpts)
+                      }} className="rounded-xl shrink-0 hover:bg-rose-100 hover:text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                    )}
+                  </div>
+                ))}
+                <Button variant="outline" onClick={() => setOptions([...options, ""])} className="rounded-xl h-10 border-dashed w-full text-xs font-bold uppercase tracking-wider text-muted-foreground"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCreate} disabled={!question || isSubmitting} className="w-full rounded-xl h-12">Broadcast Poll</Button>
+              <Button onClick={handleCreate} disabled={!question || isSubmitting} className="w-full rounded-xl h-12 font-headline font-black uppercase tracking-widest">Broadcast Poll</Button>
             </DialogFooter>
           </DialogContent>
+
         </Dialog>
       </header>
 

@@ -100,7 +100,7 @@ export default function ManageTriviaPage() {
               <Button variant="ghost" size="icon" className="rounded-xl"><ArrowLeft className="h-5 w-5" /></Button>
            </Link>
            <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight text-primary">Manage Trivia</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Manage Trivia</h1>
               <p className="text-muted-foreground font-medium text-sm">Add or edit questions for the family</p>
            </div>
         </div>

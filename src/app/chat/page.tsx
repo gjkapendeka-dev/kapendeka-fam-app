@@ -181,7 +181,7 @@ export default function ChatPage() {
               <Users className="h-5 w-5" />
             </Button>
             <div className="min-w-0">
-              <h1 className="text-sm md:text-lg font-black uppercase tracking-tight truncate">{currentChannel?.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">{currentChannel?.name}</h1>
               <p className="text-[9px] md:text-xs text-muted-foreground font-bold uppercase tracking-widest truncate">{currentChannel?.description}</p>
             </div>
           </div>

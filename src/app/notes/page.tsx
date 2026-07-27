@@ -160,7 +160,7 @@ export default function NotesPage() {
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">Wiki & Notes</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Wiki & Notes</h1>
           <p className="text-muted-foreground font-medium">Family knowledge base and quick memos</p>
         </div>
       </header>

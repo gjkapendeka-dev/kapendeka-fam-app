@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
+import { Camera,
   Plus, Clock, CheckCircle2, ClipboardList, Loader2,
   Calendar as CalendarIcon, Upload, Play, Pause, MessageSquare,
   Pencil, Trash2, Send, Users, Mic, Square, Download, LayoutGrid,
@@ -514,7 +514,19 @@ export default function ChurchWorkTab() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Attachments (Documents, Photos)</Label>
-                  <Input type="file" multiple onChange={(e) => setNewFiles(e.target.files)} />
+                  <div className="flex flex-col gap-2">
+                    <Input type="file" multiple onChange={(e) => setNewFiles(e.target.files)} />
+                    <Label className="cursor-pointer flex items-center justify-center h-10 rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium">
+                      <Camera className="mr-2 h-4 w-4" /> Take Photo/Video
+                      <Input 
+                        type="file"
+                        accept="image/*,video/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e) => setNewFiles(e.target.files)} 
+                      />
+                    </Label>
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Voice Note (Instructions)</Label>

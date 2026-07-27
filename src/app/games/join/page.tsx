@@ -124,7 +124,7 @@ export default function JoinGamePage() {
 
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-5xl font-black text-white tracking-tight drop-shadow-xl">Kapendeka!</h1>
+          <h1 className="text-4xl md:text-5xl font-headline font-black uppercase tracking-tight text-white drop-shadow-lg">Kapendeka!</h1>
           <p className="text-indigo-200 mt-2 font-medium">Enter a game PIN to join</p>
         </div>
 

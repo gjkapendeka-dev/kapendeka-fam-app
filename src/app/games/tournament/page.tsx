@@ -110,7 +110,7 @@ export default function TournamentPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-black text-amber-700">
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">
             {view === "create" ? "Create Tournament" : "🏆 Tournaments"}
           </h1>
           <p className="text-muted-foreground font-medium">Chain multiple quizzes into one epic event</p>

@@ -85,7 +85,7 @@ export default function TriviaPage() {
               <HelpCircle className="h-6 w-6" />
            </div>
            <div>
-              <h1 className="text-3xl font-black uppercase italic text-primary">Trivia Quest</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Trivia Quest</h1>
               <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">How well do you know the Universe?</p>
            </div>
         </div>

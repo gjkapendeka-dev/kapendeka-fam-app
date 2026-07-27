@@ -218,7 +218,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col p-3 md:p-5 space-y-4 max-w-5xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
-        <h1 className="text-3xl font-headline font-bold tracking-tight text-primary">My Identity</h1>
+        <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">My Identity</h1>
         <p className="text-muted-foreground font-medium">Manage your presence in the Kapendeka World</p>
       </header>
 
@@ -289,6 +289,7 @@ export default function ProfilePage() {
                           <SelectItem value="teen">Teenager</SelectItem>
                           <SelectItem value="grandparent">Grandparent</SelectItem>
                           <SelectItem value="admin">Administrator</SelectItem>
+                          <SelectItem value="visitor">Visitor</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

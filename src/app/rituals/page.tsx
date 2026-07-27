@@ -124,7 +124,7 @@ export default function RitualsPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:pr-0 pr-14">
         <div>
           <Badge className="bg-primary text-white font-black uppercase tracking-[0.2em] text-[10px] mb-2 px-3">Legacy Feature</Badge>
-          <h1 className="text-4xl font-black tracking-tight text-primary uppercase italic">Family Rituals</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Family Rituals</h1>
           <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Designing the Kapendeka Daily Cycle</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

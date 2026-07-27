@@ -181,7 +181,7 @@ export default function GamesHubPage() {
     <div className="flex flex-col p-3 md:p-5 space-y-6 max-w-5xl mx-auto">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-headline font-black tracking-tight text-indigo-600">Kapendeka Games</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">Kapendeka Games</h1>
           <p className="text-muted-foreground font-medium text-lg mt-1">Host live interactive Kahoot-style quizzes</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">

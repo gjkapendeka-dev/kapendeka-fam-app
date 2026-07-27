@@ -389,7 +389,7 @@ export default function HostGamePage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 p-8">
-          <h1 className="text-4xl font-black text-white mb-2">{quiz?.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tight text-primary">{quiz?.title}</h1>
           
           <Card className="max-w-2xl w-full mx-auto bg-white/10 border-none shadow-2xl backdrop-blur-md">
             <CardContent className="p-12 space-y-8">
@@ -498,7 +498,7 @@ export default function HostGamePage() {
 
     return (
       <div className={`min-h-screen ${themeBg} p-8 flex flex-col items-center justify-center`}>
-        <h1 className="text-5xl font-black text-white mb-12 drop-shadow-lg">Final Podium</h1>
+        <h1 className="text-4xl md:text-5xl font-headline font-black uppercase tracking-tight text-white drop-shadow-lg">Final Podium</h1>
 
         <div className="flex items-end justify-center gap-4 h-96 w-full max-w-4xl animate-in slide-in-from-bottom-32 duration-1000">
           {sortedPlayers.slice(0, 3).map((p, i) => {
