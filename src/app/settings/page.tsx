@@ -159,7 +159,7 @@ export default function SettingsPage() {
                       </div>
                       <div className="w-full md:w-1/3">
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                           <div className="h-full bg-primary" style={{ width: \`\${percent}%\` }} />
+                           <div className="h-full bg-primary" style={{ width: `${percent}%` }} />
                         </div>
                       </div>
                       <div className="flex items-center gap-2 w-full md:w-auto">
